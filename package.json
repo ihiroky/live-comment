@@ -1,0 +1,13 @@
+{
+  "name": "live-comment",
+  "version": "0.1.0",
+  "main": "index.js",
+  "author": "Hiroki Itoh <ihiroky@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  }
+}

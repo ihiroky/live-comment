@@ -1,0 +1,19 @@
+{
+  "name": "common",
+  "version": "0.1.0",
+  "description": "live-comment-common",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": "https://github.com/ihiroky/live-comment/common",
+  "author": "Hiroki Itoh <ihiroky@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "@types/ws": "^7.2.6",
+    "typescript": "^3.9.6"
+  },
+  "dependencies": {
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "live-comment-server",
+  "version": "0.1.0",
+  "description": "live-comment server",
+  "main": "dist/index.js",
+  "repository": "https://github.com/ihiroky/live-comment/server",
+  "author": "Hiroki Itoh <ihiroky@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build": "tsc -b && bash ./create_pem.sh",
+    "start": "node dist/index.js"
+  },
+  "devDependencies": {
+    "@types/ws": "^7.2.6",
+    "typescript": "^3.9.6",
+    "ws": "^7.3.1"
+  },
+  "dependencies": {
+    "tslib": "^2.0.0",
+    "ws": "^7.3.1"
+  }
+}

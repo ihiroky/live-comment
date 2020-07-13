@@ -1,0 +1,31 @@
+.App {
+  font-size: calc(10px + 3vmin);
+}
+.App-link {
+  color: #61dafb;
+}
+.message-list {
+  width: 100%;
+  padding: 0.5em 0;
+  overflow: hidden;
+  margin-bottom: 10px;
+  position: relative;
+} 
+.message-list p:after {
+  content: "";
+  white-space: nowrap;
+  padding-right: 50px;
+} 
+.message-list p {
+  margin: 0px;
+  padding-left: 100%;
+  display: inline-block;
+  white-space: nowrap;
+  animation-name: marquee;
+  animation-timing-function: linear;
+  animation-duration: 5s;
+}
+@keyframes marquee {
+  from   { transform: translate(0%); }
+  99%,to { transform: translate(-100%); }
+}
