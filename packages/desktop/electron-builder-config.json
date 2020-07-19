@@ -1,0 +1,11 @@
+{
+  "productName": "live-comment",
+  "electronVersion": "9.1.0",
+  "files": [
+    "package.json",
+    "dist/js/**"
+  ],
+  "extraFiles": [
+    { "from": "../screen/build/", "to": "./public/" }
+  ]
+}
