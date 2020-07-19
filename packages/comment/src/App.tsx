@@ -3,23 +3,23 @@ import './App.css'
 import { WebSocketClient } from 'common'
 import { SendMessageForm } from './SendMessageForm'
 
-type AppPropsType = {
+type AppProps = {
   url: string
   maxMessageCount: number
   autoScroll: boolean
 }
 
-type AppStateType = {
+type AppState = {
   messages: { key: number, data: string }[]
 }
 
-export default class App extends React.Component<AppPropsType, AppStateType> {
+export default class App extends React.Component<AppProps, AppState> {
 
   private ref: React.RefObject<HTMLDivElement>
   private messageListDiv: Element | null
   private sender: ((message: string) => void) | null
 
-  constructor(props: Readonly<AppPropsType>) {
+  constructor(props: Readonly<AppProps>) {
     super(props)
     this.state = {
       messages: []
@@ -28,7 +28,6 @@ export default class App extends React.Component<AppPropsType, AppStateType> {
     this.ref = React.createRef()
     this.messageListDiv = null
     this.sender = null
-  
     this.onOpen = this.onOpen.bind(this)
     this.onMessage = this.onMessage.bind(this)
     this.onSubmit = this.onSubmit.bind(this)
