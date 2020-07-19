@@ -21,6 +21,8 @@ function onReady(): void {
     show: false,
     frame: false,
     transparent: true,
+    focusable: false,  // Must be set to enable 'alwaysOnTop' on Linux
+    alwaysOnTop: true,
     webPreferences: {
       contextIsolation: true
     }
@@ -29,6 +31,7 @@ function onReady(): void {
   mainWindow.once('ready-to-show', () => mainWindow?.show())
   mainWindow.on('closed', () => mainWindow = null)
   mainWindow.webContents.openDevTools({ mode: 'detach' })
+  mainWindow.setIgnoreMouseEvents(true)
 }
 
 function onQuit(): void {
