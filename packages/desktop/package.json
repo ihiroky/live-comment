@@ -1,0 +1,23 @@
+{
+  "name": "desktop",
+  "version": "0.1.0",
+  "description": "live-comment desktop",
+  "main": "dist/js/index.js",
+  "repository": "https://github.com/ihiroky/live-comment/desktop",
+  "author": "Hiroki Itoh <ihiroky@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build": "tsc -b && electron-builder -c electron-builder-config.json --dir",
+    "fullbuild": "yarn --cwd ../screen build && yarn build"
+  },
+  "dependencies": {
+    "tslib": "^2.0.0"
+  },
+  "devDependencies": {
+    "asar": "^3.0.3",
+    "electron": "9.1.0",
+    "electron-builder": "^22.7.0",
+    "typescript": "^3.9.6"
+  }
+}
