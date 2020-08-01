@@ -1,5 +1,6 @@
 import React from 'react'
 import './App.css'
+import { TextWidthCalculator } from './TextWidthCalculator'
 import { WebSocketClient } from 'common'
 
 // TODO data flow should be server -> comment -> screen. A presentater may want to show comment list.
@@ -10,9 +11,10 @@ type AppProps = {
 }
 
 type Message = {
-  key: number,
-  level: number,
-  data: string,
+  key: number
+  level: number
+  data: string
+  duration: number
   ref: React.RefObject<HTMLParagraphElement>
 }
 
@@ -22,7 +24,8 @@ type AppState = {
 
 export default class App extends React.Component<AppProps, AppState> {
 
-  private static readonly MARQUEE_TIMEOUT_MILLIS = 5000
+  private static readonly SLIDE_PIXEL_PER_SECOND = 250
+  private static readonly TWC_ID = 'app_twc'
 
   constructor(props: Readonly<AppProps>) {
     super(props)
@@ -34,8 +37,11 @@ export default class App extends React.Component<AppProps, AppState> {
   }
 
   private onMessage(ev: MessageEvent): void {
+
+    // TODO handle large amount of messages.
+
     const now = Date.now()
-    const messages = this.state.messages.filter(m => now - m.key < App.MARQUEE_TIMEOUT_MILLIS)
+    const messages = this.state.messages.filter(m => now - m.key <= m.duration)
     const length = messages.length
     let level = App.calcMinimumEmptyLevel(messages)
     if (level === -1) {
@@ -54,10 +60,13 @@ export default class App extends React.Component<AppProps, AppState> {
         }
       }
     }
+    const textWidth = TextWidthCalculator.calculateWidth(ev.data, App.TWC_ID)
+    const durationMillis = Math.round((window.innerWidth + textWidth) / App.SLIDE_PIXEL_PER_SECOND * 1000)
     messages.splice(insertPosition, 0, {
       key: now,
       data: ev.data,
       level: level,
+      duration: durationMillis,
       ref: React.createRef<HTMLParagraphElement>()
     })
     this.setState({ messages })
@@ -108,11 +117,21 @@ export default class App extends React.Component<AppProps, AppState> {
     return (
       <div className="App">
         <div className="message-list">{
-          this.state.messages.map(
-            m => <p className="message" key={m.key} ref={m.ref} style={{ top: m.level * 50 }}>{m.data}</p>
+          this.state.messages.map((m: Message): React.ReactNode =>
+            <p
+              className="message"
+              key={m.key}
+              ref={m.ref}
+              style={{
+                top: m.level * 50,
+                animationDuration: m.duration + 'ms'
+              }}>
+              {m.data}
+            </p>
           )
         }</div>
         <WebSocketClient url={this.props.url} onMessage={this.onMessage} />
+        <TextWidthCalculator id={App.TWC_ID} />
       </div>
     );
   }
