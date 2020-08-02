@@ -25,6 +25,7 @@ type AppState = {
 export default class App extends React.Component<AppProps, AppState> {
 
   private static readonly SLIDE_PIXEL_PER_SECOND = 250
+  private static readonly MAX_MESSAGES = 500
   private static readonly TWC_ID = 'app_twc'
 
   constructor(props: Readonly<AppProps>) {
@@ -37,11 +38,13 @@ export default class App extends React.Component<AppProps, AppState> {
   }
 
   private onMessage(ev: MessageEvent): void {
-
-    // TODO handle large amount of messages.
-
     const now = Date.now()
     const messages = this.state.messages.filter(m => now - m.key <= m.duration)
+    if (messages.length >= App.MAX_MESSAGES)  {
+      console.debug('Dropped:', ev.data)
+      return
+    }
+
     const length = messages.length
     let level = App.calcMinimumEmptyLevel(messages)
     if (level === -1) {
