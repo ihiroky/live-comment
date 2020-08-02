@@ -53,13 +53,14 @@ export default class App extends React.Component<AppProps, AppState> {
 
     let insertPosition = messages.length
     if (length > 0 && messages[length - 1].level >= level) {
-      for (let i = messages.length - 1; insertPosition >= 0; insertPosition--) {
+      for (let i = messages.length - 1; i >= 0; i--) {
         if (messages[i].level === level) {
-          insertPosition = i + 1
+          insertPosition = i
           break
         }
       }
     }
+
     const textWidth = TextWidthCalculator.calculateWidth(ev.data, App.TWC_ID)
     const durationMillis = Math.round((window.innerWidth + textWidth) / App.SLIDE_PIXEL_PER_SECOND * 1000)
     messages.splice(insertPosition, 0, {
@@ -106,7 +107,7 @@ export default class App extends React.Component<AppProps, AppState> {
       const element = m.ref.current
       if (element) {
         const rect = element.getBoundingClientRect()
-        existsNoRightSpaceMessage = existsNoRightSpaceMessage || (rect.left + rect.width >= windowInnerWidth)
+        existsNoRightSpaceMessage = existsNoRightSpaceMessage || (rect.right >= windowInnerWidth)
       }
       prev = m
     }
