@@ -1,4 +1,4 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var AppBase_1 = require("./AppBase");
-Object.defineProperty(exports, "AppBase", { enumerable: true, get: function () { return AppBase_1.AppBase; } });
+var WebSocketClient_1 = require("./WebSocketClient");
+Object.defineProperty(exports, "WebSocketClient", { enumerable: true, get: function () { return WebSocketClient_1.WebSocketClient; } });

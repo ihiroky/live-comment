@@ -6,45 +6,39 @@ const react_1 = tslib_1.__importDefault(require("react"));
 class WebSocketClient extends react_1.default.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            connected: false,
-            ws: null
-        };
+        this.webSocket = null;
     }
     componentDidMount() {
-        const ws = new WebSocket('wss://localhost:8080/test');
-        this.setState({
-            connected: true,
-            ws
+        const webSocket = new WebSocket(this.props.url);
+        webSocket.addEventListener('open', (ev) => {
+            console.log('webSocket open', ev);
+            if (this.props.onOpen) {
+                this.props.onOpen(this.send.bind(this));
+            }
         });
-        const onMessage = this.props.onMessage;
-        ws.addEventListener('open', function (ev) {
-            console.log('open', ev);
+        webSocket.addEventListener('close', (ev) => {
+            console.log('webSocket close', ev);
+            this.webSocket = null;
         });
-        ws.addEventListener('message', function (ev) {
-            console.log('message', ev);
-            onMessage(ev.data);
+        webSocket.addEventListener('error', (ev) => {
+            console.log('webSocket error', ev);
         });
-        ws.addEventListener('close', function (ev) {
-            console.log('close', ev);
-        });
-        ws.addEventListener('error', function (ev) {
-            console.log('error', ev);
-        });
+        webSocket.addEventListener('message', this.props.onMessage);
+        this.webSocket = webSocket;
     }
     componentWillUnmount() {
-        const ws = this.state.ws;
-        if (ws) {
-            ws.close();
-            this.setState({
-                connected: false,
-                ws: null
-            });
+        if (this.webSocket) {
+            this.webSocket.close();
+            this.webSocket = null;
         }
     }
     render() {
-        const message = this.state.connected ? "connected." : "connecting...";
-        return react_1.default.createElement("div", null, message);
+        return react_1.default.createElement("div", null);
+    }
+    send(message) {
+        if (this.webSocket) {
+            this.webSocket.send(message);
+        }
     }
 }
 exports.WebSocketClient = WebSocketClient;

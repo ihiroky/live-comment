@@ -1,15 +1,14 @@
 import React from 'react';
-declare type PropsType = {
-    onMessage: (message: string) => void;
+export declare type WebSocketClientPropsType = {
+    onOpen?: (sender: (message: string) => void) => void;
+    onMessage: (ev: MessageEvent) => void;
+    url: string;
 };
-declare type StateType = {
-    connected: boolean;
-    ws: WebSocket | null;
-};
-export declare class WebSocketClient extends React.Component<PropsType, StateType> {
-    constructor(props: Readonly<PropsType>);
+export declare class WebSocketClient extends React.Component<WebSocketClientPropsType> {
+    private webSocket;
+    constructor(props: Readonly<WebSocketClientPropsType>);
     componentDidMount(): void;
     componentWillUnmount(): void;
     render(): React.ReactNode;
+    send(message: string): void;
 }
-export {};

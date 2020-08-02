@@ -8,7 +8,6 @@ ReactDOM.render(
   <React.StrictMode>
     <App
       messageDuration={5000}
-      maxMessageCount={Number.MAX_VALUE}
       url="wss://localhost:8080/test"
      />
   </React.StrictMode>,

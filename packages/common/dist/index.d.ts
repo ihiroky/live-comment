@@ -1,1 +1,1 @@
-export { AppBase, AppBasePropsType } from './AppBase';
+export { WebSocketClient } from './WebSocketClient';

@@ -7,9 +7,9 @@ import * as serviceWorker from './serviceWorker';
 ReactDOM.render(
   <React.StrictMode>
     <App
-      messageDuration={Number.MAX_VALUE}
-      maxMessageCount={256}
       url="wss://localhost:8080/test"
+      maxMessageCount={256}
+      autoScroll={true}
     />
   </React.StrictMode>,
   document.getElementById('root')
