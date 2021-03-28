@@ -7,5 +7,24 @@
   ],
   "extraFiles": [
     { "from": "../screen/build/", "to": "./public/" }
-  ]
+  ],
+  "win": {
+    "target": [{
+      "target": "nsis",
+      "arch": ["x64"]
+    }]
+  },
+  "mac": {
+    "target": [{
+      "target": "dmg",
+      "arch": ["x64"]
+    }]
+  },
+  "linux": {
+    "executableName": "live-comment",
+    "target": [{
+      "target": "deb",
+      "arch": ["x64"]
+    }]
+  }
 }
