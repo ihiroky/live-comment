@@ -8,7 +8,7 @@ ReactDOM.render(
   <React.StrictMode>
     <App
       messageDuration={5000}
-      url="wss://localhost:8080/test"
+      url="wss://live-comment.ml/app"
      />
   </React.StrictMode>,
   document.getElementById('root')
