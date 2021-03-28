@@ -1,12 +1,8 @@
-import fs from 'fs'
-import https from 'https'
-import 'tslib'
+import { createServer } from 'http'
 import { createWebSocketServer } from './websocket'
+import 'tslib'
 
-const server = https.createServer({
-  cert: fs.readFileSync('dist/cert.pem'),
-  key: fs.readFileSync('dist/key.pem')
-}).on('request', (_, res): void => {
+const server = createServer().on('request', (_, res): void => {
   res.end('Hello.')
 })
 const wss = createWebSocketServer(server)

@@ -1,7 +1,6 @@
 import WebSocket from 'ws'
 import { v4 as uuidv4 } from 'uuid'
-import { Duplex } from 'stream'
-import https from 'https'
+import http from 'http'
 
 export interface Session extends WebSocket {
   alive: boolean
@@ -76,7 +75,7 @@ function checkPendingCount(client: Session): void {
   }
 }
 
-export function createWebSocketServer(server: https.Server): WebSocket.Server {
+export function createWebSocketServer(server: http.Server): WebSocket.Server {
   const wss = new WebSocket.Server({ server })
   wss.on('connection', onConnected)
 
