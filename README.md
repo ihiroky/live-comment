@@ -47,7 +47,7 @@ If you don't use http server, /path/to/live-comment/packages/comment/build must 
 - Start websocket server
 ```bash
 cd /path/to/live-comment/
-yarn --cwd packages/server start
+nohup yarn --cwd packages/server start >nohup.out 2>&1 &
 ```
 
 ### Client
