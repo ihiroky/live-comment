@@ -3,8 +3,8 @@ import electron, { Tray } from 'electron'
 
 // TODO run server then desktop to develop
 
-let mainWindow: electron.BrowserWindow | null = null
-let tray: electron.Tray | null = null
+let mainWindow_: electron.BrowserWindow | null = null
+let tray_: electron.Tray | null = null
 
 function getWorkArea(): electron.Rectangle {
   const cursorPoint: electron.Point = electron.screen.getCursorScreenPoint()
@@ -18,17 +18,17 @@ function createTrayIcon(): electron.Tray {
       label: 'Quit', role: 'quit'
     }
   ])
-  tray = new Tray('resources/icon.png')
+  const tray = new Tray('resources/icon.png')
   tray.setToolTip(electron.app.name)
   tray.setContextMenu(menu)
   return tray
 }
 
 function onReady(): void {
-  tray = createTrayIcon()
+  tray_ = createTrayIcon()
 
   const workArea = getWorkArea()
-  mainWindow = new electron.BrowserWindow({
+  const mainWindow = new electron.BrowserWindow({
     x: workArea.x,
     y: workArea.y,
     width: workArea.width,
@@ -44,14 +44,15 @@ function onReady(): void {
   })
   mainWindow.loadURL(`file://${path.resolve('public/index.html')}`)
   mainWindow.once('ready-to-show', (): void  => {
-    mainWindow?.show()
+    mainWindow_?.show()
   })
   mainWindow.on('closed', (): void => {
-    tray = null
-    mainWindow = null
+    tray_ = null
+    mainWindow_ = null
   })
   mainWindow.webContents.openDevTools({ mode: 'detach' })
   mainWindow.setIgnoreMouseEvents(true)
+  mainWindow_ = mainWindow
 }
 
 function onQuit(): void {
