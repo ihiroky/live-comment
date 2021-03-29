@@ -4,6 +4,8 @@ import electron, { Tray } from 'electron'
 // TODO run server then desktop to develop
 
 let mainWindow_: electron.BrowserWindow | null = null
+
+// https://www.electronjs.org/docs/faq#my-apps-tray-disappeared-after-a-few-minutes
 let tray_: electron.Tray | null = null
 
 function getWorkArea(): electron.Rectangle {
@@ -24,9 +26,7 @@ function createTrayIcon(): electron.Tray {
   return tray
 }
 
-function onReady(): void {
-  tray_ = createTrayIcon()
-
+function createMainWindow(): electron.BrowserWindow {
   const workArea = getWorkArea()
   const mainWindow = new electron.BrowserWindow({
     x: workArea.x,
@@ -43,16 +43,21 @@ function onReady(): void {
     }
   })
   mainWindow.loadURL(`file://${path.resolve('public/index.html')}`)
+  mainWindow.webContents.openDevTools({ mode: 'detach' })
+  mainWindow.setIgnoreMouseEvents(true)
   mainWindow.once('ready-to-show', (): void  => {
-    mainWindow_?.show()
+    mainWindow.show()
   })
-  mainWindow.on('closed', (): void => {
+  return mainWindow
+}
+
+function onReady(): void {
+  tray_ = createTrayIcon()
+  mainWindow_ = createMainWindow()
+  mainWindow_.on('closed', (): void => {
     tray_ = null
     mainWindow_ = null
   })
-  mainWindow.webContents.openDevTools({ mode: 'detach' })
-  mainWindow.setIgnoreMouseEvents(true)
-  mainWindow_ = mainWindow
 }
 
 function onQuit(): void {
