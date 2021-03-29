@@ -16,8 +16,8 @@
 git clone https://github.com/ihiroky/live-comment.git
 cd live-comment
 yarn install
-yarn workspace comment build
-yarn workspace server build
+yarn --cwd packages/comment build
+yarn --cwd packages/server build
 ```
 
 - Configure http server (optional)
@@ -47,7 +47,7 @@ If you don't use http server, /path/to/live-comment/packages/comment/build must 
 - Start websocket server
 ```bash
 cd /path/to/live-comment/
-yarn workspace server start
+nohup yarn --cwd packages/server start >nohup.out 2>&1 &
 ```
 
 ### Client
