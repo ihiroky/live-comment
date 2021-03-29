@@ -33,7 +33,7 @@ function sendMessage(ws: WebSocket, message:  WebSocket.Data): void {
       console.error('Error on sending message:', s.id, err)
       return
     }
-    s.pendingCharCount--
+    s.pendingMessageCount--
     s.pendingCharCount -= charCount
   })
 }
