@@ -1,9 +1,12 @@
 import path from 'path'
-import electron from 'electron'
+import electron, { Tray } from 'electron'
 
 // TODO run server then desktop to develop
 
-let mainWindow: electron.BrowserWindow | null = null 
+let mainWindow_: electron.BrowserWindow | null = null
+
+// https://www.electronjs.org/docs/faq#my-apps-tray-disappeared-after-a-few-minutes
+let tray_: electron.Tray | null = null
 
 function getWorkArea(): electron.Rectangle {
   const cursorPoint: electron.Point = electron.screen.getCursorScreenPoint()
@@ -11,9 +14,21 @@ function getWorkArea(): electron.Rectangle {
   return display.workArea
 }
 
-function onReady(): void {
+function createTrayIcon(): electron.Tray {
+  const menu: electron.Menu = electron.Menu.buildFromTemplate([
+    {
+      label: 'Quit', role: 'quit'
+    }
+  ])
+  const tray = new Tray('resources/icon.png')
+  tray.setToolTip(electron.app.name)
+  tray.setContextMenu(menu)
+  return tray
+}
+
+function createMainWindow(): electron.BrowserWindow {
   const workArea = getWorkArea()
-  mainWindow = new electron.BrowserWindow({
+  const mainWindow = new electron.BrowserWindow({
     x: workArea.x,
     y: workArea.y,
     width: workArea.width,
@@ -28,10 +43,21 @@ function onReady(): void {
     }
   })
   mainWindow.loadURL(`file://${path.resolve('public/index.html')}`)
-  mainWindow.once('ready-to-show', () => mainWindow?.show())
-  mainWindow.on('closed', () => mainWindow = null)
   mainWindow.webContents.openDevTools({ mode: 'detach' })
   mainWindow.setIgnoreMouseEvents(true)
+  mainWindow.once('ready-to-show', (): void  => {
+    mainWindow.show()
+  })
+  return mainWindow
+}
+
+function onReady(): void {
+  tray_ = createTrayIcon()
+  mainWindow_ = createMainWindow()
+  mainWindow_.on('closed', (): void => {
+    tray_ = null
+    mainWindow_ = null
+  })
 }
 
 function onQuit(): void {
@@ -52,4 +78,3 @@ if (process.platform === 'linux') {
 }
 electron.app.on('window-all-closed', onQuit)
 electron.app.on('certificate-error', onCertificationError)
-
