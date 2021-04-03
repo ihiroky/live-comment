@@ -6,7 +6,8 @@
     "dist/js/**"
   ],
   "extraFiles": [
-    { "from": "../screen/build/", "to": "./public/" }
+    { "from": "../screen/build/", "to": "./resources/screen/" },
+    "resources/**"
   ],
   "win": {
     "target": [{

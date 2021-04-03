@@ -11,20 +11,36 @@
   "scripts": {
     "clean": "node -e \"require('fs').rmdirSync('dist', {recursive: true})\"",
     "start": "tsc -b && electron . --enable-logging",
-    "build": "tsc -b && electron-builder -c electron-builder-config.json --dir",
-    "build:full": "yarn --cwd ../screen build && yarn build",
-    "packages": "tsc -b && electron-builder -c electron-builder-config.json -wml",
-    "package:linux": "tsc -b && electron-builder -c electron-builder-config.json -l",
-    "package:win": "tsc -b && electron-builder -c electron-builder-config.json -w",
-    "package:mac": "tsc -b && electron-builder -c electron-builder-config.json -m"
+    "build:screen": "yarn --cwd ../screen build",
+    "build": "tsc -b && rollup -c && electron-builder -c electron-builder-config.json --dir",
+    "packages": "yarn build && electron-builder -c electron-builder-config.json -wml",
+    "package:linux": "yarn build && electron-builder -c electron-builder-config.json -l",
+    "package:win": "yarn build && electron-builder -c electron-builder-config.json -w",
+    "package:mac": "yarn build && electron-builder -c electron-builder-config.json -m"
   },
   "dependencies": {
     "tslib": "^2.0.0"
   },
   "devDependencies": {
+    "@material-ui/core": "^4.11.3",
+    "@material-ui/icons": "^4.11.2",
+    "@rollup/plugin-commonjs": "^18.0.0",
+    "@rollup/plugin-node-resolve": "^11.2.1",
+    "@rollup/plugin-replace": "^2.4.2",
+    "@types/react": "^17.0.3",
+    "@types/react-dom": "^17.0.3",
+    "@typescript-eslint/eslint-plugin": "^4.20.0",
+    "@typescript-eslint/parser": "^4.20.0",
     "asar": "^3.0.3",
     "electron": "9.4.0",
     "electron-builder": "^22.7.0",
+    "eslint": "^7.23.0",
+    "eslint-plugin-react": "^7.23.1",
+    "eslint-plugin-react-hooks": "^4.2.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "rollup": "^2.44.0",
+    "rollup-plugin-terser": "^7.0.2",
     "typescript": "^3.9.6"
   }
 }
