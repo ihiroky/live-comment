@@ -3,11 +3,12 @@
   "electronVersion": "9.1.0",
   "files": [
     "package.json",
-    "dist/js/**"
+    "dist/js/**/*.js"
   ],
   "extraFiles": [
     { "from": "../screen/build/", "to": "./resources/screen/" },
-    "resources/**"
+    "resources/**",
+    "dist/js/preload/*.js"
   ],
   "win": {
     "target": [{
