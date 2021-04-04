@@ -94,6 +94,9 @@ const App: React.FC = (): JSX.Element => {
       }
     }
   }
+  function hasError(): boolean {
+    return serverUrl.error || messageDuration.error
+  }
 
   const classes = useStyles();
   return (
@@ -121,7 +124,7 @@ const App: React.FC = (): JSX.Element => {
       <p>
         <Grid container alignItems="center" justify="center" spacing={3}>
           <Grid item>
-            <Button variant="outlined" type="submit">OK</Button>
+            <Button variant="outlined" type="submit" disabled={hasError()}>OK</Button>
           </Grid>
           <Grid item>
             <Button variant="outlined" onClick={() => window.close()}>Cancel</Button>
