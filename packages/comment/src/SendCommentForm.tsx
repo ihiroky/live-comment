@@ -1,11 +1,12 @@
 import React from 'react'
+import { Message } from 'common'
 
 type PropsType = {
-  onSubmit: (message: string) => void
+  onSubmit: (message: Message) => void
 }
 
 type StateType = {
-  message: string
+  comment: string
 }
 
 export class SendMessageForm extends React.Component<PropsType, StateType> {
@@ -13,18 +14,18 @@ export class SendMessageForm extends React.Component<PropsType, StateType> {
   constructor(props: Readonly<PropsType>) {
     super(props)
     this.state = {
-      message: ""
+      comment: ''
     }
     this.onSubmit = this.onSubmit.bind(this)
     this.onChange = this.onChange.bind(this)
   }
 
   onSubmit(e: React.FormEvent<HTMLFormElement>): void {
-    const message = this.state.message
-    if (message) {
-      this.props.onSubmit(message)
+    const comment = this.state.comment
+    if (comment) {
+      this.props.onSubmit({ comment })
       this.setState({
-        message: ""
+        comment: ''
       })
     }
     e.preventDefault()
@@ -32,14 +33,14 @@ export class SendMessageForm extends React.Component<PropsType, StateType> {
 
   onChange(e: React.ChangeEvent<HTMLInputElement>): void {
     this.setState({
-      message: e.target.value
+      comment: e.target.value
     })
   }
 
   render(): React.ReactNode {
     return (
       <form onSubmit={this.onSubmit}>
-        <input type="text" value={this.state.message} onChange={this.onChange}></input>
+        <input type="text" value={this.state.comment} onChange={this.onChange}></input>
         <input type="submit" value="💬"></input>
       </form>
     )

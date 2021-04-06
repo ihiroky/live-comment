@@ -18,12 +18,21 @@ class WebSocketClient extends react_1.default.Component {
         });
         webSocket.addEventListener('close', (ev) => {
             console.log('webSocket close', ev);
+            if (this.props.onClose) {
+                this.props.onClose(ev);
+            }
             this.webSocket = null;
         });
         webSocket.addEventListener('error', (ev) => {
             console.log('webSocket error', ev);
+            if (this.props.onError) {
+                this.props.onError(ev);
+            }
         });
-        webSocket.addEventListener('message', this.props.onMessage);
+        webSocket.addEventListener('message', (ev) => {
+            const message = JSON.parse(ev.data);
+            this.props.onMessage(message);
+        });
         this.webSocket = webSocket;
     }
     componentWillUnmount() {
@@ -37,7 +46,8 @@ class WebSocketClient extends react_1.default.Component {
     }
     send(message) {
         if (this.webSocket) {
-            this.webSocket.send(message);
+            const json = JSON.stringify(message);
+            this.webSocket.send(json);
         }
     }
 }
