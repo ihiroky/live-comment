@@ -1,10 +1,14 @@
 import React from 'react'
 
+export interface Message {
+  comment: string
+}
+
 export type WebSocketClientPropsType = {
-  onOpen?: (sender: (message: string) => void) => void,
+  onOpen?: (sender: (message: Message) => void) => void,
   onClose?: (ev: CloseEvent) => void
   onError?: (ev: Event) => void
-  onMessage: (ev: MessageEvent) => void
+  onMessage: (message: Message) => void
   url: string
 }
 
@@ -38,7 +42,10 @@ export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
         this.props.onError(ev)
       }
     })
-    webSocket.addEventListener('message', this.props.onMessage)
+    webSocket.addEventListener('message', (ev: MessageEvent<string>): void => {
+      const message: Message = JSON.parse(ev.data)
+      this.props.onMessage(message)
+    })
     this.webSocket = webSocket
   }
 
@@ -53,9 +60,10 @@ export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
     return <div></div>;
   }
 
-  send(message: string): void {
+  send(message: Message): void {
     if (this.webSocket) {
-      this.webSocket.send(message)
+      const json = JSON.stringify(message)
+      this.webSocket.send(json)
     }
   }
 }

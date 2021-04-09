@@ -1,7 +1,7 @@
 import React from 'react'
 import './App.css'
-import { WebSocketClient } from 'common'
-import { SendMessageForm } from './SendMessageForm'
+import { WebSocketClient, Message } from 'common'
+import { SendCommentForm } from './SendCommentForm'
 
 type AppProps = {
   url: string
@@ -10,19 +10,19 @@ type AppProps = {
 }
 
 type AppState = {
-  messages: { key: number, data: string }[]
+  comments: { key: number, comment: string }[]
 }
 
 export default class App extends React.Component<AppProps, AppState> {
 
   private ref: React.RefObject<HTMLDivElement>
   private messageListDiv: Element | null
-  private sender: ((message: string) => void) | null
+  private sender: ((message: Message) => void) | null
 
   constructor(props: Readonly<AppProps>) {
     super(props)
     this.state = {
-      messages: []
+      comments: []
     }
 
     this.ref = React.createRef()
@@ -33,27 +33,27 @@ export default class App extends React.Component<AppProps, AppState> {
     this.onSubmit = this.onSubmit.bind(this)
   }
 
-  private onOpen(sender: (message: string) => void): void {
+  private onOpen(sender: (message: Message) => void): void {
     console.log('onOpen', sender)
     this.sender = sender
   }
 
-  private onMessage(ev: MessageEvent): void {
+  private onMessage(message: Message): void {
     const key = Date.now()
-    const data = ev.data
+    const comment = message.comment
 
-    const messages = this.state.messages
-    if (messages.length === this.props.maxMessageCount) {
-      messages.unshift()
+    const comments = this.state.comments
+    if (comments.length === this.props.maxMessageCount) {
+      comments.unshift()
     }
-    messages.push({ key, data })
-    this.setState({ messages })
+    comments.push({ key, comment })
+    this.setState({ comments })
     if (this.props.autoScroll && this.ref.current && this.messageListDiv) {
       this.messageListDiv.scrollTo(0, this.ref.current.offsetTop)
     }
   }
 
-  onSubmit(message: string): void {
+  onSubmit(message: Message): void {
     if (this.sender) {
       this.sender(message)
     }
@@ -68,14 +68,13 @@ export default class App extends React.Component<AppProps, AppState> {
       <div className="App">
         <div className="box">
           <div className="message-list">
-            { this.state.messages.map(m => <p key={m.key} className="message">{m.data}</p>) }
+            { this.state.comments.map(m => <p key={m.key} className="message">{m.comment}</p>) }
             <div ref={this.ref}></div>
           </div>
-          <SendMessageForm onSubmit={this.onSubmit} />
+          <SendCommentForm onSubmit={this.onSubmit} />
         </div>
         <WebSocketClient url={this.props.url} onOpen={this.onOpen} onMessage={this.onMessage} />
       </div>
     )
   }
 }
-

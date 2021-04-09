@@ -1,25 +1,25 @@
 import React from 'react'
 import './App.css'
 import { TextWidthCalculator } from './TextWidthCalculator'
-import { WebSocketClient } from 'common'
+import { WebSocketClient, Message } from 'common'
 
 // TODO data flow should be server -> comment -> screen. A presentater may want to show comment list.
 
 type AppProps = {
   url: string
-  messageDuration: number
+  marqueeDuration: number
 }
 
-type Message = {
+type Marquee = {
   key: number
   level: number
-  data: string
+  comment: string
   duration: number
   ref: React.RefObject<HTMLParagraphElement>
 }
 
 type AppState = {
-  messages: Message[]
+  marquees: Marquee[]
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -31,52 +31,52 @@ export default class App extends React.Component<AppProps, AppState> {
   constructor(props: Readonly<AppProps>) {
     super(props)
     this.state = {
-      messages: []
+      marquees: []
     }
 
     this.onMessage = this.onMessage.bind(this)
   }
 
-  private onMessage(ev: MessageEvent): void {
+  private onMessage(message: Message): void {
     const now = Date.now()
-    const messages = this.state.messages.filter(m => now - m.key <= m.duration)
-    if (messages.length >= App.MAX_MESSAGES)  {
-      console.debug('Dropped:', ev.data)
+    const marquees = this.state.marquees.filter(m => now - m.key <= m.duration)
+    if (marquees.length >= App.MAX_MESSAGES)  {
+      console.debug('Dropped:', message.comment)
       return
     }
 
-    const length = messages.length
-    let level = App.calcMinimumEmptyLevel(messages)
+    const length = marquees.length
+    let level = App.calcMinimumEmptyLevel(marquees)
     if (level === -1) {
-      level = App.findLevelRightSpaceExists(messages)
+      level = App.findLevelRightSpaceExists(marquees)
       if (level === -1) {
-        level = length > 0 ? messages[length - 1].level + 1 : 0
+        level = length > 0 ? marquees[length - 1].level + 1 : 0
       }
     }
 
-    let insertPosition = messages.length
-    if (length > 0 && messages[length - 1].level >= level) {
-      for (let i = messages.length - 1; i >= 0; i--) {
-        if (messages[i].level === level) {
+    let insertPosition = marquees.length
+    if (length > 0 && marquees[length - 1].level >= level) {
+      for (let i = marquees.length - 1; i >= 0; i--) {
+        if (marquees[i].level === level) {
           insertPosition = i
           break
         }
       }
     }
 
-    const textWidth = TextWidthCalculator.calculateWidth(ev.data, App.TWC_ID)
+    const textWidth = TextWidthCalculator.calculateWidth(message.comment, App.TWC_ID)
     const durationMillis = Math.round((window.innerWidth + textWidth) / App.SLIDE_PIXEL_PER_SECOND * 1000)
-    messages.splice(insertPosition, 0, {
+    marquees.splice(insertPosition, 0, {
       key: now,
-      data: ev.data,
+      comment: message.comment,
       level: level,
       duration: durationMillis,
       ref: React.createRef<HTMLParagraphElement>()
     })
-    this.setState({ messages })
+    this.setState({ marquees })
   }
 
-  private static calcMinimumEmptyLevel(messages: Message[]): number {
+  private static calcMinimumEmptyLevel(messages: Marquee[]): number {
     if (messages.length === 0 || messages[0].level > 0) {
       return 0
     }
@@ -92,36 +92,36 @@ export default class App extends React.Component<AppProps, AppState> {
     return -1
   }
 
-  private static findLevelRightSpaceExists(messages: Message[]): number {
-    if (messages.length === 0 || messages[0].level > 0) {
+  private static findLevelRightSpaceExists(marquees: Marquee[]): number {
+    if (marquees.length === 0 || marquees[0].level > 0) {
       return 0
     }
 
-    let existsNoRightSpaceMessage = false
-    let prev = messages[0]
+    let existsNoRightSpaceMarquee = false
+    let prev = marquees[0]
     const windowInnerWidth = window.innerWidth
-    for (const m of messages) {
+    for (const m of marquees) {
       if (m.level !== prev.level) {
-        if (!existsNoRightSpaceMessage) {
+        if (!existsNoRightSpaceMarquee) {
           return prev.level
         }
-        existsNoRightSpaceMessage = false
+        existsNoRightSpaceMarquee = false
       }
       const element = m.ref.current
       if (element) {
         const rect = element.getBoundingClientRect()
-        existsNoRightSpaceMessage = existsNoRightSpaceMessage || (rect.right >= windowInnerWidth)
+        existsNoRightSpaceMarquee = existsNoRightSpaceMarquee || (rect.right >= windowInnerWidth)
       }
       prev = m
     }
-    return !existsNoRightSpaceMessage ? prev.level : -1
+    return !existsNoRightSpaceMarquee ? prev.level : -1
   }
 
   render(): React.ReactNode {
     return (
       <div className="App">
         <div className="message-list">{
-          this.state.messages.map((m: Message): React.ReactNode =>
+          this.state.marquees.map((m: Marquee): React.ReactNode =>
             <p
               className="message"
               key={m.key}
@@ -130,7 +130,7 @@ export default class App extends React.Component<AppProps, AppState> {
                 top: m.level * 50,
                 animationDuration: m.duration + 'ms'
               }}>
-              {m.data}
+              {m.comment}
             </p>
           )
         }</div>

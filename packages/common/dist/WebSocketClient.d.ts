@@ -1,7 +1,12 @@
 import React from 'react';
+export interface Message {
+    comment: string;
+}
 export declare type WebSocketClientPropsType = {
-    onOpen?: (sender: (message: string) => void) => void;
-    onMessage: (ev: MessageEvent) => void;
+    onOpen?: (sender: (message: Message) => void) => void;
+    onClose?: (ev: CloseEvent) => void;
+    onError?: (ev: Event) => void;
+    onMessage: (message: Message) => void;
     url: string;
 };
 export declare class WebSocketClient extends React.Component<WebSocketClientPropsType> {
@@ -10,5 +15,5 @@ export declare class WebSocketClient extends React.Component<WebSocketClientProp
     componentDidMount(): void;
     componentWillUnmount(): void;
     render(): React.ReactNode;
-    send(message: string): void;
+    send(message: Message): void;
 }

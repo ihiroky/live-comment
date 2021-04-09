@@ -1,1 +1,4 @@
-export { WebSocketClient } from './WebSocketClient'
+export {
+  WebSocketClient,
+  Message
+} from './WebSocketClient'
