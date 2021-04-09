@@ -1,7 +1,7 @@
 import React from 'react'
 import './App.css'
 import { WebSocketClient, Message } from 'common'
-import { SendMessageForm } from './SendCommentForm'
+import { SendCommentForm } from './SendCommentForm'
 
 type AppProps = {
   url: string
@@ -71,7 +71,7 @@ export default class App extends React.Component<AppProps, AppState> {
             { this.state.comments.map(m => <p key={m.key} className="message">{m.comment}</p>) }
             <div ref={this.ref}></div>
           </div>
-          <SendMessageForm onSubmit={this.onSubmit} />
+          <SendCommentForm onSubmit={this.onSubmit} />
         </div>
         <WebSocketClient url={this.props.url} onOpen={this.onOpen} onMessage={this.onMessage} />
       </div>

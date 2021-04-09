@@ -7,7 +7,7 @@ import * as serviceWorker from './serviceWorker';
 ReactDOM.render(
   <React.StrictMode>
     <App
-      url="wss://live-comment.ml/app"
+      url={`wss://${window.location.hostname}/app`}
       maxMessageCount={256}
       autoScroll={true}
     />

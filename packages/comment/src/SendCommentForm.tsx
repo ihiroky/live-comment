@@ -9,7 +9,7 @@ type StateType = {
   comment: string
 }
 
-export class SendMessageForm extends React.Component<PropsType, StateType> {
+export class SendCommentForm extends React.Component<PropsType, StateType> {
 
   constructor(props: Readonly<PropsType>) {
     super(props)
