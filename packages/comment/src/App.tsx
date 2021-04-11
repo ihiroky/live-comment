@@ -1,6 +1,13 @@
 import React from 'react'
 import './App.css'
-import { WebSocketClient, Message } from 'common'
+import {
+  CloseCode,
+  WebSocketClient,
+  WebSocketControl,
+  Message,
+  AcnMessage,
+  isCommentMessage,
+} from 'common'
 import { SendCommentForm } from './SendCommentForm'
 
 type AppProps = {
@@ -13,11 +20,17 @@ type AppState = {
   comments: { key: number, comment: string }[]
 }
 
+type AcnState = {
+  room: string
+  hash: string
+  reconnectTimer: number
+}
 export default class App extends React.Component<AppProps, AppState> {
 
   private ref: React.RefObject<HTMLDivElement>
   private messageListDiv: Element | null
-  private sender: ((message: Message) => void) | null
+  private webSocketControl: WebSocketControl | null
+  private acnState: AcnState
 
   constructor(props: Readonly<AppProps>) {
     super(props)
@@ -27,18 +40,56 @@ export default class App extends React.Component<AppProps, AppState> {
 
     this.ref = React.createRef()
     this.messageListDiv = null
-    this.sender = null
+    this.webSocketControl = null
+    this.acnState = { room: '', hash: '', reconnectTimer: 0 }
     this.onOpen = this.onOpen.bind(this)
+    this.onClose = this.onClose.bind(this)
     this.onMessage = this.onMessage.bind(this)
     this.onSubmit = this.onSubmit.bind(this)
   }
 
-  private onOpen(sender: (message: Message) => void): void {
-    console.log('onOpen', sender)
-    this.sender = sender
+  private onOpen(control: WebSocketControl): void {
+    console.log('onOpen', control)
+    if (this.acnState.room.length === 0 || this.acnState.hash.length === 0) {
+      window.location.href = './login'
+      return
+    }
+
+    this.webSocketControl = control
+    const acn: AcnMessage = {
+      type: 'acn',
+      room: this.acnState.room,
+      hash: this.acnState.hash
+    }
+    this.webSocketControl.send(acn)
+  }
+
+  private onClose(ev: CloseEvent): void {
+    if (this.webSocketControl) {
+      this.webSocketControl.close()
+    }
+    switch (ev.code) {
+      case CloseCode.ACN_FAILED:
+        // TODO Notify to user
+        window.location.href = './login'
+        break
+      default:
+        const waitMillis = 3000 + 7000 * Math.random()
+        this.acnState.reconnectTimer = window.setTimeout((): void => {
+          this.acnState.reconnectTimer = 0
+          console.log('[onClose] Try to reconnect.')
+          this.webSocketControl?.reconnect()
+        }, waitMillis)
+        console.log(`[onClose] Reconnect after ${waitMillis}ms.`)
+        break
+    }
   }
 
   private onMessage(message: Message): void {
+    if (!isCommentMessage(message)) {
+      console.log('Unexpected message:', message)
+      return
+    }
     const key = Date.now()
     const comment = message.comment
 
@@ -54,13 +105,33 @@ export default class App extends React.Component<AppProps, AppState> {
   }
 
   onSubmit(message: Message): void {
-    if (this.sender) {
-      this.sender(message)
-    }
+    this.webSocketControl?.send(message)
   }
 
   componentDidMount(): void {
+    console.log('componentDidMount')
     this.messageListDiv = document.getElementsByClassName('message-list')[0]
+
+    const json = window.localStorage.getItem('login')
+    if (!json) {
+      window.location.href = './login'
+      return
+    }
+    const loginConfig = JSON.parse(json)
+    console.log('componentDidMount', loginConfig)
+    this.acnState.room = loginConfig.room
+    this.acnState.hash = loginConfig.hash
+    window.localStorage.removeItem('login')
+
+  }
+
+  componentWillUnmount(): void {
+    this.webSocketControl?.close()
+    this.webSocketControl = null
+    if (this.acnState.reconnectTimer) {
+      window.clearTimeout(this.acnState.reconnectTimer)
+      this.acnState.reconnectTimer = 0
+    }
   }
 
   render(): React.ReactNode {
@@ -73,7 +144,7 @@ export default class App extends React.Component<AppProps, AppState> {
           </div>
           <SendCommentForm onSubmit={this.onSubmit} />
         </div>
-        <WebSocketClient url={this.props.url} onOpen={this.onOpen} onMessage={this.onMessage} />
+        <WebSocketClient url={this.props.url} onOpen={this.onOpen} onClose={this.onClose} onMessage={this.onMessage} />
       </div>
     )
   }

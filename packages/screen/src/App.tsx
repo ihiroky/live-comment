@@ -1,12 +1,22 @@
 import React from 'react'
 import './App.css'
 import { TextWidthCalculator } from './TextWidthCalculator'
-import { WebSocketClient, Message } from 'common'
+import {
+  CloseCode,
+  WebSocketClient,
+  WebSocketControl,
+  Message,
+  AcnMessage,
+  createHash,
+  isCommentMessage
+} from 'common'
 
 // TODO data flow should be server -> comment -> screen. A presentater may want to show comment list.
 
 type AppProps = {
   url: string
+  room: string
+  password: string
   marqueeDuration: number
 }
 
@@ -20,6 +30,7 @@ type Marquee = {
 
 type AppState = {
   marquees: Marquee[]
+  authFailedCount: number
 }
 
 export default class App extends React.Component<AppProps, AppState> {
@@ -28,17 +39,58 @@ export default class App extends React.Component<AppProps, AppState> {
   private static readonly MAX_MESSAGES = 500
   private static readonly TWC_ID = 'app_twc'
 
+  private webSocketControl: WebSocketControl | null
+  private reconnectTimer: number
+
   constructor(props: Readonly<AppProps>) {
     super(props)
     this.state = {
-      marquees: []
+      marquees: [],
+      authFailedCount: 0
     }
 
+    this.onOpen = this.onOpen.bind(this)
+    this.onClose = this.onClose.bind(this)
     this.onMessage = this.onMessage.bind(this)
+    this.webSocketControl = null
+    this.reconnectTimer = 0
+  }
+
+  private onOpen(control: WebSocketControl): void {
+    console.log('onOpen', control)
+    const message: AcnMessage = {
+      type: 'acn',
+      room: this.props.room,
+      hash: createHash(this.props.password)
+    }
+    control.send(message)
+    this.webSocketControl = control
+  }
+
+  private onClose(ev: CloseEvent): void {
+    if (this.webSocketControl) {
+      this.webSocketControl.close()
+    }
+    if (ev.code === CloseCode.ACN_FAILED) {
+      // TODO Notify to user
+      return
+    }
+    const waitMillis = 3000 + 7000 * Math.random()
+    this.reconnectTimer = window.setTimeout((): void => {
+      this.reconnectTimer = 0
+      console.log('[onClose] Try to reconnect.')
+      this.webSocketControl?.reconnect()
+    }, waitMillis)
+    console.log(`[onClose] Reconnect after ${waitMillis}ms.`)
   }
 
   private onMessage(message: Message): void {
     const now = Date.now()
+    if (!isCommentMessage(message)) {
+      console.log(message)
+      return
+    }
+
     const marquees = this.state.marquees.filter(m => now - m.key <= m.duration)
     if (marquees.length >= App.MAX_MESSAGES)  {
       console.debug('Dropped:', message.comment)
@@ -117,6 +169,15 @@ export default class App extends React.Component<AppProps, AppState> {
     return !existsNoRightSpaceMarquee ? prev.level : -1
   }
 
+  componentWillUnmount(): void {
+    this.webSocketControl?.close()
+    this.webSocketControl = null
+    if (this.reconnectTimer) {
+      window.clearTimeout(this.reconnectTimer)
+      this.reconnectTimer = 0
+    }
+  }
+
   render(): React.ReactNode {
     return (
       <div className="App">
@@ -134,7 +195,7 @@ export default class App extends React.Component<AppProps, AppState> {
             </p>
           )
         }</div>
-        <WebSocketClient url={this.props.url} onMessage={this.onMessage} />
+        <WebSocketClient url={this.props.url} onOpen={this.onOpen} onClose={this.onClose} onMessage={this.onMessage} />
         <TextWidthCalculator id={App.TWC_ID} />
       </div>
     );

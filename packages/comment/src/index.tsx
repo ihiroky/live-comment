@@ -1,16 +1,28 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { BrowserRouter, Route } from 'react-router-dom'
 import './index.css';
 import App from './App';
+import { LoginForm } from './LoginForm'
 import * as serviceWorker from './serviceWorker';
+
+const url = process.env.NODE_ENV === 'production'
+  ? `wss://${window.location.hostname}/app`
+  : `ws://localhost:8080/`
 
 ReactDOM.render(
   <React.StrictMode>
-    <App
-      url={`wss://${window.location.hostname}/app`}
-      maxMessageCount={256}
-      autoScroll={true}
-    />
+    <BrowserRouter>
+      <Route path="/login" component={LoginForm} />
+      <Route path="/comment" render={(): React.ReactNode => {
+        return <App
+          url={url}
+          maxMessageCount={256}
+          autoScroll={true}
+        />
+      }}/>
+    </BrowserRouter>
+
   </React.StrictMode>,
   document.getElementById('root')
 );

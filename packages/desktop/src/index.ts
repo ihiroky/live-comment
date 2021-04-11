@@ -1,5 +1,7 @@
 import path from 'path'
-import electron, { Tray } from 'electron'
+import fs from 'fs'
+import electron from 'electron'
+import { PathLike } from 'original-fs'
 
 const CHANNEL_REQUEST_SETTINGS = '#request-settings'
 const CHANNEL_POST_SETTINGS = '#post-settings'
@@ -10,7 +12,9 @@ let mainWindow_: electron.BrowserWindow | null = null
 let settingWindow_: electron.BrowserWindow | null = null
 const screenSettings: Record<string, string> = {
   messageDuration: '5',
-  url: 'wss://live-comment.ml/app'
+  url: 'wss://test/app',
+  room: 'room',
+  password: 'password'
 }
 
 // https://www.electronjs.org/docs/faq#my-apps-tray-disappeared-after-a-few-minutes
@@ -22,32 +26,75 @@ function getWorkArea(): electron.Rectangle {
   return display.workArea
 }
 
-function handleRequestSettings(): Promise<Record<string, string>> {
-  console.debug(CHANNEL_REQUEST_SETTINGS)
-  return new Promise<Record<string, string>>((resolve: (settings: Record<string, string>) => void): void => {
-    resolve(screenSettings)
-  })
+async function asyncGetUserConfigPromise(checkIfExists: boolean): Promise<PathLike> {
+  const userDataPath = electron.app.getPath('userData')
+  const userConfigPath = path.join(userDataPath, 'user.config')
+  try {
+    const stat: fs.Stats = await fs.promises.stat(userConfigPath)
+    if (stat.isDirectory()) {
+      throw new Error(`User configuration file ${userConfigPath} is a direcotry.`)
+    }
+  } catch (e: unknown) {
+    if (checkIfExists) {
+      throw e
+    }
+  }
+  return userConfigPath
 }
 
-function handlePostSettings(e: electron.IpcMainInvokeEvent, settings: Record<string, string>): Promise<void> {
-  console.debug(CHANNEL_POST_SETTINGS, settings)
-  return new Promise<void>((resolve: () => void): void => {
-    for (const i in screenSettings) {
-      if (settings[i]) {
-        screenSettings[i] = settings[i]
-      }
+async function asyncLoadScreenSettings(): Promise<void> {
+  try {
+    const userConfigPath: PathLike = await asyncGetUserConfigPromise(false)
+    const config = await fs.promises.readFile(userConfigPath, { encoding: 'utf8' })
+    const settings = JSON.parse(config);
+    for (const i in settings) {
+      screenSettings[i] = settings[i]
     }
-    console.log(`Screen settings updated: ${JSON.stringify(screenSettings)}`)
-    mainWindow_?.on('closed', (): void => {
-      const mw = createMainWindow()
-      mw.on('closed', (): void => {
-        mainWindow_ = null
-      })
-      mainWindow_ = mw
+  } catch (e: unknown) {
+    console.warn('Failed to load configuration. Use default.')
+  }
+}
+
+async function asyncHandleRequestSettings(): Promise<Record<string, string>> {
+  console.debug(CHANNEL_REQUEST_SETTINGS)
+  try {
+    const userConfigPath: PathLike = await asyncGetUserConfigPromise(true)
+    const contents = await fs.promises.readFile(userConfigPath, { encoding: 'utf8' })
+    const settings = JSON.parse(contents)
+    if (process.argv[1]) {
+      settings.url = process.argv[1]
+    }
+    return settings
+  } catch (e: unknown) {
+    console.warn(`Failed to load user configuration file. Load default settings.`, e)
+    return screenSettings
+  }
+}
+
+async function asyncHandlePostSettings(e: electron.IpcMainInvokeEvent, settings: Record<string, string>): Promise<void> {
+  console.debug(CHANNEL_POST_SETTINGS, settings)
+  try {
+    const userConfigPath: PathLike = await asyncGetUserConfigPromise(false)
+    const contents = JSON.stringify(settings)
+    await fs.promises.writeFile(userConfigPath, contents, { encoding: 'utf8', mode: 0o600 })
+  } catch (e: unknown) {
+    console.warn('Failed to save user configuration.', e)
+  }
+
+  for (const i in settings) {
+    if (settings[i]) {
+      screenSettings[i] = settings[i]
+    }
+  }
+  console.log(`Screen settings updated: ${JSON.stringify(screenSettings)}`)
+  mainWindow_?.on('closed', (): void => {
+    const mw = createMainWindow()
+    mw.on('closed', (): void => {
+      mainWindow_ = null
     })
-    mainWindow_?.close()
-    resolve()
+    mainWindow_ = mw
   })
+  mainWindow_?.close()
 }
 
 function showSettingWindow(): void {
@@ -77,7 +124,7 @@ function createTrayIcon(): electron.Tray {
     { label: 'Settings', click: showSettingWindow },
     { label: 'Quit', role: 'quit' }
   ])
-  const tray = new Tray('resources/icon.png')
+  const tray = new electron.Tray('resources/icon.png')
   tray.setToolTip(electron.app.name)
   tray.setContextMenu(menu)
   return tray
@@ -102,6 +149,8 @@ function createMainWindow(): electron.BrowserWindow {
   const fileUrl = `file://${path.resolve('resources/screen/index.html')}`
     + `?messageDuration=${screenSettings.messageDuration}`
     + `&url=${screenSettings.url}`
+    + `&room=${screenSettings.room}`
+    + `&password=${screenSettings.password}`
   mainWindow.loadURL(fileUrl)
   mainWindow.webContents.openDevTools({ mode: 'detach' })
   mainWindow.setIgnoreMouseEvents(true)
@@ -111,9 +160,11 @@ function createMainWindow(): electron.BrowserWindow {
   return mainWindow
 }
 
-function onReady(): void {
-  electron.ipcMain.handle(CHANNEL_REQUEST_SETTINGS, handleRequestSettings)
-  electron.ipcMain.handle(CHANNEL_POST_SETTINGS, handlePostSettings)
+async function onReady(): Promise<void> {
+  await asyncLoadScreenSettings()
+
+  electron.ipcMain.handle(CHANNEL_REQUEST_SETTINGS, asyncHandleRequestSettings)
+  electron.ipcMain.handle(CHANNEL_POST_SETTINGS, asyncHandlePostSettings)
 
   tray_ = createTrayIcon()
   mainWindow_ = createMainWindow()
@@ -128,12 +179,6 @@ function onQuit(): void {
   console.log('onQuit')
 }
 
-function onCertificationError(event: electron.Event, webContents: electron.WebContents, url: string, error: string, certificate: electron.Certificate, callback: (isTrusted: boolean) => void): void {
-  console.warn(url, error)
-  event.preventDefault()
-  callback(true)
-}
-
 if (process.platform === 'linux') {
   // https://stackoverflow.com/questions/53538215/cant-succeed-in-making-transparent-window-in-electron-javascript
   electron.app.commandLine.appendSwitch('enable-transparent-visuals')
@@ -142,4 +187,6 @@ if (process.platform === 'linux') {
   electron.app.on('ready', onReady)
 }
 electron.app.on('window-all-closed', onQuit)
-electron.app.on('certificate-error', onCertificationError)
+if (process.argv[1]) {
+  screenSettings.url = process.argv[1]
+}

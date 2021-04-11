@@ -1,11 +1,15 @@
 import React from 'react'
 
-export interface Message {
-  comment: string
+import { Message } from './Message'
+
+export interface WebSocketControl {
+  send(message: Message): void
+  reconnect(): void
+  close(): void
 }
 
 export type WebSocketClientPropsType = {
-  onOpen?: (sender: (message: Message) => void) => void,
+  onOpen?: (control: WebSocketControl) => void,
   onClose?: (ev: CloseEvent) => void
   onError?: (ev: Event) => void
   onMessage: (message: Message) => void
@@ -22,11 +26,55 @@ export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
   }
 
   componentDidMount(): void {
+    if (!this.webSocket) {
+      this.webSocket = this.createWebSocket()
+    }
+  }
+
+  componentWillUnmount(): void {
+    if (this.webSocket) {
+      this.webSocket.close()
+      this.webSocket = null
+    }
+  }
+
+  render(): React.ReactNode {
+    return <div></div>;
+  }
+
+  send(message: Message): void {
+    if (this.webSocket) {
+      const json = JSON.stringify(message)
+      this.webSocket.send(json)
+    }
+  }
+
+  close(): void {
+    if (this.webSocket) {
+      this.webSocket.close()
+      this.webSocket = null
+    }
+  }
+
+  private createWebSocket(): WebSocket {
     const webSocket = new WebSocket(this.props.url)
     webSocket.addEventListener('open', (ev: Event): void => {
       console.log('webSocket open', ev)
       if (this.props.onOpen) {
-      this.props.onOpen(this.send.bind(this))
+        this.props.onOpen({
+          send: (message: Message): void => {
+            this.send(message)
+          },
+          reconnect: (): void => {
+            console.log('[reconnect]')
+            this.webSocket?.close()
+            this.webSocket = this.createWebSocket()
+            console.log('[reconnect] ', this.webSocket.url)
+          },
+          close: (): void => {
+            this.close()
+          }
+        })
       }
     })
     webSocket.addEventListener('close', (ev: CloseEvent): void => {
@@ -46,24 +94,6 @@ export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
       const message: Message = JSON.parse(ev.data)
       this.props.onMessage(message)
     })
-    this.webSocket = webSocket
-  }
-
-  componentWillUnmount(): void {
-    if (this.webSocket) {
-      this.webSocket.close()
-      this.webSocket = null
-    }
-  }
-
-  render(): React.ReactNode {
-    return <div></div>;
-  }
-
-  send(message: Message): void {
-    if (this.webSocket) {
-      const json = JSON.stringify(message)
-      this.webSocket.send(json)
-    }
+    return webSocket
   }
 }
