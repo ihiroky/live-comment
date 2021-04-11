@@ -13,8 +13,10 @@ ReactDOM.render(
         const qs = queryString.parse(props.location.search)
         const marqueeDuration = Number(qs['marqueeDuration'] + '000')
         const url = String(qs['url'])
+        const room = String(qs['room'])
+        const password = String(qs['password'])
         console.info(`marqueeDuration: ${marqueeDuration}, url: ${url}`)
-        return <App marqueeDuration={marqueeDuration} url={url} />
+        return <App marqueeDuration={marqueeDuration} url={url} room={room} password={password} />
       }}
     />
     </BrowserRouter>

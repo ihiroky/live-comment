@@ -19,7 +19,6 @@ declare global {
 
 interface TextFieldState {
   value: string,
-  error: boolean,
   helperText: string
 }
 
@@ -36,35 +35,48 @@ const useStyles = makeStyles((theme: Theme) => (
 const App: React.FC = (): JSX.Element => {
   const [serverUrl, setServerUrl] = React.useState<TextFieldState>({
     value: '',
-    error: true,
+    helperText: ''
+  })
+  const [room, setRoom] = React.useState<TextFieldState>({
+    value: '',
+    helperText: ''
+  })
+  const [password, setPassword] = React.useState<TextFieldState>({
+    value: '',
     helperText: ''
   })
   const [messageDuration, setMessageDuration] = React.useState<TextFieldState>({
     value: '',
-    error: true,
     helperText: ''
   })
   React.useEffect((): void => {
     window.settingsProxy.requestSettings().then((settings: Record<string, string>): void => {
-      const newServerUrl: TextFieldState = {
-        value: settings['url'],
-        error: false,
+      setServerUrl({
+        value: settings.url,
         helperText: '',
-      }
-      setServerUrl(newServerUrl)
-      const newMessageDuration: TextFieldState = {
-        value: settings['messageDuration'],
-        error: false,
-        helperText: ''
-      }
-      setMessageDuration(newMessageDuration)
+      })
+      setRoom({
+        value: settings.room,
+        helperText: '',
+      })
+      setPassword({
+        value: settings.password,
+        helperText: '',
+      })
+      setMessageDuration({
+        value: settings.messageDuration,
+        helperText: '',
+      })
     })
   }, [])
   function onSubmit(e: React.FormEvent<HTMLFormElement>): void {
     e.preventDefault()
-    const settings: Record<string, string> = {}
-    settings.url = serverUrl.value
-    settings.messageDuration = messageDuration.value
+    const settings: Record<string, string> = {
+      url: serverUrl.value,
+      room: room.value,
+      password: password.value,
+      messageDuration: messageDuration.value
+    }
     window.settingsProxy.postSettings(settings)
     window.close()
   }
@@ -73,29 +85,44 @@ const App: React.FC = (): JSX.Element => {
     switch (e.target.name) {
       case 'serverUrl': {
         // TODO Ping to validate
-        const state = { ...serverUrl }
-        state.value = e.target.value
-        state.error = !/^wss?:\/\/.*/.test(e.target.value)
-        if (state.error) {
-          state.helperText = 'Input URL like "wss://hoge/app".'
-        }
-        setServerUrl(state)
+        const error = !/^wss?:\/\/.*/.test(e.target.value)
+        setServerUrl({
+          value: e.target.value,
+          helperText: error ? 'Input URL like "wss://hoge/app".' : ''
+        })
+        break
+      }
+      case 'room': {
+        const error = e.target.value.length === 0
+        setRoom({
+          value: e.target.value,
+          helperText: error ? 'Input room name.' : ''
+        })
+        break
+      }
+      case 'password': {
+        const error = e.target.value.length === 0
+        setPassword({
+          value: e.target.value,
+          helperText: error ? 'Input password' : ''
+        })
         break
       }
       case 'messageDuration': {
-        const state = { ...messageDuration }
-        state.value = e.target.value
-        state.error = !/^[1-9]\d*$/.test(e.target.value)
-        if (state.error) {
-          state.helperText = 'Input number.'
-        }
-        setMessageDuration(state)
+        const error = !/^[1-9]\d*$/.test(e.target.value)
+        setMessageDuration({
+          value: e.target.value,
+          helperText: error ? 'Input positive number.' : ''
+        })
         break
       }
     }
   }
   function hasError(): boolean {
-    return serverUrl.error || messageDuration.error
+    return serverUrl.helperText.length > 0
+      || messageDuration.helperText.length > 0
+      || room.helperText.length > 0
+      || password.helperText.length > 0
   }
 
   const classes = useStyles();
@@ -107,8 +134,27 @@ const App: React.FC = (): JSX.Element => {
           label="Server URL"
           name="serverUrl"
           value={serverUrl.value}
-          error={serverUrl.error}
+          error={serverUrl.helperText.length > 0}
           helperText={serverUrl.helperText}
+          onChange={onTextFieldChange}
+        />
+        <TextField
+          fullWidth
+          label="Room"
+          name="room"
+          value={room.value}
+          error={room.helperText.length > 0}
+          helperText={room.helperText}
+          onChange={onTextFieldChange}
+        />
+        <TextField
+          fullWidth
+          label="Password"
+          name="password"
+          type="password"
+          value={password.value}
+          error={password.helperText.length > 0}
+          helperText={password.helperText}
           onChange={onTextFieldChange}
         />
         <TextField
@@ -116,7 +162,7 @@ const App: React.FC = (): JSX.Element => {
           label="Message duration (seconds)"
           name="messageDuration"
           value={messageDuration.value}
-          error={messageDuration.error}
+          error={messageDuration.helperText.length > 0}
           helperText={messageDuration.helperText}
           onChange={onTextFieldChange}
         />

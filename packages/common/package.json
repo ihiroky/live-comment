@@ -13,6 +13,7 @@
     "typescript": "^4.2.3"
   },
   "dependencies": {
+    "js-sha512": "^0.8.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1"
   }

@@ -1,12 +1,23 @@
 import React from 'react'
 import './App.css'
 import { TextWidthCalculator } from './TextWidthCalculator'
-import { WebSocketClient, Message } from 'common'
+import {
+  WebSocketClient,
+  Message,
+  CommentMessage,
+  AcnMessage,
+  ErrorMessage,
+  createHash,
+  isCommentMessage,
+  isErrorMessage
+} from 'common'
 
 // TODO data flow should be server -> comment -> screen. A presentater may want to show comment list.
 
 type AppProps = {
   url: string
+  room: string
+  password: string
   marqueeDuration: number
 }
 
@@ -20,7 +31,10 @@ type Marquee = {
 
 type AppState = {
   marquees: Marquee[]
+  authFailedCount: number
 }
+
+const MAX_ACN_FAILED = 3
 
 export default class App extends React.Component<AppProps, AppState> {
 
@@ -28,17 +42,59 @@ export default class App extends React.Component<AppProps, AppState> {
   private static readonly MAX_MESSAGES = 500
   private static readonly TWC_ID = 'app_twc'
 
+  private reconnectTimer: NodeJS.Timeout | null
+
   constructor(props: Readonly<AppProps>) {
     super(props)
     this.state = {
-      marquees: []
+      marquees: [],
+      authFailedCount: 0
     }
 
+    this.onOpen = this.onOpen.bind(this)
+    this.onClose = this.onClose.bind(this)
     this.onMessage = this.onMessage.bind(this)
+    this.reconnectTimer = null
+  }
+
+  private onOpen(sender: (message: AcnMessage) => void): void {
+    console.log('onOpen', sender)
+    const message: AcnMessage = {
+      type: 'acn',
+      room: this.props.room,
+      hash: createHash(this.props.password)
+    }
+    sender(message)
+  }
+
+  private onClose(ev: CloseEvent, reconnect: () => void): void {
+    /*
+    if (this.state.authFailedCount <= MAX_ACN_FAILED) {
+      this.reconnectTimer = setTimeout(reconnect, 5000)
+      return
+    }
+    console.error('Authentication failed. Reload if retry.')
+    */
   }
 
   private onMessage(message: Message): void {
     const now = Date.now()
+    if (isErrorMessage(message)) {
+      if (message.error === 'ACN_FAILED') {
+        const newState = {
+          marquees: this.state.marquees,
+          authFailedCount: this.state.authFailedCount + 1
+        }
+        console.error(message.error, this.state.authFailedCount)
+        this.setState(newState)
+      }
+      return
+    }
+    if (!isCommentMessage(message)) {
+      console.log(message)
+      return
+    }
+
     const marquees = this.state.marquees.filter(m => now - m.key <= m.duration)
     if (marquees.length >= App.MAX_MESSAGES)  {
       console.debug('Dropped:', message.comment)
@@ -134,7 +190,7 @@ export default class App extends React.Component<AppProps, AppState> {
             </p>
           )
         }</div>
-        <WebSocketClient url={this.props.url} onMessage={this.onMessage} />
+        <WebSocketClient url={this.props.url} onOpen={this.onOpen} onMessage={this.onMessage} />
         <TextWidthCalculator id={App.TWC_ID} />
       </div>
     );
