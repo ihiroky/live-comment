@@ -1,8 +1,8 @@
 import React from 'react'
-import { Message } from 'common'
+import { CommentMessage } from 'common'
 
 type PropsType = {
-  onSubmit: (message: Message) => void
+  onSubmit: (message: CommentMessage) => void
 }
 
 type StateType = {
@@ -23,7 +23,8 @@ export class SendCommentForm extends React.Component<PropsType, StateType> {
   onSubmit(e: React.FormEvent<HTMLFormElement>): void {
     const comment = this.state.comment
     if (comment) {
-      this.props.onSubmit({ comment })
+      const type = 'comment'
+      this.props.onSubmit({ type, comment })
       this.setState({
         comment: ''
       })

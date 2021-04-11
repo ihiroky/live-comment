@@ -2,9 +2,15 @@ import React from 'react'
 
 import { Message } from './Message'
 
+export interface WebSocketControl {
+  send(message: Message): void
+  reconnect(): void
+  close(): void
+}
+
 export type WebSocketClientPropsType = {
-  onOpen?: (sender: (message: Message) => void) => void,
-  onClose?: (ev: CloseEvent, reconnect: () => void) => void
+  onOpen?: (control: WebSocketControl) => void,
+  onClose?: (ev: CloseEvent) => void
   onError?: (ev: Event) => void
   onMessage: (message: Message) => void
   url: string
@@ -55,16 +61,26 @@ export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
     webSocket.addEventListener('open', (ev: Event): void => {
       console.log('webSocket open', ev)
       if (this.props.onOpen) {
-      this.props.onOpen(this.send.bind(this))
+        this.props.onOpen({
+          send: (message: Message): void => {
+            this.send(message)
+          },
+          reconnect: (): void => {
+            console.log('[reconnect]')
+            this.webSocket?.close()
+            this.webSocket = this.createWebSocket()
+            console.log('[reconnect] ', this.webSocket.url)
+          },
+          close: (): void => {
+            this.close()
+          }
+        })
       }
     })
     webSocket.addEventListener('close', (ev: CloseEvent): void => {
       console.log('webSocket close', ev)
       if (this.props.onClose) {
-        this.props.onClose(ev, (): void => {
-          this.webSocket?.close()
-          this.webSocket = this.createWebSocket()
-        })
+        this.props.onClose(ev)
       }
       this.webSocket = null
     })

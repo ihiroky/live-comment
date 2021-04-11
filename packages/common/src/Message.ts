@@ -4,6 +4,10 @@ const Errors = [
 
 type Error = typeof Errors[number]
 
+export const CloseCode = {
+  ACN_FAILED: 4000
+}
+
 export interface Message {
   type: string
 }

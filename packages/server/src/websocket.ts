@@ -4,7 +4,9 @@ import http from 'http'
 import fs from 'fs'
 
 import {
+  CloseCode,
   AcnMessage,
+  ErrorMessage,
   isAcnMessage,
   isCommentMessage,
 } from 'common'
@@ -15,6 +17,8 @@ interface ServerConfig {
     hash: string
   }[]
 }
+
+
 export interface ClientSession extends WebSocket {
   alive: boolean
   id: string
@@ -70,12 +74,12 @@ function onAuthenticate(client: ClientSession, m: AcnMessage): void {
     }
     console.log('No room or invalid hash:', data)
     // TODO add type
-    const message = {
-      error: 1,
+    const message: ErrorMessage = {
+      type: 'error',
+      error: 'ACN_FAILED',
       message: 'Invalid room or hash.'
     }
-    client.send(JSON.stringify(message))
-    client.close()
+    client.close(CloseCode.ACN_FAILED, JSON.stringify(message))
   })
 }
 
@@ -96,6 +100,7 @@ function onConnected(this: WebSocket.Server, ws: WebSocket): void {
         console.error('Unauthenticated client:', client.id)
         client.close()
       }
+      console.log(`[onCommentMessage] ${m.comment} from ${client.id}`)
       server.clients.forEach(c => sendMessage(c, message))
     } else if (isAcnMessage(m)) {
       console.log(`AcnMessage: ${data}`)
@@ -107,6 +112,10 @@ function onConnected(this: WebSocket.Server, ws: WebSocket): void {
   client.on('error', function (e: Error): void {
     const client = this as ClientSession
     console.error('Socket error', client.id, e)
+  })
+  client.on('close', function (this: WebSocket, code: number, reason: string): void {
+    const c = this as ClientSession
+    console.log('[close]', c.id, code, reason)
   })
   console.log('connected', client.id)
 }

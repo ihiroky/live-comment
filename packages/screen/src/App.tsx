@@ -2,14 +2,13 @@ import React from 'react'
 import './App.css'
 import { TextWidthCalculator } from './TextWidthCalculator'
 import {
+  CloseCode,
   WebSocketClient,
+  WebSocketControl,
   Message,
-  CommentMessage,
   AcnMessage,
-  ErrorMessage,
   createHash,
-  isCommentMessage,
-  isErrorMessage
+  isCommentMessage
 } from 'common'
 
 // TODO data flow should be server -> comment -> screen. A presentater may want to show comment list.
@@ -34,15 +33,14 @@ type AppState = {
   authFailedCount: number
 }
 
-const MAX_ACN_FAILED = 3
-
 export default class App extends React.Component<AppProps, AppState> {
 
   private static readonly SLIDE_PIXEL_PER_SECOND = 250
   private static readonly MAX_MESSAGES = 500
   private static readonly TWC_ID = 'app_twc'
 
-  private reconnectTimer: NodeJS.Timeout | null
+  private webSocketControl: WebSocketControl | null
+  private reconnectTimer: number
 
   constructor(props: Readonly<AppProps>) {
     super(props)
@@ -54,42 +52,40 @@ export default class App extends React.Component<AppProps, AppState> {
     this.onOpen = this.onOpen.bind(this)
     this.onClose = this.onClose.bind(this)
     this.onMessage = this.onMessage.bind(this)
-    this.reconnectTimer = null
+    this.webSocketControl = null
+    this.reconnectTimer = 0
   }
 
-  private onOpen(sender: (message: AcnMessage) => void): void {
-    console.log('onOpen', sender)
+  private onOpen(control: WebSocketControl): void {
+    console.log('onOpen', control)
     const message: AcnMessage = {
       type: 'acn',
       room: this.props.room,
       hash: createHash(this.props.password)
     }
-    sender(message)
+    control.send(message)
+    this.webSocketControl = control
   }
 
-  private onClose(ev: CloseEvent, reconnect: () => void): void {
-    /*
-    if (this.state.authFailedCount <= MAX_ACN_FAILED) {
-      this.reconnectTimer = setTimeout(reconnect, 5000)
+  private onClose(ev: CloseEvent): void {
+    if (this.webSocketControl) {
+      this.webSocketControl.close()
+    }
+    if (ev.code === CloseCode.ACN_FAILED) {
+      // TODO Notify to user
       return
     }
-    console.error('Authentication failed. Reload if retry.')
-    */
+    const waitMillis = 3000 + 7000 * Math.random()
+    this.reconnectTimer = window.setTimeout((): void => {
+      this.reconnectTimer = 0
+      console.log('[onClose] Try to reconnect.')
+      this.webSocketControl?.reconnect()
+    }, waitMillis)
+    console.log(`[onClose] Reconnect after ${waitMillis}ms.`)
   }
 
   private onMessage(message: Message): void {
     const now = Date.now()
-    if (isErrorMessage(message)) {
-      if (message.error === 'ACN_FAILED') {
-        const newState = {
-          marquees: this.state.marquees,
-          authFailedCount: this.state.authFailedCount + 1
-        }
-        console.error(message.error, this.state.authFailedCount)
-        this.setState(newState)
-      }
-      return
-    }
     if (!isCommentMessage(message)) {
       console.log(message)
       return
@@ -173,6 +169,15 @@ export default class App extends React.Component<AppProps, AppState> {
     return !existsNoRightSpaceMarquee ? prev.level : -1
   }
 
+  componentWillUnmount(): void {
+    this.webSocketControl?.close()
+    this.webSocketControl = null
+    if (this.reconnectTimer) {
+      window.clearTimeout(this.reconnectTimer)
+      this.reconnectTimer = 0
+    }
+  }
+
   render(): React.ReactNode {
     return (
       <div className="App">
@@ -190,7 +195,7 @@ export default class App extends React.Component<AppProps, AppState> {
             </p>
           )
         }</div>
-        <WebSocketClient url={this.props.url} onOpen={this.onOpen} onMessage={this.onMessage} />
+        <WebSocketClient url={this.props.url} onOpen={this.onOpen} onClose={this.onClose} onMessage={this.onMessage} />
         <TextWidthCalculator id={App.TWC_ID} />
       </div>
     );
