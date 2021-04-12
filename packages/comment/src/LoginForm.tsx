@@ -16,22 +16,47 @@ interface TextFieldState {
 const useStyles = makeStyles((theme: Theme) => (
   {
     root: {
-      width: '100vw',
-      height: '100vh',
+      minWidth: '300px',
+      maxWidth: '600px',
+      height: '600px',
+      margin: 'auto',
       padding: theme.spacing(3)
+    },
+    notification: {
+      color: theme.palette.warning.main
+    },
+    texts: {
+      margin: theme.spacing(3)
+    },
+    buttons: {
+      margin: theme.spacing(3)
     }
   }
 ))
 
 export const LoginForm: React.FC = (): JSX.Element => {
+  const [notification, setNotification] = React.useState<{ message: string }>({
+    message: ''
+  })
   const [room, setRoom] = React.useState<TextFieldState>({
     value: '',
-    helperText: ''
+    helperText: 'Input room name'
   })
   const [password, setPassword] = React.useState<TextFieldState>({
     value: '',
-    helperText: ''
+    helperText: 'Input password of the room'
   })
+
+  React.useEffect((): void => {
+    const json = window.localStorage.getItem('App.notification')
+    if (!json) {
+      setNotification({ message: '' })
+      return
+    }
+    window.localStorage.removeItem('App.notification')
+    const notification = JSON.parse(json)
+    setNotification(notification)
+  }, [])
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>): void {
     e.preventDefault()
@@ -39,12 +64,13 @@ export const LoginForm: React.FC = (): JSX.Element => {
       room: room.value,
       hash: createHash(password.value)
     })
-    window.localStorage.setItem('login', json)
+    window.localStorage.setItem('LoginForm.credential', json)
     window.location.href = './comment'
   }
 
   function onTextFieldChange(e: React.ChangeEvent<HTMLInputElement>): void {
     console.log(e.target.name, e.target.value)
+    setNotification({ message: '' })
     switch (e.target.name) {
       case 'room': {
         const error = e.target.value.length === 0
@@ -71,7 +97,8 @@ export const LoginForm: React.FC = (): JSX.Element => {
 
   const classes = useStyles()
   return <form className={classes.root} onSubmit={onSubmit}>
-    <div>
+    <div className={classes.texts}>
+      <div className={classes.notification}>{notification.message}</div>
       <TextField
         fullWidth
         label="Room"
@@ -79,6 +106,7 @@ export const LoginForm: React.FC = (): JSX.Element => {
         value={room.value}
         error={room.value.length === 0}
         helperText={room.helperText}
+        margin="normal"
         onChange={onTextFieldChange}
       />
       <TextField
@@ -89,11 +117,12 @@ export const LoginForm: React.FC = (): JSX.Element => {
         value={password.value}
         error={password.value.length === 0}
         helperText={password.helperText}
+        margin="normal"
         onChange={onTextFieldChange}
       />
     </div>
-    <div>
-      <Grid container alignItems="center" justify="center" spacing={3}>
+    <div className={classes.buttons}>
+      <Grid container alignItems="center" justify="center">
         <Grid item>
           <Button variant="outlined" type="submit" disabled={hasError()}>Enter</Button>
         </Grid>
