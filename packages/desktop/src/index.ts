@@ -6,12 +6,10 @@ import { PathLike } from 'original-fs'
 const CHANNEL_REQUEST_SETTINGS = '#request-settings'
 const CHANNEL_POST_SETTINGS = '#post-settings'
 
-// TODO run server then desktop to develop
-
 let mainWindow_: electron.BrowserWindow | null = null
 let settingWindow_: electron.BrowserWindow | null = null
 const screenSettings: Record<string, string> = {
-  messageDuration: '5',
+  speed: '300',
   url: 'wss://test/app',
   room: 'room',
   password: 'password'
@@ -103,7 +101,7 @@ function showSettingWindow(): void {
   }
 
   const settingWindow = new electron.BrowserWindow({
-    width: 300,
+    width: 600,
     height: 400,
     webPreferences: {
       nodeIntegration: false,
@@ -147,7 +145,7 @@ function createMainWindow(): electron.BrowserWindow {
     }
   })
   const fileUrl = `file://${path.resolve('resources/screen/index.html')}`
-    + `?messageDuration=${screenSettings.messageDuration}`
+    + `?speed=${screenSettings.speed}`
     + `&url=${screenSettings.url}`
     + `&room=${screenSettings.room}`
     + `&password=${screenSettings.password}`

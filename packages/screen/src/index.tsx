@@ -11,12 +11,12 @@ ReactDOM.render(
     <BrowserRouter>
       <Route render={(props: RouteComponentProps): ReactNode => {
         const qs = queryString.parse(props.location.search)
-        const marqueeDuration = Number(qs['marqueeDuration'] + '000')
+        const speed = Number(qs['speed'])
         const url = String(qs['url'])
         const room = String(qs['room'])
         const password = String(qs['password'])
-        console.info(`marqueeDuration: ${marqueeDuration}, url: ${url}`)
-        return <App marqueeDuration={marqueeDuration} url={url} room={room} password={password} />
+        console.info('parameters:', qs)
+        return <App speed={speed} url={url} room={room} password={password} />
       }}
     />
     </BrowserRouter>

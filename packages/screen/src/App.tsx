@@ -7,6 +7,7 @@ import {
   WebSocketControl,
   Message,
   AcnMessage,
+  CommentMessage,
   createHash,
   isCommentMessage
 } from 'common'
@@ -17,7 +18,7 @@ type AppProps = {
   url: string
   room: string
   password: string
-  marqueeDuration: number
+  speed: number
 }
 
 type Marquee = {
@@ -35,7 +36,6 @@ type AppState = {
 
 export default class App extends React.Component<AppProps, AppState> {
 
-  private static readonly SLIDE_PIXEL_PER_SECOND = 250
   private static readonly MAX_MESSAGES = 500
   private static readonly TWC_ID = 'app_twc'
 
@@ -72,9 +72,20 @@ export default class App extends React.Component<AppProps, AppState> {
       this.webSocketControl.close()
     }
     if (ev.code === CloseCode.ACN_FAILED) {
-      // TODO Notify to user
+      const comment: CommentMessage = {
+        type: 'comment',
+        comment: 'Room authentication failed. Please check your setting 🙏'
+      }
+      this.onMessage(comment)
       return
     }
+
+    const comment: CommentMessage = {
+      type: 'comment',
+      comment: `Connection closed: ${ev.code}`
+    }
+    this.onMessage(comment)
+
     const waitMillis = 3000 + 7000 * Math.random()
     this.reconnectTimer = window.setTimeout((): void => {
       this.reconnectTimer = 0
@@ -116,8 +127,9 @@ export default class App extends React.Component<AppProps, AppState> {
       }
     }
 
+    // speed: slide pixels per second
     const textWidth = TextWidthCalculator.calculateWidth(message.comment, App.TWC_ID)
-    const durationMillis = Math.round((window.innerWidth + textWidth) / App.SLIDE_PIXEL_PER_SECOND * 1000)
+    const durationMillis = Math.round((window.innerWidth + textWidth) / this.props.speed * 1000)
     marquees.splice(insertPosition, 0, {
       key: now,
       comment: message.comment,
