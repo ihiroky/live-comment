@@ -27,6 +27,7 @@ const useStyles = makeStyles((theme: Theme) => (
     root: {
       width: '80vw',
       height: '80vh',
+      margin: 'auto',
       padding: theme.spacing(3)
     }
   }
@@ -45,7 +46,7 @@ const App: React.FC = (): JSX.Element => {
     value: '',
     helperText: ''
   })
-  const [messageDuration, setMessageDuration] = React.useState<TextFieldState>({
+  const [speed, setSpeed] = React.useState<TextFieldState>({
     value: '',
     helperText: ''
   })
@@ -63,8 +64,8 @@ const App: React.FC = (): JSX.Element => {
         value: settings.password,
         helperText: '',
       })
-      setMessageDuration({
-        value: settings.messageDuration,
+      setSpeed({
+        value: settings.speed,
         helperText: '',
       })
     })
@@ -75,7 +76,7 @@ const App: React.FC = (): JSX.Element => {
       url: serverUrl.value,
       room: room.value,
       password: password.value,
-      messageDuration: messageDuration.value
+      speed: speed.value
     }
     window.settingsProxy.postSettings(settings)
     window.close()
@@ -108,11 +109,12 @@ const App: React.FC = (): JSX.Element => {
         })
         break
       }
-      case 'messageDuration': {
-        const error = !/^[1-9]\d*$/.test(e.target.value)
-        setMessageDuration({
+      case 'speed': {
+        const n = Number(e.target.value)
+        const error = isNaN(n) || n < 100
+        setSpeed({
           value: e.target.value,
-          helperText: error ? 'Input positive number.' : ''
+          helperText: error ? 'Must be >= 100.' : ''
         })
         break
       }
@@ -120,7 +122,7 @@ const App: React.FC = (): JSX.Element => {
   }
   function hasError(): boolean {
     return serverUrl.helperText.length > 0
-      || messageDuration.helperText.length > 0
+      || speed.helperText.length > 0
       || room.helperText.length > 0
       || password.helperText.length > 0
   }
@@ -159,11 +161,11 @@ const App: React.FC = (): JSX.Element => {
         />
         <TextField
           fullWidth
-          label="Message duration (seconds)"
-          name="messageDuration"
-          value={messageDuration.value}
-          error={messageDuration.helperText.length > 0}
-          helperText={messageDuration.helperText}
+          label="Base message speed (pixels per second)"
+          name="speed"
+          value={speed.value}
+          error={speed.helperText.length > 0}
+          helperText={speed.helperText}
           onChange={onTextFieldChange}
         />
       </p>
