@@ -70,7 +70,7 @@ export default class App extends React.Component<AppProps, AppState> {
     }
     switch (ev.code) {
       case CloseCode.ACN_FAILED:
-        // TODO Notify to user
+        window.localStorage.setItem('App.notification', JSON.stringify({ message: 'Authentication failed.' }))
         window.location.href = './login'
         break
       default:
@@ -112,7 +112,7 @@ export default class App extends React.Component<AppProps, AppState> {
     console.log('componentDidMount')
     this.messageListDiv = document.getElementsByClassName('message-list')[0]
 
-    const json = window.localStorage.getItem('login')
+    const json = window.localStorage.getItem('LoginForm.credential')
     if (!json) {
       window.location.href = './login'
       return
@@ -121,8 +121,7 @@ export default class App extends React.Component<AppProps, AppState> {
     console.log('componentDidMount', loginConfig)
     this.acnState.room = loginConfig.room
     this.acnState.hash = loginConfig.hash
-    window.localStorage.removeItem('login')
-
+    window.localStorage.removeItem('LoginForm.credential')
   }
 
   componentWillUnmount(): void {
