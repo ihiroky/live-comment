@@ -30,7 +30,8 @@ server {
   server_name live-comment.ml;
 
   location /comment/ {
-    alias /path/to/live-comment/packages/comment/build/;
+    root /path/to/live-comment/packages/comment/build/;
+    try_files $uri /index.html;
   }
   location /app {
     proxy_pass http://localhost:8080;
@@ -47,6 +48,7 @@ If you don't use http server, /path/to/live-comment/packages/comment/build must 
 - Start websocket server
 ```bash
 cd /path/to/live-comment/
+vi server.config.json  # Add room name and password :(
 nohup yarn --cwd packages/server start >nohup.out 2>&1 &
 ```
 
@@ -64,9 +66,12 @@ git clone https://github.com/ihiroky/live-comment.git
 cd live-comment
 yarn install
 yarn --cwd packages/screen build
-yarn --cwd packages/desktop package:linux     # for Linux
-# or yarn --cwd packages/desktop package:mac  # for Mac (under construction)
-# or yarn --cwd packages/desktop package:win  # for Windows (under construction)
+cd packages/desktop
+yarn install           # desktop is not a member of workspace
+yarn package:linux     # for Linux
+yarn package:win       # for Windows
+# or yarn package:mac  # for Mac (under construction)
+
 ```
 
 Then, install generated package in live-comment/packages/desktop/dist directory.
@@ -79,4 +84,4 @@ Execute the executable file included in the installed package.
 
 ### Post comments from web browser
 
-Access to comment/index.html served on your http server. e.g. `https://<your-server>/comment/index.html`
+Access to comment/index.html served on your http server. e.g. `https://<your-server>/comment/login`
