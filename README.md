@@ -39,7 +39,6 @@ server {
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
   }
-
 }
 ```
 
@@ -54,7 +53,7 @@ nohup yarn --cwd packages/server start >nohup.out 2>&1 &
 
 ### Client
 
-- Clone (if required)
+- Clone
 ```bash
 git clone https://github.com/ihiroky/live-comment.git
 ```
@@ -84,4 +83,4 @@ Execute the executable file included in the installed package.
 
 ### Post comments from web browser
 
-Access to comment/index.html served on your http server. e.g. `https://<your-server>/comment/login`
+Access to comment/index.html served on your http server. e.g. `https://<your-server>/login`
