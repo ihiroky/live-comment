@@ -30,7 +30,8 @@ server {
   server_name live-comment.ml;
 
   location /comment/ {
-    alias /path/to/live-comment/packages/comment/build/;
+    root /path/to/live-comment/packages/comment/build/;
+    try_files $uri /index.html;
   }
   location /app {
     proxy_pass http://localhost:8080;
