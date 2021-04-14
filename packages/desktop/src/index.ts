@@ -85,14 +85,8 @@ async function asyncHandlePostSettings(e: electron.IpcMainInvokeEvent, settings:
     }
   }
   console.log(`Screen settings updated: ${JSON.stringify(screenSettings)}`)
-  mainWindow_?.on('closed', (): void => {
-    const mw = createMainWindow()
-    mw.on('closed', (): void => {
-      mainWindow_ = null
-    })
-    mainWindow_ = mw
-  })
-  mainWindow_?.close()
+  const screenUrl = createScreenUrl(screenSettings)
+  mainWindow_?.loadURL(screenUrl)
 }
 
 function showSettingWindow(): void {
@@ -128,6 +122,14 @@ function createTrayIcon(): electron.Tray {
   return tray
 }
 
+function createScreenUrl(settings: Record<string, string>): string {
+  return `file://${path.resolve('resources/screen/index.html')}`
+    + `?speed=${settings.speed}`
+    + `&url=${settings.url}`
+    + `&room=${settings.room}`
+    + `&password=${settings.password}`
+}
+
 function createMainWindow(): electron.BrowserWindow {
   const workArea = getWorkArea()
   const mainWindow = new electron.BrowserWindow({
@@ -144,12 +146,8 @@ function createMainWindow(): electron.BrowserWindow {
       contextIsolation: true
     }
   })
-  const fileUrl = `file://${path.resolve('resources/screen/index.html')}`
-    + `?speed=${screenSettings.speed}`
-    + `&url=${screenSettings.url}`
-    + `&room=${screenSettings.room}`
-    + `&password=${screenSettings.password}`
-  mainWindow.loadURL(fileUrl)
+  const screenUrl = createScreenUrl(screenSettings)
+  mainWindow.loadURL(screenUrl)
   mainWindow.webContents.openDevTools({ mode: 'detach' })
   mainWindow.setIgnoreMouseEvents(true)
   mainWindow.once('ready-to-show', (): void  => {
