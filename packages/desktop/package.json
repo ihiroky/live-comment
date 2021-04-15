@@ -18,9 +18,6 @@
     "package:win": "yarn build && electron-builder -c electron-builder-config.json -w",
     "package:mac": "yarn build && electron-builder -c electron-builder-config.json -m"
   },
-  "dependencies": {
-    "tslib": "^2.0.0"
-  },
   "devDependencies": {
     "@material-ui/core": "^4.11.3",
     "@material-ui/icons": "^4.11.2",
