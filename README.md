@@ -58,8 +58,6 @@ nohup yarn --cwd packages/server start >nohup.out 2>&1 &
 git clone https://github.com/ihiroky/live-comment.git
 ```
 
-- Edit `url` property in live-comment/packages/screen/index.tsx to the URL of the websocket server that works on your server.
-
 - Build
 ```bash
 cd live-comment
@@ -70,7 +68,6 @@ yarn install           # desktop is not a member of workspace
 yarn package:linux     # for Linux
 yarn package:win       # for Windows
 # or yarn package:mac  # for Mac (under construction)
-
 ```
 
 Then, install generated package in live-comment/packages/desktop/dist directory.
@@ -84,3 +81,26 @@ Execute the executable file included in the installed package.
 ### Post comments from web browser
 
 Access to comment/index.html served on your http server. e.g. `https://<your-server>/login`
+
+
+## Start servers and client to develop
+
+### Start streaming server
+```bash
+cd packages/server
+yarn start  # Starts http/ws server on port 8080
+```
+### Serve comment from on development server
+```bash
+cd packages/comment
+yarn start  # Starts http server on port 3000
+```
+
+### Start desktop application
+```bash
+cd packages/desktop
+yarn build:screen
+yarn build
+cd dist/linux-unpacked
+./live-comment ws://localhost:8080  # Connect to the streaming server regardless of its settings.
+```
