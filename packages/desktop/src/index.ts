@@ -1,3 +1,4 @@
+import 'tslib'
 import path from 'path'
 import fs from 'fs'
 import electron from 'electron'
