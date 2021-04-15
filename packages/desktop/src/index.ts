@@ -1,7 +1,6 @@
 import path from 'path'
 import fs from 'fs'
 import electron from 'electron'
-import { PathLike } from 'original-fs'
 
 const CHANNEL_REQUEST_SETTINGS = '#request-settings'
 const CHANNEL_POST_SETTINGS = '#post-settings'
@@ -9,10 +8,10 @@ const CHANNEL_POST_SETTINGS = '#post-settings'
 let mainWindow_: electron.BrowserWindow | null = null
 let settingWindow_: electron.BrowserWindow | null = null
 const screenSettings: Record<string, string> = {
-  speed: '300',
-  url: 'wss://test/app',
-  room: 'room',
-  password: 'password'
+  url: 'ws://localhost:8080',
+  room: '',
+  password: '',
+  speed: '200'
 }
 
 // https://www.electronjs.org/docs/faq#my-apps-tray-disappeared-after-a-few-minutes
@@ -24,7 +23,7 @@ function getWorkArea(): electron.Rectangle {
   return display.workArea
 }
 
-async function asyncGetUserConfigPromise(checkIfExists: boolean): Promise<PathLike> {
+async function asyncGetUserConfigPromise(checkIfExists: boolean): Promise<fs.PathLike> {
   const userDataPath = electron.app.getPath('userData')
   const userConfigPath = path.join(userDataPath, 'user.config')
   try {
@@ -42,7 +41,7 @@ async function asyncGetUserConfigPromise(checkIfExists: boolean): Promise<PathLi
 
 async function asyncLoadScreenSettings(): Promise<void> {
   try {
-    const userConfigPath: PathLike = await asyncGetUserConfigPromise(false)
+    const userConfigPath: fs.PathLike = await asyncGetUserConfigPromise(false)
     const config = await fs.promises.readFile(userConfigPath, { encoding: 'utf8' })
     const settings = JSON.parse(config);
     for (const i in settings) {
@@ -56,7 +55,7 @@ async function asyncLoadScreenSettings(): Promise<void> {
 async function asyncHandleRequestSettings(): Promise<Record<string, string>> {
   console.debug(CHANNEL_REQUEST_SETTINGS)
   try {
-    const userConfigPath: PathLike = await asyncGetUserConfigPromise(true)
+    const userConfigPath: fs.PathLike = await asyncGetUserConfigPromise(true)
     const contents = await fs.promises.readFile(userConfigPath, { encoding: 'utf8' })
     const settings = JSON.parse(contents)
     if (process.argv[1]) {
@@ -72,7 +71,7 @@ async function asyncHandleRequestSettings(): Promise<Record<string, string>> {
 async function asyncHandlePostSettings(e: electron.IpcMainInvokeEvent, settings: Record<string, string>): Promise<void> {
   console.debug(CHANNEL_POST_SETTINGS, settings)
   try {
-    const userConfigPath: PathLike = await asyncGetUserConfigPromise(false)
+    const userConfigPath: fs.PathLike = await asyncGetUserConfigPromise(false)
     const contents = JSON.stringify(settings)
     await fs.promises.writeFile(userConfigPath, contents, { encoding: 'utf8', mode: 0o600 })
   } catch (e: unknown) {
@@ -111,15 +110,17 @@ function showSettingWindow(): void {
   settingWindow_ = settingWindow
 }
 
-function createTrayIcon(): electron.Tray {
+function showTrayIcon(): void {
+  if (tray_) {
+    tray_.destroy()
+  }
   const menu: electron.Menu = electron.Menu.buildFromTemplate([
     { label: 'Settings', click: showSettingWindow },
     { label: 'Quit', role: 'quit' }
   ])
-  const tray = new electron.Tray('resources/icon.png')
-  tray.setToolTip(electron.app.name)
-  tray.setContextMenu(menu)
-  return tray
+  tray_ = new electron.Tray('resources/icon.png')
+  tray_.setToolTip(electron.app.name)
+  tray_.setContextMenu(menu)
 }
 
 function createScreenUrl(settings: Record<string, string>): string {
@@ -130,9 +131,9 @@ function createScreenUrl(settings: Record<string, string>): string {
     + `&password=${settings.password}`
 }
 
-function createMainWindow(): electron.BrowserWindow {
+function showMainWindow(): void {
   const workArea = getWorkArea()
-  const mainWindow = new electron.BrowserWindow({
+  mainWindow_ = new electron.BrowserWindow({
     x: workArea.x,
     y: workArea.y,
     width: workArea.width,
@@ -140,20 +141,22 @@ function createMainWindow(): electron.BrowserWindow {
     show: false,
     frame: false,
     transparent: true,
-    focusable: false,  // Must be set to enable 'alwaysOnTop' on Linux
+    focusable: false,  // Must be set false to enable 'alwaysOnTop' on Linux
     alwaysOnTop: true,
     webPreferences: {
       contextIsolation: true
     }
   })
   const screenUrl = createScreenUrl(screenSettings)
-  mainWindow.loadURL(screenUrl)
-  mainWindow.webContents.openDevTools({ mode: 'detach' })
-  mainWindow.setIgnoreMouseEvents(true)
-  mainWindow.once('ready-to-show', (): void  => {
-    mainWindow.show()
+  mainWindow_.loadURL(screenUrl)
+  mainWindow_.webContents.openDevTools({ mode: 'detach' })
+  mainWindow_.setIgnoreMouseEvents(true)
+  mainWindow_.once('ready-to-show', (): void  => {
+    mainWindow_?.show()
   })
-  return mainWindow
+  mainWindow_.on('closed', (): void => {
+    mainWindow_ = null
+  })
 }
 
 async function onReady(): Promise<void> {
@@ -162,27 +165,30 @@ async function onReady(): Promise<void> {
   electron.ipcMain.handle(CHANNEL_REQUEST_SETTINGS, asyncHandleRequestSettings)
   electron.ipcMain.handle(CHANNEL_POST_SETTINGS, asyncHandlePostSettings)
 
-  tray_ = createTrayIcon()
-  mainWindow_ = createMainWindow()
-  mainWindow_.on('closed', (): void => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    tray_ = null
-    mainWindow_ = null
-  })
-}
-
-function onQuit(): void {
-  console.log('onQuit')
+  showTrayIcon()
+  showMainWindow()
 }
 
 if (process.platform === 'linux') {
   // https://stackoverflow.com/questions/53538215/cant-succeed-in-making-transparent-window-in-electron-javascript
   electron.app.commandLine.appendSwitch('enable-transparent-visuals')
-  electron.app.on('ready', () => setTimeout(onReady, 100))
+  electron.app.on('ready', (): void => {
+    setTimeout(onReady, 100)
+  })
 } else {
   electron.app.on('ready', onReady)
 }
-electron.app.on('window-all-closed', onQuit)
+electron.app.on('window-all-closed', (): void => {
+  if (process.platform !== 'darwin') {
+    electron.app.quit()
+  }
+})
+electron.app.on('activate', (): void => {
+  if (mainWindow_ === null) {
+    showMainWindow()
+  }
+})
+
 if (process.argv[1]) {
   screenSettings.url = process.argv[1]
 }
