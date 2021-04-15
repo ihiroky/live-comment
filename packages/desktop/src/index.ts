@@ -184,7 +184,7 @@ electron.app.on('window-all-closed', (): void => {
   }
 })
 electron.app.on('activate', (): void => {
-  if (mainWindow_ === null) {
+  if (electron.app.isReady() && mainWindow_ === null) {
     showMainWindow()
   }
 })
