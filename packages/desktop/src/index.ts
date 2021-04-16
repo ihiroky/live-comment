@@ -11,7 +11,7 @@ const screenSettings: Record<string, string> = {
   url: 'ws://localhost:8080',
   room: '',
   password: '',
-  speed: '200'
+  messageDuration: '7'
 }
 
 // https://www.electronjs.org/docs/faq#my-apps-tray-disappeared-after-a-few-minutes
@@ -125,7 +125,7 @@ function showTrayIcon(): void {
 
 function createScreenUrl(settings: Record<string, string>): string {
   return `file://${path.resolve('resources/screen/index.html')}`
-    + `?speed=${settings.speed}`
+    + `?messageDuration=${settings.messageDuration}`
     + `&url=${settings.url}`
     + `&room=${settings.room}`
     + `&password=${settings.password}`

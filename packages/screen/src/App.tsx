@@ -18,14 +18,13 @@ type AppProps = {
   url: string
   room: string
   password: string
-  speed: number
+  messageDuration: number
 }
 
 type Marquee = {
   key: number
   level: number
   comment: string
-  duration: number
   ref: React.RefObject<HTMLParagraphElement>
 }
 
@@ -37,7 +36,6 @@ type AppState = {
 export default class App extends React.Component<AppProps, AppState> {
 
   private static readonly MAX_MESSAGES = 500
-  private static readonly TWC_ID = 'app_twc'
 
   private webSocketControl: WebSocketControl | null
   private reconnectTimer: number
@@ -102,7 +100,7 @@ export default class App extends React.Component<AppProps, AppState> {
       return
     }
 
-    const marquees = this.state.marquees.filter(m => now - m.key <= m.duration)
+    const marquees = this.state.marquees.filter(m => now - m.key <= this.props.messageDuration)
     if (marquees.length >= App.MAX_MESSAGES)  {
       console.debug('Dropped:', message.comment)
       return
@@ -127,14 +125,10 @@ export default class App extends React.Component<AppProps, AppState> {
       }
     }
 
-    // speed: slide pixels per second
-    const textWidth = TextWidthCalculator.calculateWidth(message.comment, App.TWC_ID)
-    const durationMillis = Math.round((window.innerWidth + textWidth) / this.props.speed * 1000)
     marquees.splice(insertPosition, 0, {
       key: now,
       comment: message.comment,
       level: level,
-      duration: durationMillis,
       ref: React.createRef<HTMLParagraphElement>()
     })
     this.setState({ marquees })
@@ -200,15 +194,14 @@ export default class App extends React.Component<AppProps, AppState> {
               key={m.key}
               ref={m.ref}
               style={{
-                top: m.level * 50,
-                animationDuration: m.duration + 'ms'
+                top: m.level * 60,  // TODO Need to work with css class .App
+                animationDuration: this.props.messageDuration + 'ms'
               }}>
               {m.comment}
             </p>
           )
         }</div>
         <WebSocketClient url={this.props.url} onOpen={this.onOpen} onClose={this.onClose} onMessage={this.onMessage} />
-        <TextWidthCalculator id={App.TWC_ID} />
       </div>
     );
   }
