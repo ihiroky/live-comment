@@ -20,7 +20,7 @@ yarn --cwd packages/comment build
 yarn --cwd packages/server build
 ```
 
-- Configure http server (optional)
+- Configure reverse proxy (optional)
 
 e.g. Nginx
 ```
@@ -42,7 +42,7 @@ server {
 }
 ```
 
-If you don't use http server, /path/to/live-comment/packages/comment/build must be served and expose 8080 port used by the server.
+If you don't use reverse proxy, /path/to/live-comment/packages/comment/build must be served and expose 8080 port used by the server.
 
 - Start websocket server
 ```bash
