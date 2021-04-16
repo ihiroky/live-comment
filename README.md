@@ -29,7 +29,7 @@ server {
   # Your server name
   server_name your-server-name;
 
-  location /comment/ {
+  location / {
     root /path/to/live-comment/packages/comment/build/;
     try_files $uri /index.html;
   }
