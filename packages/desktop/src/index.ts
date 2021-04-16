@@ -1,18 +1,13 @@
 import path from 'path'
 import fs from 'fs'
 import electron from 'electron'
+import * as Settings from './Settings'
 
 const CHANNEL_REQUEST_SETTINGS = '#request-settings'
 const CHANNEL_POST_SETTINGS = '#post-settings'
 
 let mainWindow_: electron.BrowserWindow | null = null
 let settingWindow_: electron.BrowserWindow | null = null
-const screenSettings: Record<string, string> = {
-  url: 'ws://localhost:8080',
-  room: '',
-  password: '',
-  speed: '200'
-}
 
 // https://www.electronjs.org/docs/faq#my-apps-tray-disappeared-after-a-few-minutes
 let tray_: electron.Tray | null = null
@@ -39,53 +34,34 @@ async function asyncGetUserConfigPromise(checkIfExists: boolean): Promise<fs.Pat
   return userConfigPath
 }
 
-async function asyncLoadScreenSettings(): Promise<void> {
-  try {
-    const userConfigPath: fs.PathLike = await asyncGetUserConfigPromise(false)
-    const config = await fs.promises.readFile(userConfigPath, { encoding: 'utf8' })
-    const settings = JSON.parse(config);
-    for (const i in settings) {
-      screenSettings[i] = settings[i]
-    }
-  } catch (e: unknown) {
-    console.warn('Failed to load configuration. Use default.')
-  }
-}
-
-async function asyncHandleRequestSettings(): Promise<Record<string, string>> {
+async function asyncLoadSettings(): Promise<Record<string, string>> {
   console.debug(CHANNEL_REQUEST_SETTINGS)
   try {
     const userConfigPath: fs.PathLike = await asyncGetUserConfigPromise(true)
-    const contents = await fs.promises.readFile(userConfigPath, { encoding: 'utf8' })
-    const settings = JSON.parse(contents)
+    const json = await fs.promises.readFile(userConfigPath, { encoding: 'utf8' })
+    const settings = Settings.parse(json)
     if (process.argv[1]) {
       settings.url = process.argv[1]
     }
     return settings
   } catch (e: unknown) {
     console.warn(`Failed to load user configuration file. Load default settings.`, e)
-    return screenSettings
+    return Settings.loadDefault()
   }
 }
 
-async function asyncHandlePostSettings(e: electron.IpcMainInvokeEvent, settings: Record<string, string>): Promise<void> {
+async function asyncSaveSettings(e: electron.IpcMainInvokeEvent, settings: Record<string, string>): Promise<void> {
   console.debug(CHANNEL_POST_SETTINGS, settings)
   try {
     const userConfigPath: fs.PathLike = await asyncGetUserConfigPromise(false)
     const contents = JSON.stringify(settings)
     await fs.promises.writeFile(userConfigPath, contents, { encoding: 'utf8', mode: 0o600 })
+    console.log(`Screen settings updated: ${contents}`)  // TODO Drop password?
+    const screenUrl = createScreenUrl(settings)
+    mainWindow_?.loadURL(screenUrl)
   } catch (e: unknown) {
     console.warn('Failed to save user configuration.', e)
   }
-
-  for (const i in settings) {
-    if (settings[i]) {
-      screenSettings[i] = settings[i]
-    }
-  }
-  console.log(`Screen settings updated: ${JSON.stringify(screenSettings)}`)
-  const screenUrl = createScreenUrl(screenSettings)
-  mainWindow_?.loadURL(screenUrl)
 }
 
 function showSettingWindow(): void {
@@ -131,7 +107,7 @@ function createScreenUrl(settings: Record<string, string>): string {
     + `&password=${settings.password}`
 }
 
-function showMainWindow(): void {
+async function asyncShowMainWindow(): Promise<void> {
   const workArea = getWorkArea()
   mainWindow_ = new electron.BrowserWindow({
     x: workArea.x,
@@ -147,7 +123,8 @@ function showMainWindow(): void {
       contextIsolation: true
     }
   })
-  const screenUrl = createScreenUrl(screenSettings)
+  const settings = await asyncLoadSettings()
+  const screenUrl = createScreenUrl(settings)
   mainWindow_.loadURL(screenUrl)
   mainWindow_.webContents.openDevTools({ mode: 'detach' })
   mainWindow_.setIgnoreMouseEvents(true)
@@ -159,14 +136,12 @@ function showMainWindow(): void {
   })
 }
 
-async function onReady(): Promise<void> {
-  await asyncLoadScreenSettings()
-
-  electron.ipcMain.handle(CHANNEL_REQUEST_SETTINGS, asyncHandleRequestSettings)
-  electron.ipcMain.handle(CHANNEL_POST_SETTINGS, asyncHandlePostSettings)
+function onReady(): void {
+  electron.ipcMain.handle(CHANNEL_REQUEST_SETTINGS, asyncLoadSettings)
+  electron.ipcMain.handle(CHANNEL_POST_SETTINGS, asyncSaveSettings)
 
   showTrayIcon()
-  showMainWindow()
+  asyncShowMainWindow()  // No need to wait
 }
 
 if (process.platform === 'linux') {
@@ -185,10 +160,6 @@ electron.app.on('window-all-closed', (): void => {
 })
 electron.app.on('activate', (): void => {
   if (electron.app.isReady() && mainWindow_ === null) {
-    showMainWindow()
+    asyncShowMainWindow()  // No need to wait
   }
 })
-
-if (process.argv[1]) {
-  screenSettings.url = process.argv[1]
-}
