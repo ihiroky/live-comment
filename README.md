@@ -27,7 +27,7 @@ e.g. Nginx
 server {
 
   # Your server name
-  server_name live-comment.ml;
+  server_name your-server-name;
 
   location /comment/ {
     root /path/to/live-comment/packages/comment/build/;
