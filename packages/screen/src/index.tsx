@@ -2,7 +2,8 @@ import React, { ReactNode } from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter, Route, RouteComponentProps } from 'react-router-dom'
 import './index.css';
-import App from './App';
+import { App } from './App';
+import { createHash } from 'common'
 import * as serviceWorker from './serviceWorker';
 import queryString from 'query-string'
 
@@ -14,9 +15,9 @@ ReactDOM.render(
         const messageDuration = Number(qs['messageDuration']) * 1000
         const url = String(qs['url'])
         const room = String(qs['room'])
-        const password = String(qs['password'])
+        const hash = createHash(String(qs['password']))
         console.info('parameters:', qs)
-        return <App messageDuration={messageDuration} url={url} room={room} password={password} />
+        return <App messageDuration={messageDuration} url={url} room={room} hash={hash} />
       }}
     />
     </BrowserRouter>
