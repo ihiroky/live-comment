@@ -7,7 +7,7 @@ import {
   Button,
   Grid
 } from '@material-ui/core'
-
+import { CURRENT_VERSION } from '../Settings'
 declare global {
   interface Window {
     settingsProxy: {
@@ -73,6 +73,7 @@ const App: React.FC = (): JSX.Element => {
   function onSubmit(e: React.FormEvent<HTMLFormElement>): void {
     e.preventDefault()
     const settings: Record<string, string> = {
+      version: CURRENT_VERSION,
       url: serverUrl.value,
       room: room.value,
       password: password.value,

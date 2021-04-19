@@ -53,6 +53,7 @@ async function asyncLoadSettings(): Promise<Record<string, string>> {
 async function asyncSaveSettings(e: electron.IpcMainInvokeEvent, settings: Record<string, string>): Promise<void> {
   console.debug(CHANNEL_POST_SETTINGS, settings)
   try {
+    Settings.validate(settings)
     const userConfigPath: fs.PathLike = await asyncGetUserConfigPromise(false)
     const contents = JSON.stringify(settings)
     await fs.promises.writeFile(userConfigPath, contents, { encoding: 'utf8', mode: 0o600 })
