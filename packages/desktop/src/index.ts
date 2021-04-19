@@ -101,7 +101,7 @@ function showTrayIcon(): void {
 
 function createScreenUrl(settings: Record<string, string>): string {
   return `file://${path.resolve('resources/screen/index.html')}`
-    + `?speed=${settings.speed}`
+    + `?messageDuration=${settings.messageDuration}`
     + `&url=${settings.url}`
     + `&room=${settings.room}`
     + `&password=${settings.password}`
