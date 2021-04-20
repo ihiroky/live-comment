@@ -12,12 +12,12 @@ ReactDOM.render(
     <BrowserRouter>
       <Route render={(props: RouteComponentProps): ReactNode => {
         const qs = queryString.parse(props.location.search)
-        const messageDuration = Number(qs['messageDuration']) * 1000
+        const duration = Number(qs['duration']) * 1000
         const url = String(qs['url'])
         const room = String(qs['room'])
         const hash = createHash(String(qs['password']))
         console.info('parameters:', qs)
-        return <App messageDuration={messageDuration} url={url} room={room} hash={hash} />
+        return <App duration={duration} url={url} room={room} hash={hash} />
       }}
     />
     </BrowserRouter>

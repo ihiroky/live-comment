@@ -58,8 +58,10 @@ async function asyncSaveSettings(e: electron.IpcMainInvokeEvent, settings: Recor
     const contents = JSON.stringify(settings)
     await fs.promises.writeFile(userConfigPath, contents, { encoding: 'utf8', mode: 0o600 })
     console.log(`Screen settings updated: ${contents}`)  // TODO Drop password?
+
     const screenUrl = createScreenUrl(settings)
     mainWindow_?.loadURL(screenUrl)
+    mainWindow_?.webContents.setZoomFactor(Number(settings.zoom) / 100)
   } catch (e: unknown) {
     console.warn('Failed to save user configuration.', e)
   }
@@ -101,8 +103,9 @@ function showTrayIcon(): void {
 }
 
 function createScreenUrl(settings: Record<string, string>): string {
+  // TODO Pass parameters like setting form because type check is disabled here
   return `file://${path.resolve('resources/screen/index.html')}`
-    + `?messageDuration=${settings.messageDuration}`
+    + `?duration=${settings.duration}`
     + `&url=${settings.url}`
     + `&room=${settings.room}`
     + `&password=${settings.password}`
@@ -127,6 +130,7 @@ async function asyncShowMainWindow(): Promise<void> {
   const settings = await asyncLoadSettings()
   const screenUrl = createScreenUrl(settings)
   mainWindow_.loadURL(screenUrl)
+  mainWindow_?.webContents.setZoomFactor(Number(settings.zoom) / 100)
   mainWindow_.webContents.openDevTools({ mode: 'detach' })
   mainWindow_.setIgnoreMouseEvents(true)
   mainWindow_.once('ready-to-show', (): void  => {
