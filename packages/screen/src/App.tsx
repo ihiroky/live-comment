@@ -15,27 +15,27 @@ type AppProps = {
   url: string
   room: string
   hash: string
-  messageDuration: number
+  duration: number
 }
 
 export const App: React.FC<AppProps> = (props: React.PropsWithChildren<AppProps>): JSX.Element => {
 
   const [marqueePropsList, setMarqueePropsList] = React.useState<MarqueePropsList>([])
-  const [marqueeGenerator] = React.useState<MarqueePropsGenerator>(
-    new MarqueePropsGenerator(props.room, props.hash, props.messageDuration, (mpl: MarqueePropsList): void => {
+  const [marqueeGenerator] = React.useState<MarqueePropsGenerator>(() =>
+    new MarqueePropsGenerator(props.room, props.hash, props.duration, (mpl: MarqueePropsList): void => {
       setMarqueePropsList(mpl)
     })
   )
 
   // TODO Need to work with css class .App
-  const marqueeHeight = 60
+  const marqueeHeight = 64
 
   return (
     <div className="App">
       <MarqueeList
         marquees={marqueePropsList}
         marqueeHeight={marqueeHeight}
-        messageDuration={props.messageDuration}
+        duration={props.duration}
       />
       <WebSocketClient
         url={props.url}

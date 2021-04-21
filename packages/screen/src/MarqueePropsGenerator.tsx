@@ -64,16 +64,16 @@ export class MarqueePropsGenerator {
 
   private readonly room: string
   private readonly hash: string
-  private readonly messageDuration: number
+  private readonly duration: number
   private readonly marqueePropsListUpdated: (marqueePropsList: MarqueePropsList) => void
   private marquees: MarqueeProps[]
   private webSocketControl: WebSocketControl | null
   private reconnectTimer: number
 
-  constructor(room: string, hash: string, messageDuration: number, listener: (marqueePropsList: MarqueePropsList) => void) {
+  constructor(room: string, hash: string, duration: number, listener: (marqueePropsList: MarqueePropsList) => void) {
     this.room = room
     this.hash = hash
-    this.messageDuration = messageDuration
+    this.duration = duration
     this.marquees = []
     this.webSocketControl = null
     this.reconnectTimer = 0
@@ -139,7 +139,7 @@ export class MarqueePropsGenerator {
       return
     }
 
-    const marquees = this.marquees.filter(m => now - m.key <= this.messageDuration)
+    const marquees = this.marquees.filter(m => now - m.key <= this.duration)
     if (marquees.length >= MAX_MESSAGES)  {
       console.debug('Dropped:', message.comment)
       return

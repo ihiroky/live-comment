@@ -2,12 +2,15 @@ interface Settings {
   version: string
 }
 
+// TODO Retain proper type
+
 interface SettingsV0 extends Settings {
   version: '0'
   url: string
   room: string
   password: string
-  messageDuration: string
+  duration: string
+  zoom: string
 }
 
 export const CURRENT_VERSION = '0'
@@ -23,7 +26,8 @@ export function parse(json: string): Record<string, string> {
     result.url = s.url ?? 'ws://localhost:8080'
     result.room = s.room ?? ''
     result.password = s.password ?? ''
-    result.messageDuration = s.messageDuration ?? '7'
+    result.duration = s.duration ?? '7'
+    result.zoom = s.zoom ?? '100'
     return result
   }
   return loadDefault()
@@ -39,8 +43,11 @@ export function validate(record: Record<string, string>): void {
   if (!record.password) {
     throw new Error('No password exists.')
   }
-  if (!record.messageDuration) {
-    throw new Error('No messageDuration exists.')
+  if (!record.duration) {
+    throw new Error('No duration exists.')
+  }
+  if (!record.zoom) {
+    throw new Error('No zoomFactor exists.')
   }
 }
 
@@ -50,6 +57,7 @@ export function loadDefault(): Record<string, string> {
     url: 'ws://localhost:8080',
     room: '',
     password: '',
-    messageDuration: '7'
+    duration: '7',
+    zoom: '100'
   }
 }

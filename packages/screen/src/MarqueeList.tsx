@@ -7,7 +7,7 @@ import {
 type Props = {
   marquees: MarqueePropsList
   marqueeHeight: number
-  messageDuration: number
+  duration: number
 }
 
 export const MarqueeList: React.FC<Props> = (props: React.PropsWithChildren<Props>): JSX.Element => {
@@ -20,7 +20,7 @@ export const MarqueeList: React.FC<Props> = (props: React.PropsWithChildren<Prop
           ref={m.ref}
           style={{
             top: m.level * props.marqueeHeight,
-            animationDuration: props.messageDuration + 'ms'
+            animationDuration: props.duration + 'ms'
           }}>
           {m.comment}
         </p>
