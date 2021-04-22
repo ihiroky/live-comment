@@ -7,7 +7,7 @@ import {
   Button,
   Grid,
   InputLabel,
-  NativeSelect
+  Select
 } from '@material-ui/core'
 import { CURRENT_VERSION } from '../Settings'
 
@@ -38,6 +38,20 @@ const useStyles = makeStyles((theme: Theme) => (
       height: '80vh',
       margin: 'auto',
       padding: theme.spacing(3)
+    },
+    fields: {
+      marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(1)
+    },
+    buttons: {
+      marginTop: theme.spacing(3),
+    },
+    screen: {
+      marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(1),
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between'
     }
   }
 ))
@@ -95,7 +109,7 @@ const App: React.FC = (): JSX.Element => {
     useTextFieldMetadata('zoom', 'Zoom (%)', validateZoom, 'Must be >= 50 and <= 500.')
   ]
 
-  const [screenName, setScreenName] = React.useState<string>('')
+  const [screenIndex, setScreenIndex] = React.useState<number>(0)
   const [screenOptions, setScreenOptions] = React.useState<ScreenProps[]>([])
 
   React.useEffect((): void => {
@@ -106,14 +120,15 @@ const App: React.FC = (): JSX.Element => {
           helperText: ''
         })
       }
+      const si = parseInt(settings.screen)
+      if (!isNaN(si)) {
+        setScreenIndex(si)
+      }
     })
     window.settingsProxy.getScreenPropsList().then((screenPropsList: ScreenProps[]): void => {
       const options = screenPropsList.map((p: ScreenProps): ScreenProps => ({ ...p }))
       console.log('screen options', options)
       setScreenOptions(options)
-      if (options.length > 0) {
-        setScreenName(options[0].name)
-      }
     })
   }, [])
 
@@ -125,6 +140,7 @@ const App: React.FC = (): JSX.Element => {
     for (const f of textFields) {
       settings[f.name] = f.state.value
     }
+    settings.screen = String(screenIndex)
     window.settingsProxy.postSettings(settings)
     window.close()
   }
@@ -143,9 +159,10 @@ const App: React.FC = (): JSX.Element => {
     })
   }
 
-  function onSelectChange(e: React.ChangeEvent<HTMLSelectElement>): void {
+  function onSelectChange(e: React.ChangeEvent<{ name?: string, value: unknown }>): void {
     console.log(e.target.name, '-', e.target.value)
-    setScreenName(e.target.value)
+    const index = Number(e.target.value)
+    setScreenIndex(!isNaN(index) ? index : 0)
   }
 
   function hasError(): boolean {
@@ -155,7 +172,7 @@ const App: React.FC = (): JSX.Element => {
   const classes = useStyles();
   return (
     <form className={classes.root} onSubmit={onSubmit}>
-      <p>
+      <div className={classes.fields}>
         {
           textFields.map((f: TextFieldMetadata): React.ReactNode => (
             <TextField
@@ -170,24 +187,27 @@ const App: React.FC = (): JSX.Element => {
             />
           ))
         }
-        <InputLabel htmlFor="screen-select">Screen</InputLabel>
-        <NativeSelect
-          value={screenName}
-          onChange={onSelectChange}
-          inputProps= {{
-            name: 'screen-name',
-            id: 'screen-select'
-          }}
-        >
-          {
-            screenOptions.map((p: ScreenProps): React.ReactNode => (
-              <option key={p.name} value={p.name}>{p.name}</option>
-            ))
-          }
-        </NativeSelect>
-        <img src={screenOptions.find((p: ScreenProps): boolean => p.name === screenName)?.thumbnailDataUrl} />
-      </p>
-      <p>
+        <div className={classes.screen}>
+          <div>
+            <InputLabel shrink id="screen-select-label">Screen</InputLabel>
+            <Select
+              labelId="screen-select-label"
+              id="screen-select"
+              name="screen-name"
+              value={screenIndex}
+              onChange={onSelectChange}
+            >
+              {
+                screenOptions.map((p: ScreenProps, i: number): React.ReactNode => (
+                  <option key={p.name} value={i}>{p.name}</option>
+                ))
+              }
+            </Select>
+          </div>
+          <img style={{ paddingLeft: '10px' }} src={screenOptions.find((p: ScreenProps, i: number): boolean => i === screenIndex)?.thumbnailDataUrl} />
+        </div>
+      </div>
+      <div className={classes.buttons}>
         <Grid container alignItems="center" justify="center" spacing={3}>
           <Grid item>
             <Button variant="outlined" type="submit" disabled={hasError()}>OK</Button>
@@ -196,7 +216,7 @@ const App: React.FC = (): JSX.Element => {
             <Button variant="outlined" onClick={() => window.close()}>Cancel</Button>
           </Grid>
         </Grid>
-      </p>
+      </div>
     </form>
   )
 }

@@ -10,7 +10,8 @@ interface SettingsV0 extends Settings {
   room: string
   password: string
   duration: string
-  zoom: string
+  zoom: string,
+  screen: string
 }
 
 export const CURRENT_VERSION = '0'
@@ -28,6 +29,7 @@ export function parse(json: string): Record<string, string> {
     result.password = s.password ?? ''
     result.duration = s.duration ?? '7'
     result.zoom = s.zoom ?? '100'
+    result.screen = s.screen ?? ''
     return result
   }
   return loadDefault()
@@ -49,6 +51,9 @@ export function validate(record: Record<string, string>): void {
   if (!record.zoom) {
     throw new Error('No zoomFactor exists.')
   }
+  if (!record.screen) {
+    throw new Error('No screen exists.')
+  }
 }
 
 export function loadDefault(): Record<string, string> {
@@ -58,6 +63,7 @@ export function loadDefault(): Record<string, string> {
     room: '',
     password: '',
     duration: '7',
-    zoom: '100'
+    zoom: '100',
+    screen: ''
   }
 }
