@@ -12,6 +12,15 @@ let settingWindow_: electron.BrowserWindow | null = null
 // https://www.electronjs.org/docs/faq#my-apps-tray-disappeared-after-a-few-minutes
 let tray_: electron.Tray | null = null
 
+function moveToRootDirectory(): void {
+  const exePath = electron.app.getPath('exe')
+  const rootDirectory = (process.platform === 'darwin')
+    ? path.dirname(path.dirname(exePath))
+    : path.dirname(exePath)
+  console.log('exePath', exePath, ', root', rootDirectory)
+  process.chdir(rootDirectory)
+}
+
 async function asyncGetUserConfigPromise(checkIfExists: boolean): Promise<fs.PathLike> {
   const userDataPath = electron.app.getPath('userData')
   const userConfigPath = path.join(userDataPath, 'user.config')
@@ -153,6 +162,7 @@ function onReady(): void {
   electron.ipcMain.handle(CHANNEL_REQUEST_SETTINGS, asyncLoadSettings)
   electron.ipcMain.handle(CHANNEL_POST_SETTINGS, asyncSaveSettings)
 
+  moveToRootDirectory()
   showTrayIcon()
   asyncShowMainWindow()  // No need to wait
 }
