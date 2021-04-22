@@ -5,14 +5,23 @@ import {
   Theme,
   TextField,
   Button,
-  Grid
+  Grid,
+  InputLabel,
+  NativeSelect
 } from '@material-ui/core'
 import { CURRENT_VERSION } from '../Settings'
+
+type ScreenProps = {
+  name: string
+  thumbnailDataUrl: string
+}
+
 declare global {
   interface Window {
     settingsProxy: {
       requestSettings: () => Promise<Record<string, string>>,
-      postSettings: (settings: Record<string, string>) => Promise<void>
+      postSettings: (settings: Record<string, string>) => Promise<void>,
+      getScreenPropsList: () => Promise<ScreenProps[]>
     }
   }
 }
@@ -43,7 +52,7 @@ const Names = [
 
 type Name = typeof Names[number]
 
-type Field = {
+type TextFieldMetadata = {
   name: Name,
   label: string,
   validate: (value: string) => boolean,
@@ -52,11 +61,12 @@ type Field = {
   dispatch: React.Dispatch<React.SetStateAction<TextFieldState>>
 }
 
-function useField(
+function useTextFieldMetadata(
   name: Name,
   label: string,
   validate: (value: string) => boolean,
-  errorMessage: string): Field {
+  errorMessage: string
+): TextFieldMetadata {
   const [state, dispatch] = React.useState<TextFieldState>({
     value: '',
     helperText: ''
@@ -72,26 +82,37 @@ function useField(
 }
 
 const App: React.FC = (): JSX.Element => {
-  const validateUrl = (v: string): boolean => /^wss?:\/\/.*/.test(v)
-  const validateRoom = (v: string): boolean => v.length > 0
-  const validatePassword = (v: string): boolean => v.length > 0
-  const validateDuration = (v: string): boolean => !isNaN(Number(v)) && Number(v) >= 3
-  const validateZoom = (v: string): boolean => !isNaN(Number(v)) && Number(v) >= 30 && Number(v) <= 500
-  const fields: Field[] = [
-    useField('url', 'Server URL', validateUrl, 'Input URL like "wss://hoge/app".'),
-    useField('room', 'Room', validateRoom, 'Input room name.'),
-    useField('password', 'Password', validatePassword, 'Input password.'),
-    useField('duration', 'Message duration (seconds)', validateDuration, 'Must be >= 3.'),
-    useField('zoom', 'Zoom (%)', validateZoom, 'Must be >= 50 and <= 500.')
+  const validateUrl = React.useCallback((v: string): boolean => /^wss?:\/\/.*/.test(v), [])
+  const validateRoom = React.useCallback((v: string): boolean => v.length > 0, [])
+  const validatePassword = React.useCallback((v: string): boolean => v.length > 0, [])
+  const validateDuration = React.useCallback((v: string): boolean => !isNaN(Number(v)) && Number(v) >= 3, [])
+  const validateZoom = React.useCallback((v: string): boolean => !isNaN(Number(v)) && Number(v) >= 30 && Number(v) <= 500, [])
+  const textFields: TextFieldMetadata[] = [
+    useTextFieldMetadata('url', 'Server URL', validateUrl, 'Input URL like "wss://hoge/app".'),
+    useTextFieldMetadata('room', 'Room', validateRoom, 'Input room name.'),
+    useTextFieldMetadata('password', 'Password', validatePassword, 'Input password.'),
+    useTextFieldMetadata('duration', 'Message duration (seconds)', validateDuration, 'Must be >= 3.'),
+    useTextFieldMetadata('zoom', 'Zoom (%)', validateZoom, 'Must be >= 50 and <= 500.')
   ]
+
+  const [screenName, setScreenName] = React.useState<string>('')
+  const [screenOptions, setScreenOptions] = React.useState<ScreenProps[]>([])
 
   React.useEffect((): void => {
     window.settingsProxy.requestSettings().then((settings: Record<string, string>): void => {
-      for (const f of fields) {
+      for (const f of textFields) {
         f.dispatch({
           value: settings[f.name],
           helperText: ''
         })
+      }
+    })
+    window.settingsProxy.getScreenPropsList().then((screenPropsList: ScreenProps[]): void => {
+      const options = screenPropsList.map((p: ScreenProps): ScreenProps => ({ ...p }))
+      console.log('screen options', options)
+      setScreenOptions(options)
+      if (options.length > 0) {
+        setScreenName(options[0].name)
       }
     })
   }, [])
@@ -101,7 +122,7 @@ const App: React.FC = (): JSX.Element => {
     const settings: Record<string, string> = {
       version: CURRENT_VERSION,
     }
-    for (const f of fields) {
+    for (const f of textFields) {
       settings[f.name] = f.state.value
     }
     window.settingsProxy.postSettings(settings)
@@ -110,7 +131,7 @@ const App: React.FC = (): JSX.Element => {
 
   function onTextFieldChange(e: React.ChangeEvent<HTMLInputElement>): void {
     console.log(e.target.name, e.target.value)
-    const field = fields.find((f: Field): boolean => f.name === e.target.name)
+    const field = textFields.find((f: TextFieldMetadata): boolean => f.name === e.target.name)
     if (!field) {
       throw new Error(`Unexpected field: ${e.target.name}`)
     }
@@ -122,8 +143,13 @@ const App: React.FC = (): JSX.Element => {
     })
   }
 
+  function onSelectChange(e: React.ChangeEvent<HTMLSelectElement>): void {
+    console.log(e.target.name, '-', e.target.value)
+    setScreenName(e.target.value)
+  }
+
   function hasError(): boolean {
-    return fields.some((f: Field): boolean => f.state.helperText.length > 0)
+    return textFields.some((f: TextFieldMetadata): boolean => f.state.helperText.length > 0)
   }
 
   const classes = useStyles();
@@ -131,7 +157,7 @@ const App: React.FC = (): JSX.Element => {
     <form className={classes.root} onSubmit={onSubmit}>
       <p>
         {
-          fields.map((f: Field): JSX.Element => (
+          textFields.map((f: TextFieldMetadata): React.ReactNode => (
             <TextField
               fullWidth
               key={f.name}
@@ -144,6 +170,22 @@ const App: React.FC = (): JSX.Element => {
             />
           ))
         }
+        <InputLabel htmlFor="screen-select">Screen</InputLabel>
+        <NativeSelect
+          value={screenName}
+          onChange={onSelectChange}
+          inputProps= {{
+            name: 'screen-name',
+            id: 'screen-select'
+          }}
+        >
+          {
+            screenOptions.map((p: ScreenProps): React.ReactNode => (
+              <option key={p.name} value={p.name}>{p.name}</option>
+            ))
+          }
+        </NativeSelect>
+        <img src={screenOptions.find((p: ScreenProps): boolean => p.name === screenName)?.thumbnailDataUrl} />
       </p>
       <p>
         <Grid container alignItems="center" justify="center" spacing={3}>
