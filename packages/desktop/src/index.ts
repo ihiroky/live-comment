@@ -1,6 +1,6 @@
 import path from 'path'
 import fs from 'fs'
-import electron from 'electron'
+import electron, { BrowserWindow } from 'electron'
 import * as Settings from './Settings'
 
 const CHANNEL_REQUEST_SETTINGS = '#request-settings'
@@ -11,12 +11,6 @@ let settingWindow_: electron.BrowserWindow | null = null
 
 // https://www.electronjs.org/docs/faq#my-apps-tray-disappeared-after-a-few-minutes
 let tray_: electron.Tray | null = null
-
-function getWorkArea(): electron.Rectangle {
-  const cursorPoint: electron.Point = electron.screen.getCursorScreenPoint()
-  const display: electron.Display = electron.screen.getDisplayNearestPoint(cursorPoint)
-  return display.workArea
-}
 
 async function asyncGetUserConfigPromise(checkIfExists: boolean): Promise<fs.PathLike> {
   const userDataPath = electron.app.getPath('userData')
@@ -59,9 +53,9 @@ async function asyncSaveSettings(e: electron.IpcMainInvokeEvent, settings: Recor
     await fs.promises.writeFile(userConfigPath, contents, { encoding: 'utf8', mode: 0o600 })
     console.log(`Screen settings updated: ${contents}`)  // TODO Drop password?
 
-    const screenUrl = createScreenUrl(settings)
-    mainWindow_?.loadURL(screenUrl)
-    mainWindow_?.webContents.setZoomFactor(Number(settings.zoom) / 100)
+    if (mainWindow_) {
+      applySettings(mainWindow_, settings)
+    }
   } catch (e: unknown) {
     console.warn('Failed to save user configuration.', e)
   }
@@ -74,7 +68,7 @@ function showSettingWindow(): void {
 
   const settingWindow = new electron.BrowserWindow({
     width: 600,
-    height: 400,
+    height: 600,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -85,6 +79,8 @@ function showSettingWindow(): void {
   settingWindow.on('closed', (): void => {
     settingWindow_ = null
   })
+  // TODO Apply zoom factor to this window?
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   settingWindow_ = settingWindow
 }
@@ -102,6 +98,14 @@ function showTrayIcon(): void {
   tray_.setContextMenu(menu)
 }
 
+function getWorkArea(index: number | undefined): electron.Rectangle {
+  const display = index
+    ? electron.screen.getAllDisplays()[index]
+    : electron.screen.getPrimaryDisplay()
+  console.log('getWorkArea', index, display.size)
+  return display.workArea
+}
+
 function createScreenUrl(settings: Record<string, string>): string {
   // TODO Pass parameters like setting form because type check is disabled here
   return `file://${path.resolve('resources/screen/index.html')}`
@@ -111,13 +115,20 @@ function createScreenUrl(settings: Record<string, string>): string {
     + `&password=${settings.password}`
 }
 
+function applySettings(mainWindow: BrowserWindow, settings: Record<string, string>): void {
+  const workArea = getWorkArea(parseInt(settings.screen))
+  const screenUrl = createScreenUrl(settings)
+  mainWindow.setBounds(workArea)
+  mainWindow.loadURL(screenUrl)
+  mainWindow.webContents.setZoomFactor(Number(settings.zoom) / 100)
+}
+
 async function asyncShowMainWindow(): Promise<void> {
-  const workArea = getWorkArea()
+  const settings = await asyncLoadSettings()
+
+  // TODO toggle dev tools of main window from setting form
+
   mainWindow_ = new electron.BrowserWindow({
-    x: workArea.x,
-    y: workArea.y,
-    width: workArea.width,
-    height: workArea.height,
     show: false,
     frame: false,
     transparent: true,
@@ -127,12 +138,9 @@ async function asyncShowMainWindow(): Promise<void> {
       contextIsolation: true
     }
   })
-  const settings = await asyncLoadSettings()
-  const screenUrl = createScreenUrl(settings)
-  mainWindow_.loadURL(screenUrl)
-  mainWindow_?.webContents.setZoomFactor(Number(settings.zoom) / 100)
-  mainWindow_.webContents.openDevTools({ mode: 'detach' })
+  applySettings(mainWindow_, settings)
   mainWindow_.setIgnoreMouseEvents(true)
+  mainWindow_.webContents.openDevTools({ mode: 'detach' })
   mainWindow_.once('ready-to-show', (): void  => {
     mainWindow_?.show()
   })
