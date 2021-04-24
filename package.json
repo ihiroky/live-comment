@@ -7,10 +7,7 @@
   "private": true,
   "workspaces": {
     "packages": [
-      "packages/comment",
-      "packages/common",
-      "packages/screen",
-      "packages/server"
+      "packages/*"
     ]
   },
   "repository": {
