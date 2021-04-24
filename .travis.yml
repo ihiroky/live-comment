@@ -1,6 +1,6 @@
 jobs:
   include:
-    - stage: build server
+    - stage: build server side resources
       os: linux
       language: node_js
       node_js: 14
@@ -9,5 +9,16 @@ jobs:
         yarn --cwd packages/comment/ build
         yarn --cwd packages/server build
         zip -r server-side.zip packages/comment/build packages/server/dist
+    - stage: build desktop app
+      os: osx
+      osx_image: xcode12
+      language: node_js
+      node_js: 14
+      script:
+      - |
+        cd packages/desktop
+        yarn --frozen-lockfile
+        yarn build:screen
+        yarn package:m
     - stage: test
       script: echo test
