@@ -1,64 +1,6 @@
-cache:
-  directories:
-    - node_modules
-    - $HOME/.cache/electron
-    - $HOME/.cache/electron-builder
-
 jobs:
-  - stage: build server
-    os: linux
-    language: node_js
-    node_js: 14
-    if: (branch = name AND type = push) OR type = pull_request
-    script:
-      - |
-        yarn --cwd packages/comment/ build
-        yarn --cwd packages/server/ build
-        zip -r server-side.zip packages/comment/build packages/server/dist
-  - stage: build desktop
-    os: osx
-    osx_image: xcode11
-    language: node_js
-    node_js: 14
-    if: (branch = main AND type = push) OR type = pull_request
-    script:
-      - |
-        cd packages/desktop
-        yarn install
-        yarn build:screen
-        yarn package:m
-  -
-    os: linux
-    service: docker
-    language: generic
-    node_js: 14
-    before_cache:
-      - rm -rf $HOME/.cache/electron-builder/wine
-    if: (branch = main AND type = push) OR type = pull_request
-    script:
-      - |
-        cd packages/desktop
-        docker run -rm \
-          -e ELECTRON_CACHE=$HOME/.cache/electron \
-          -e ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder \
-          -e CI=$CI
-          -e GH_TOKEN=$GH_TOKEN \
-          -e TRAVIS_PULL_REQUEST=$TRAVIS_PULL_REQUEST \
-          -v ${PWD}:/project \
-          -v $HOME/.cache/electron:/root/.cache/electron \
-          -v $HOME/.cache/electron-builder:/root/.cache/electron-builder \
-          electronuserland/builder:wine \
-          /bin/bash -c "\
-            yarn install && \
-            yarn build:screen && \
-            yarn package:wl
-          "
-  - stage: deploy server-side.zip
-    deploy:
-      if: branch = main AND type = push
-      provider: release
-      apk_key: $GH_GOKEN
-      file: server-side.zip
-      skip-cleanup: true
-      draft: true
-
+  include:
+    - stage: test0
+      script: echo test0
+    - stage: test1
+      script: echo test1
