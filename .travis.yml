@@ -2,6 +2,7 @@ jobs:
   include:
     - stage: build server side resources
       os: linux
+      dist: focal
       language: node_js
       node_js: 14
       script:
@@ -20,5 +21,25 @@ jobs:
         yarn --frozen-lockfile
         yarn build:screen
         yarn package:m
-    - stage: test
-      script: echo test
+    -
+      os: linux
+      dist: focal
+      service: docker
+      language: generic
+      before_cache:
+        - rm -rf $HOME/.cache/electron-builder/wine
+      script:
+      - |
+        cd packages/desktop
+        docker run -rm \
+          -e ELECTRON_CACHE=$HOME/.cache/electron \
+          -e ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder \
+          -e CI=$CI
+          -e GH_TOKEN=$GH_TOKEN \
+          -e TRAVIS_PULL_REQUEST=$TRAVIS_PULL_REQUEST \
+          -v ${PWD}:/project \
+          -v $HOME/.cache/electron:/root/.cache/electron \
+          -v $HOME/.cache/electron-builder:/root/.cache/electron-builder \
+          electronuserland/builder:wine \
+          /bin/bash -c "yarn install && yarn build:screen && yarn package:wl"
+

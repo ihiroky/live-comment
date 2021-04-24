@@ -19,19 +19,22 @@
     "target": [{
       "target": "nsis",
       "arch": ["x64"]
-    }]
+    }],
+    "publish": ["github"]
   },
   "mac": {
     "target": [{
       "target": "dmg",
       "arch": ["x64"]
-    }]
+    }],
+    "publish": ["github"]
   },
   "linux": {
     "executableName": "live-comment",
     "target": [{
       "target": "deb",
       "arch": ["x64"]
-    }]
+    }],
+    "publish": ["github"]
   }
 }
