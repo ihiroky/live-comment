@@ -13,10 +13,8 @@
     "start": "tsc -b && electron . --enable-logging",
     "build:screen": "yarn --cwd ../screen build",
     "build": "tsc -b && rollup -c && electron-builder -c electron-builder-config.json --dir",
-    "packages": "yarn build && electron-builder -c electron-builder-config.json -wml",
-    "package:linux": "yarn build && electron-builder -c electron-builder-config.json -l",
-    "package:win": "yarn build && electron-builder -c electron-builder-config.json -w",
-    "package:mac": "yarn build && electron-builder -c electron-builder-config.json -m"
+    "package:m": "tsc -b && rollup -c && electron-builder -c electron-builder-config.json -m",
+    "package:wl": "tsc -b && rollup -c && electron-builder -c electron-builder-config.json -wl"
   },
   "devDependencies": {
     "@material-ui/core": "^4.11.3",
