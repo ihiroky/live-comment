@@ -24,7 +24,7 @@ jobs:
     -
       os: linux
       dist: focal
-      service: docker
+      services: docker
       language: generic
       before_cache:
         - rm -rf $HOME/.cache/electron-builder/wine
