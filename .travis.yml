@@ -10,7 +10,7 @@ jobs:
         yarn --cwd packages/comment/ build
         zip -r comment.zip packages/comment/build
       deploy:
-        if branch = main AND type = push
+        if: branch = main AND type = push
         provider: release
         api_key: $GH_TOKEN
         file: comment.zip
