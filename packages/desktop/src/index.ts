@@ -168,8 +168,7 @@ function onReady(): void {
 }
 
 if (process.platform === 'linux') {
-  // https://stackoverflow.com/questions/53538215/cant-succeed-in-making-transparent-window-in-electron-javascript
-  electron.app.commandLine.appendSwitch('enable-transparent-visuals')
+  electron.app.commandLine.appendSwitch('disable-gpu')
   electron.app.on('ready', (): void => {
     setTimeout(onReady, 100)
   })
