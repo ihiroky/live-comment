@@ -1,5 +1,6 @@
 {
   "productName": "live-comment",
+  "appId": "ml.live-comment.desktop",
   "electronVersion": "12.0.5",
   "files": [
     "package.json",
@@ -10,23 +11,30 @@
     "resources/**",
     "dist/js/preload/*.js"
   ],
+  "publish": {
+    "provider": "github",
+    "releaseType": "draft"
+  },
   "win": {
     "target": [{
       "target": "nsis",
       "arch": ["x64"]
-    }]
+    }],
+    "publish": ["github"]
   },
   "mac": {
     "target": [{
       "target": "dmg",
       "arch": ["x64"]
-    }]
+    }],
+    "publish": ["github"]
   },
   "linux": {
     "executableName": "live-comment",
     "target": [{
       "target": "deb",
       "arch": ["x64"]
-    }]
+    }],
+    "publish": ["github"]
   }
 }
