@@ -12,5 +12,9 @@
       "packages/screen",
       "packages/server"
     ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ihiroky/live-comment"
   }
 }
