@@ -1,6 +1,12 @@
 jobs:
   include:
-    - stage: test0
-      script: echo test0
-    - stage: test1
-      script: echo test1
+    - stage: build server
+      os: linux
+      language: node_js
+      node_js: 14
+      script:
+      - |
+        echo node version
+        echo $(node --version)
+    - stage: test
+      script: echo test
