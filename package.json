@@ -7,10 +7,11 @@
   "private": true,
   "workspaces": {
     "packages": [
-      "packages/comment",
-      "packages/common",
-      "packages/screen",
-      "packages/server"
+      "packages/*"
     ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ihiroky/live-comment.git"
   }
 }

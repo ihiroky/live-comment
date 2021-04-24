@@ -4,19 +4,18 @@
   "description": "live-comment desktop",
   "main": "dist/js/index.js",
   "homepage": "https://github.com/ihiroky/live-comment",
-  "repository": "https://github.com/ihiroky/live-comment/desktop",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ihiroky/live-comment.git"
+  },
   "author": "Hiroki Itoh <ihiroky@gmail.com>",
   "license": "MIT",
   "private": true,
   "scripts": {
     "clean": "node -e \"require('fs').rmdirSync('dist', {recursive: true})\"",
-    "start": "tsc -b && electron . --enable-logging",
-    "build:screen": "yarn --cwd ../screen build",
-    "build": "tsc -b && rollup -c && electron-builder -c electron-builder-config.json --dir",
-    "packages": "yarn build && electron-builder -c electron-builder-config.json -wml",
-    "package:linux": "yarn build && electron-builder -c electron-builder-config.json -l",
-    "package:win": "yarn build && electron-builder -c electron-builder-config.json -w",
-    "package:mac": "yarn build && electron-builder -c electron-builder-config.json -m"
+    "build": "yarn --cwd ../screen build && tsc -b && rollup -c",
+    "build:dir": "electron-builder -c electron-builder-config.json --dir",
+    "start": "electron . --enable-logging"
   },
   "devDependencies": {
     "@material-ui/core": "^4.11.3",
@@ -30,7 +29,7 @@
     "@typescript-eslint/parser": "^4.20.0",
     "asar": "^3.0.3",
     "electron": "^12.0.5",
-    "electron-builder": "^22.7.0",
+    "electron-builder": "^22.10.5",
     "eslint": "^7.23.0",
     "eslint-plugin-react": "^7.23.1",
     "eslint-plugin-react-hooks": "^4.2.0",
