@@ -1,6 +1,6 @@
 jobs:
   include:
-    - stage: build server side resources
+    - stage: build comment app
       os: linux
       dist: focal
       language: node_js
@@ -8,8 +8,14 @@ jobs:
       script:
       - |
         yarn --cwd packages/comment/ build
-        yarn --cwd packages/server build
-        zip -r server-side.zip packages/comment/build packages/server/dist
+        zip -r comment.zip packages/comment/build
+      deploy:
+        if branch = main AND type = push
+        provider: release
+        api_key: $GH_TOKEN
+        file: comment.zip
+        skip-cleanup: true
+        draft: true
     - stage: build desktop app
       os: osx
       osx_image: xcode12
