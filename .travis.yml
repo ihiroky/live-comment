@@ -6,7 +6,8 @@ jobs:
       node_js: 14
       script:
       - |
-        echo node version
-        echo $(node --version)
+        yarn --cwd packages/comment/ build
+        yarn --cwd packages/server build
+        zip -r server-side.zip packages/comment/build packages/server/dist
     - stage: test
       script: echo test
