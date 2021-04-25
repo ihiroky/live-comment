@@ -44,27 +44,27 @@ async function asyncLoadSettings(): Promise<Record<string, string>> {
     const json = await fs.promises.readFile(userConfigPath, { encoding: 'utf8' })
     const settings = Settings.parse(json)
     if (process.argv[1]) {
-      settings.url = process.argv[1]
+      settings.general.url = process.argv[1]
     }
     console.debug(CHANNEL_REQUEST_SETTINGS, settings)
-    return settings
+    return Settings.toRecord(settings)
   } catch (e: unknown) {
     console.warn(`Failed to load user configuration file. Load default settings.`, e)
-    return Settings.loadDefault()
+    return Settings.toRecord(Settings.loadDefault())
   }
 }
 
 async function asyncSaveSettings(e: electron.IpcMainInvokeEvent, settings: Record<string, string>): Promise<void> {
   console.debug(CHANNEL_POST_SETTINGS, settings)
   try {
-    Settings.validate(settings)
+    const typed = Settings.fromRecord(settings)
     const userConfigPath: fs.PathLike = await asyncGetUserConfigPromise(false)
-    const contents = JSON.stringify(settings)
+    const contents = JSON.stringify(typed)
     await fs.promises.writeFile(userConfigPath, contents, { encoding: 'utf8', mode: 0o600 })
     console.log(`Screen settings updated: ${contents}`)  // TODO Drop password?
 
     if (mainWindow_) {
-      applySettings(mainWindow_, settings)
+      applySettings(mainWindow_, typed)
     }
   } catch (e: unknown) {
     console.warn('Failed to save user configuration.', e)
@@ -78,7 +78,7 @@ function showSettingWindow(): void {
 
   const settingWindow = new electron.BrowserWindow({
     width: 600,
-    height: 600,
+    height: 650,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -116,22 +116,22 @@ function getWorkArea(index: number | undefined): electron.Rectangle {
   return display.workArea
 }
 
-function createScreenUrl(settings: Record<string, string>): string {
+function createScreenUrl(settings: Settings.SettingsV1): string {
   // TODO Pass parameters like setting form because type check is disabled here
   return `file://${path.resolve('resources/screen/index.html')}`
-    + `?duration=${settings.duration}`
-    + `&url=${settings.url}`
-    + `&room=${settings.room}`
-    + `&password=${settings.password}`
-    + `&watermark=${encodeURIComponent(JSON.stringify({ html: 'WATERMARK!', color: 'red' }))}`
+    + `?duration=${settings.general.duration}`
+    + `&url=${settings.general.url}`
+    + `&room=${settings.general.room}`
+    + `&password=${settings.general.password}`
+    + `&watermark=${encodeURIComponent(JSON.stringify(settings.watermark))}`
 }
 
-function applySettings(mainWindow: BrowserWindow, settings: Record<string, string>): void {
-  const workArea = getWorkArea(parseInt(settings.screen))
+function applySettings(mainWindow: BrowserWindow, settings: Settings.SettingsV1): void {
+  const workArea = getWorkArea(parseInt(settings.general.screen))
   const screenUrl = createScreenUrl(settings)
   mainWindow.setBounds(workArea)
   mainWindow.loadURL(screenUrl)
-  mainWindow.webContents.setZoomFactor(Number(settings.zoom) / 100)
+  mainWindow.webContents.setZoomFactor(Number(settings.general.zoom) / 100)
 }
 
 async function asyncShowMainWindow(): Promise<void> {
@@ -149,7 +149,7 @@ async function asyncShowMainWindow(): Promise<void> {
       contextIsolation: true
     }
   })
-  applySettings(mainWindow_, settings)
+  applySettings(mainWindow_, Settings.fromRecord(settings))
   mainWindow_.setIgnoreMouseEvents(true)
   mainWindow_.webContents.openDevTools({ mode: 'detach' })
   mainWindow_.once('ready-to-show', (): void  => {

@@ -1,14 +1,16 @@
-import React from 'react'
+import React, { PropsWithChildren } from 'react'
 import {
   makeStyles,
   Theme,
   TextField,
-  Button,
-  Grid,
   InputLabel,
   Select
 } from '@material-ui/core'
-import { CURRENT_VERSION } from '../Settings'
+import { GeneralSettings } from './hooks'
+import {
+  TextFieldMetadata,
+  createTextFieldMetadata
+} from './createTextFieldMetadata'
 
 type ScreenProps = {
   name: string
@@ -25,25 +27,17 @@ declare global {
   }
 }
 
-interface TextFieldState {
-  value: string,
-  helperText: string
-}
-
 const useStyles = makeStyles((theme: Theme) => (
   {
     root: {
       width: '80vw',
-      height: '80vh',
       margin: 'auto',
-      padding: theme.spacing(3)
+      paddingTop: theme.spacing(3),
+      paddingBottom: theme.spacing(3)
     },
     fields: {
       marginTop: theme.spacing(1),
       marginBottom: theme.spacing(1)
-    },
-    buttons: {
-      marginTop: theme.spacing(3),
     },
     screen: {
       marginTop: theme.spacing(1),
@@ -55,77 +49,27 @@ const useStyles = makeStyles((theme: Theme) => (
   }
 ))
 
-const Names = [
-  'url',
-  'room',
-  'password',
-  'duration',
-  'zoom'
-] as const
 
-type Name = typeof Names[number]
-
-type TextFieldMetadata = {
-  name: Name,
-  label: string,
-  validate: (value: string) => boolean,
-  errorMessage: string
-  state: TextFieldState,
-  dispatch: React.Dispatch<React.SetStateAction<TextFieldState>>
+interface GeneralProps extends GeneralSettings {
+  onUpdate(name: keyof GeneralSettings, value: string, error: boolean): void
 }
 
-function useTextFieldMetadata(
-  name: Name,
-  label: string,
-  validate: (value: string) => boolean,
-  errorMessage: string
-): TextFieldMetadata {
-  const [state, dispatch] = React.useState<TextFieldState>({
-    value: '',
-    helperText: ''
-  })
-  return {
-    name,
-    label,
-    validate,
-    errorMessage,
-    state,
-    dispatch,
-  }
-}
-
-export const General: React.FC = (): JSX.Element => {
+export const General: React.FC<PropsWithChildren<GeneralProps>> = (props: GeneralProps): JSX.Element => {
   const validateUrl = React.useCallback((v: string): boolean => /^wss?:\/\/.*/.test(v), [])
   const validateRoom = React.useCallback((v: string): boolean => v.length > 0, [])
   const validatePassword = React.useCallback((v: string): boolean => v.length > 0, [])
   const validateDuration = React.useCallback((v: string): boolean => !isNaN(Number(v)) && Number(v) >= 3, [])
   const validateZoom = React.useCallback((v: string): boolean => !isNaN(Number(v)) && Number(v) >= 30 && Number(v) <= 500, [])
-  const textFields: TextFieldMetadata[] = [
-    useTextFieldMetadata('url', 'Server URL', validateUrl, 'Input URL like "wss://hoge/app".'),
-    useTextFieldMetadata('room', 'Room', validateRoom, 'Input room name.'),
-    useTextFieldMetadata('password', 'Password', validatePassword, 'Input password.'),
-    useTextFieldMetadata('duration', 'Message duration (seconds)', validateDuration, 'Must be >= 3.'),
-    useTextFieldMetadata('zoom', 'Zoom (%)', validateZoom, 'Must be >= 50 and <= 500.')
+  const textFields: TextFieldMetadata<GeneralSettings>[] = [
+    createTextFieldMetadata('url', props.url, 'Server URL', 1, validateUrl, 'Input URL like "wss://hoge/app".'),
+    createTextFieldMetadata('room', props.room, 'Room', 1, validateRoom, 'Input room name.'),
+    createTextFieldMetadata('password', props.password, 'Password', 1, validatePassword, 'Input password.'),
+    createTextFieldMetadata('duration', props.duration, 'Message duration (seconds)', 1, validateDuration, 'Must be >= 3.'),
+    createTextFieldMetadata('zoom', props.zoom, 'Zoom (%)', 1, validateZoom, 'Must be >= 50 and <= 500.')
   ]
-
-  const [screenIndex, setScreenIndex] = React.useState<number>(0)
   const [screenOptions, setScreenOptions] = React.useState<ScreenProps[]>([])
 
   React.useEffect((): void => {
-    window.settingsProxy.requestSettings().then((settings: Record<string, string>): void => {
-      console.log('General requestSettings', settings)
-      for (const f of textFields) {
-        f.dispatch({
-          value: settings[f.name],
-          helperText: ''
-        })
-      }
-      console.log('General requestSettings', settings.screen)
-      const si = parseInt(settings.screen)
-      if (!isNaN(si)) {
-        setScreenIndex(si)
-      }
-    })
     window.settingsProxy.getScreenPropsList().then((screenPropsList: ScreenProps[]): void => {
       console.log('General screenPropsList', screenPropsList)
       const options = screenPropsList.map((p: ScreenProps): ScreenProps => ({ ...p }))
@@ -134,58 +78,37 @@ export const General: React.FC = (): JSX.Element => {
     })
   }, [])
 
-  function onSubmit(e: React.FormEvent<HTMLFormElement>): void {
-    e.preventDefault()
-    const settings: Record<string, string> = {
-      version: CURRENT_VERSION,
-    }
-    for (const f of textFields) {
-      settings[f.name] = f.state.value
-    }
-    console.log('onsubmit', settings)
-    settings.screen = String(screenIndex)
-    window.settingsProxy.postSettings(settings)
-    window.close()
-  }
-
   function onTextFieldChange(e: React.ChangeEvent<HTMLInputElement>): void {
     console.log(e.target.name, e.target.value)
-    const field = textFields.find((f: TextFieldMetadata): boolean => f.name === e.target.name)
+    const field = textFields.find((f: TextFieldMetadata<GeneralSettings>): boolean => f.name === e.target.name)
     if (!field) {
       throw new Error(`Unexpected field: ${e.target.name}`)
     }
-
-    // TODO Ping to validate url.
-    field.dispatch({
-      value: e.target.value,
-      helperText: !field.validate(e.target.value) ? field.errorMessage : ''
-    })
+    const error = !field.validate(e.target.value)
+    props.onUpdate(field.name, e.target.value, error)
   }
 
   function onSelectChange(e: React.ChangeEvent<{ name?: string, value: unknown }>): void {
     console.log(e.target.name, '-', e.target.value)
-    const index = Number(e.target.value)
-    setScreenIndex(!isNaN(index) ? index : 0)
-  }
-
-  function hasError(): boolean {
-    return textFields.some((f: TextFieldMetadata): boolean => f.state.helperText.length > 0)
+    const strValue = String(e.target.value)
+    const numValue = Number(e.target.value)
+    props.onUpdate('screen', strValue, !isNaN(numValue))
   }
 
   const classes = useStyles();
   return (
-    <form className={classes.root} onSubmit={onSubmit}>
+    <div className={classes.root}>
       <div className={classes.fields}>
         {
-          textFields.map((f: TextFieldMetadata): React.ReactNode => (
+          textFields.map((f: TextFieldMetadata<GeneralSettings>): React.ReactNode => (
             <TextField
               fullWidth
               key={f.name}
               name={f.name}
               label={f.label}
-              value={f.state.value}
-              error={f.state.helperText.length > 0}
-              helperText={f.state.helperText}
+              value={f.field.value}
+              error={f.field.error}
+              helperText={f.field.error ? f.errorMessage : ''}
               onChange={onTextFieldChange}
             />
           ))
@@ -198,30 +121,23 @@ export const General: React.FC = (): JSX.Element => {
               labelId="screen-select-label"
               id="screen-select"
               name="screen-name"
-              value={screenIndex}
+              value={props.screen.value}
               onChange={onSelectChange}
             >
               {
                 screenOptions.map((p: ScreenProps, i: number): React.ReactNode => (
-                  <option key={p.name} value={i}>{p.name}</option>
+                  <option key={p.name} value={String(i)}>{p.name}</option>
                 ))
               }
             </Select>
           </div>
           }
-          <img style={{ paddingLeft: '10px' }} src={screenOptions.find((p: ScreenProps, i: number): boolean => i === screenIndex)?.thumbnailDataUrl} />
+          <img
+            style={{ paddingLeft: '10px' }}
+            src={screenOptions.find((p: ScreenProps, i: number): boolean => String(i) === props.screen.value)?.thumbnailDataUrl}
+          />
         </div>
       </div>
-      <div className={classes.buttons}>
-        <Grid container alignItems="center" justify="center" spacing={3}>
-          <Grid item>
-            <Button variant="outlined" type="submit" disabled={hasError()}>OK</Button>
-          </Grid>
-          <Grid item>
-            <Button variant="outlined" onClick={() => window.close()}>Cancel</Button>
-          </Grid>
-        </Grid>
-      </div>
-    </form>
+    </div>
   )
 }
