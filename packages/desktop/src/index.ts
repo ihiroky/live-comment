@@ -122,6 +122,7 @@ function createScreenUrl(settings: Record<string, string>): string {
     + `&url=${settings.url}`
     + `&room=${settings.room}`
     + `&password=${settings.password}`
+    + `&watermark=${encodeURIComponent(JSON.stringify({ html: 'WATERMARK!', color: 'red' }))}`
 }
 
 function applySettings(mainWindow: BrowserWindow, settings: Record<string, string>): void {

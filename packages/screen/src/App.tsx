@@ -8,6 +8,7 @@ import {
   MarqueePropsList
 } from './MarqueePropsGenerator'
 import { MarqueeList } from './MarqueeList'
+import { Watermark, WatermarkProps } from './Watermark'
 
 // TODO data flow should be server -> comment -> screen. A presentater may want to show comment list.
 
@@ -16,11 +17,13 @@ type AppProps = {
   room: string
   hash: string
   duration: number
+  watermark?: WatermarkProps
 }
 
 export const App: React.FC<AppProps> = (props: React.PropsWithChildren<AppProps>): JSX.Element => {
 
   const [marqueePropsList, setMarqueePropsList] = React.useState<MarqueePropsList>([])
+  // TODO useMemo
   const [marqueeGenerator] = React.useState<MarqueePropsGenerator>(() =>
     new MarqueePropsGenerator(props.room, props.hash, props.duration, (mpl: MarqueePropsList): void => {
       setMarqueePropsList(mpl)
@@ -30,6 +33,7 @@ export const App: React.FC<AppProps> = (props: React.PropsWithChildren<AppProps>
   // TODO Need to work with css class .App
   const marqueeHeight = 64
 
+  console.log('App.watermark', props.watermark)
   return (
     <div className="App">
       <MarqueeList
@@ -37,6 +41,11 @@ export const App: React.FC<AppProps> = (props: React.PropsWithChildren<AppProps>
         marqueeHeight={marqueeHeight}
         duration={props.duration}
       />
+      {
+        props.watermark
+          ? <Watermark {...props.watermark} />
+          : <></>
+      }
       <WebSocketClient
         url={props.url}
         onOpen={marqueeGenerator.onOpen}
