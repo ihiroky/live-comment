@@ -46,6 +46,7 @@ async function asyncLoadSettings(): Promise<Record<string, string>> {
     if (process.argv[1]) {
       settings.url = process.argv[1]
     }
+    console.debug(CHANNEL_REQUEST_SETTINGS, settings)
     return settings
   } catch (e: unknown) {
     console.warn(`Failed to load user configuration file. Load default settings.`, e)

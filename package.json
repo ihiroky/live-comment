@@ -8,6 +8,12 @@
   "workspaces": {
     "packages": [
       "packages/*"
+    ],
+    "nohoist": [
+      "**/react",
+      "**/react/**",
+      "**/react-dom",
+      "**/react-dom/**"
     ]
   },
   "repository": {
