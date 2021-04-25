@@ -62,12 +62,11 @@ git clone https://github.com/ihiroky/live-comment.git
 ```bash
 cd live-comment
 yarn install
-yarn --cwd packages/screen build
 cd packages/desktop
-yarn install           # desktop is not a member of workspace
-yarn package:linux     # for Linux
-yarn package:win       # for Windows
-# or yarn package:mac  # for Mac (under construction)
+yarn build
+yarn electron-builer -c electron-builder-config.json -w  # for Windows
+yarn electron-builer -c electron-builder-config.json -m  # for Mac
+yarn electron-builer -c electron-builder-config.json -l  # for Linux
 ```
 
 Then, install generated package in live-comment/packages/desktop/dist directory.
