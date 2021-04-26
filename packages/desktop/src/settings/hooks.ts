@@ -31,7 +31,12 @@ export interface GeneralSettings {
 
 export interface WatermarkSettings {
   html: Field
+  opacity: Field
   color: Field
+  fontSize: Field
+  position: Field
+  offset: Field,
+  noComments: Field,
 }
 
 type FieldState = {
@@ -77,11 +82,16 @@ export function toGeneralSettings(state: GeneralFieldsState): GeneralSettings {
 export function toWatermarkSettings(state: WatermarkFieldsState): WatermarkSettings {
   return {
     html: state.html.field,
-    color: state.color.field
+    opacity: state.opacity.field,
+    color: state.color.field,
+    fontSize: state.fontSize.field,
+    position: state.position.field,
+    offset: state.offset.field,
+    noComments: state.noComments.field
   }
 }
 
-export function uselSettingsState(): SettingsState {
+export function useSettingsState(): SettingsState {
   const general: GeneralFieldsState = {
     url: useFieldValue(),
     room: useFieldValue(),
@@ -92,9 +102,13 @@ export function uselSettingsState(): SettingsState {
   }
   const watermark: WatermarkFieldsState = {
     html: useFieldValue(),
-    color: useFieldValue()
+    opacity: useFieldValue(),
+    color: useFieldValue(),
+    fontSize: useFieldValue(),
+    position: useFieldValue(),
+    offset: useFieldValue(),
+    noComments: useFieldValue()
   }
-
 
   React.useEffect((): void => {
     window.settingsProxy.requestSettings().then((settings: Record<string, string>): void => {

@@ -26,7 +26,12 @@ export interface SettingsV1 extends Settings {
   },
   watermark: {
     html: string
+    opacity: string
     color: string
+    fontSize: string
+    position: string
+    offset: string
+    noComments: string
   }
 }
 
@@ -85,7 +90,12 @@ export function parse(json: string): SettingsV1 {
       },
       watermark: {
         html: '',
-        color: '#333333'
+        opacity: '0.7',
+        color: '#333333',
+        fontSize: '64px',
+        position: 'bottom-right',
+        offset: '3%',
+        noComments: 'false',
       }
     }
   }
@@ -105,7 +115,12 @@ export function loadDefault(): SettingsV1 {
     },
     watermark: {
       html: '',
-      color: '#333333'
+      opacity: '0.7',
+      color: '#333333',
+      fontSize: '64px',
+      position: 'bottom-right',
+      offset: '3%',
+      noComments: 'false'
     }
   }
 }

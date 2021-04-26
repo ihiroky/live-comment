@@ -3,11 +3,12 @@ import dompurify from 'dompurify'
 
 export interface WatermarkProps {
   html: string
-  opacity: number
+  opacity?: number
   color?: string
   fontSize?: string
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
   offset?: string
+  noComments?: 'true' | 'false'
 }
 
 

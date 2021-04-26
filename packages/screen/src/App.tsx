@@ -48,6 +48,7 @@ export const App: React.FC<AppProps> = (props: React.PropsWithChildren<AppProps>
       }
       <WebSocketClient
         url={props.url}
+        noComments={props.watermark?.noComments === 'true'}
         onOpen={marqueeGenerator.onOpen}
         onClose={marqueeGenerator.onClose}
         onMessage={marqueeGenerator.onMessage}

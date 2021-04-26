@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from 'react'
+import React from 'react'
 import {
   makeStyles,
   Theme,
@@ -54,7 +54,7 @@ interface GeneralProps extends GeneralSettings {
   onUpdate(name: keyof GeneralSettings, value: string, error: boolean): void
 }
 
-export const General: React.FC<PropsWithChildren<GeneralProps>> = (props: GeneralProps): JSX.Element => {
+export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: GeneralProps): JSX.Element => {
   const validateUrl = React.useCallback((v: string): boolean => /^wss?:\/\/.*/.test(v), [])
   const validateRoom = React.useCallback((v: string): boolean => v.length > 0, [])
   const validatePassword = React.useCallback((v: string): boolean => v.length > 0, [])

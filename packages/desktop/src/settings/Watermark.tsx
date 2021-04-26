@@ -1,8 +1,12 @@
-import React, { PropsWithChildren } from 'react'
+import React from 'react'
 import {
   makeStyles,
   Theme,
-  TextField
+  TextField,
+  Select,
+  InputLabel,
+  Checkbox,
+  FormControlLabel
 } from '@material-ui/core'
 import { WatermarkSettings } from './hooks'
 import {
@@ -26,13 +30,19 @@ interface WatermarkProps extends WatermarkSettings {
   onUpdate(key: keyof WatermarkSettings, value: string, error: boolean): void
 }
 
-export const Watermark: React.FC<PropsWithChildren<WatermarkProps>> = (props: WatermarkProps): JSX.Element => {
-  const validateHTML = (value: string): boolean => value.length > 0
-  const validateColor = (valudate: string): boolean => valudate.length > 0
+export const Watermark: React.FC<React.PropsWithChildren<WatermarkProps>> = (props: WatermarkProps): JSX.Element => {
+  const validateOpacity = (v: string): boolean => Number(v) >= 0 && Number(v) <= 1
+  const validateColor = (v: string): boolean => v.length > 0
+  const validateFontSize = (v: string): boolean => /^[1-9][0-9]*(px|pt|em|rem|%)$/.test(v)
+  const validateOffset = validateFontSize
   const textFields: TextFieldMetadata<WatermarkSettings>[] = [
-    createTextFieldMetadata('html', props.html, 'HTML', 4, validateHTML, 'Input HTML or text.'),
-    createTextFieldMetadata('color', props.color, 'Color', 1, validateColor, 'Input color.')
+    createTextFieldMetadata('html', props.html, 'Text or HTML', 4, (): boolean => true, ''),
+    createTextFieldMetadata('opacity', props.opacity, 'Opacity', 1, validateOpacity, 'Between 0 and 1.'),
+    createTextFieldMetadata('color', props.color, 'Color (name or #hex)', 1, validateColor, 'Input color.'),
+    createTextFieldMetadata('fontSize', props.fontSize, 'Font size (default 64px)', 1, validateFontSize, 'px, pt, em, rem or %.'),
+    createTextFieldMetadata('offset', props.offset, 'Offset from screen edge', 1, validateOffset, 'px, pt, em, rem or %.'),
   ]
+
   function onTextFieldChange(e: React.ChangeEvent<HTMLInputElement>): void {
     console.log(e.target.name, e.target.value)
     const field = textFields.find((f: TextFieldMetadata<WatermarkSettings>): boolean => f.name === e.target.name)
@@ -42,6 +52,16 @@ export const Watermark: React.FC<PropsWithChildren<WatermarkProps>> = (props: Wa
     const error = !field.validate(e.target.value)
     console.log('watermark error', error)
     props.onUpdate(field.name, e.target.value, error)
+  }
+
+  function onSelectChange(e: React.ChangeEvent<{ name?: string, value: unknown }>): void {
+    console.log(e.target.name, '-', e.target.value)
+    props.onUpdate('position', String(e.target.value), false)
+  }
+
+  function onCheckboxChange(e: React.ChangeEvent<HTMLInputElement>): void {
+    console.log(e.target.name, '-', e.target.checked)
+    props.onUpdate('noComments', String(e.target.checked), false)
   }
 
   const classes = useStyles()
@@ -64,6 +84,34 @@ export const Watermark: React.FC<PropsWithChildren<WatermarkProps>> = (props: Wa
           />
         ))
       }
+      <div>
+        <InputLabel shrink id="watermark-position-label">Position</InputLabel>
+        <Select
+          labelId="watermark-position-label"
+          id="watermrk-position"
+          name="watermark-position"
+          value={props.position.value || 'bottom-right'}
+          onChange={onSelectChange}
+        >
+          {
+            ['top-left', 'top-right', 'bottom-left', 'bottom-right'].map((v: string): React.ReactNode => (
+              <option key={v} value={v}>{v}</option>
+            ))
+          }
+        </Select>
+      </div>
+      <div>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={props.noComments.value === 'true'}
+              color="primary"
+              onChange={onCheckboxChange}
+            />
+          }
+          label="No comments mode"
+        />
+      </div>
     </div>
   )
 }

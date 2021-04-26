@@ -18,7 +18,7 @@ import {
   WatermarkSettings,
   toWatermarkSettings,
   SettingsState,
-  uselSettingsState
+  useSettingsState
 } from './hooks'
 
 import { CURRENT_VERSION } from '../Settings'
@@ -64,7 +64,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 const App: React.FC = (): JSX.Element => {
 
-  const settingsState: SettingsState = uselSettingsState()
+  const settingsState: SettingsState = useSettingsState()
 
   const [value, setValue] = React.useState<number>(0)
 
@@ -81,7 +81,7 @@ const App: React.FC = (): JSX.Element => {
 
   function onWatermarkSettingsUpdate(key: keyof WatermarkSettings, value: string, error: boolean): void {
     const field = settingsState.watermark[key]
-    console.log(key, value, error)
+    console.log(key, value, error, field.field.value, field.field.error)
     field.setField({ value, error })
   }
 
@@ -94,9 +94,10 @@ const App: React.FC = (): JSX.Element => {
     for (gkey in settingsState.general) {
       settings[gkey] = settingsState.general[gkey].field.value
     }
-    const wm = {
-      html: settingsState.watermark.html.field.value,
-      color: settingsState.watermark.color.field.value
+    let wkey: keyof WatermarkSettings
+    const wm: Record<string, string> = {}
+    for (wkey in settingsState.watermark) {
+      wm[wkey] = settingsState.watermark[wkey].field.value
     }
     settings.watermark = JSON.stringify(wm)
 
