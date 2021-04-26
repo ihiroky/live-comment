@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { Message } from './Message'
+import { CommentMessage, Message } from './Message'
 
 export interface WebSocketControl {
   send(message: Message): void
@@ -9,11 +9,12 @@ export interface WebSocketControl {
 }
 
 export type WebSocketClientPropsType = {
-  onOpen?: (control: WebSocketControl) => void,
+  onOpen?: (control: WebSocketControl) => void
   onClose?: (ev: CloseEvent) => void
   onError?: (ev: Event) => void
   onMessage: (message: Message) => void
   url: string
+  noComments?: boolean
 }
 
 export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
@@ -26,6 +27,13 @@ export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
   }
 
   componentDidMount(): void {
+    if (this.props.noComments) {
+      const comment: CommentMessage = {
+        type: 'comment',
+        comment: 'Entering no comments mode.'
+      }
+      this.props.onMessage(comment)
+    }
     if (!this.webSocket) {
       this.webSocket = this.createWebSocket()
     }
