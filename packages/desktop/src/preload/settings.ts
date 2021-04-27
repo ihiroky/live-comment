@@ -16,7 +16,6 @@ electron.contextBridge.exposeInMainWorld('settingsProxy', {
     return electron.ipcRenderer.invoke(CHANNEL_POST_SETTINGS, settings)
   },
   async getScreenPropsList(): Promise<ScreenProps[]> {
-    console.log('displays', electron.remote.screen.getAllDisplays())
     const options: electron.SourcesOptions = {
       types: ['screen'],
       thumbnailSize: { width: 300, height: 200 }

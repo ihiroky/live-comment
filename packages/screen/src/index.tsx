@@ -12,16 +12,20 @@ ReactDOM.render(
     <BrowserRouter>
       <Route render={(props: RouteComponentProps): ReactNode => {
         const qs = queryString.parse(props.location.search)
-        const duration = Number(qs['duration']) * 1000
-        const url = String(qs['url'])
-        const room = String(qs['room'])
-        const hash = createHash(String(qs['password']))
         console.info('parameters:', qs)
-        return <App duration={duration} url={url} room={room} hash={hash} />
+        const watermark = qs['watermark'] as string
+        const appProps = {
+          duration: Number(qs['duration']) * 1000,
+          url: String(qs['url']),
+          room: String(qs['room']),
+          hash: createHash(String(qs['password'])),
+          watermark: watermark ? JSON.parse(watermark) : undefined
+        }
+        console.log('index watermark', appProps.watermark)
+        return <App { ...appProps } />
       }}
     />
     </BrowserRouter>
-
   </React.StrictMode>,
   document.getElementById('root')
 );
