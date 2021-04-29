@@ -1,5 +1,4 @@
 import React from 'react'
-import './App.css'
 import {
   WebSocketClient
 } from 'common'
@@ -12,7 +11,7 @@ import { Watermark, WatermarkProps } from './Watermark'
 
 // TODO data flow should be server -> comment -> screen. A presentater may want to show comment list.
 
-type AppProps = {
+type ScreenProps = {
   url: string
   room: string
   hash: string
@@ -20,22 +19,21 @@ type AppProps = {
   watermark?: WatermarkProps
 }
 
-export const App: React.FC<AppProps> = (props: React.PropsWithChildren<AppProps>): JSX.Element => {
+export const Screen: React.FC<ScreenProps> = (props: React.PropsWithChildren<ScreenProps>): JSX.Element => {
 
   const [marqueePropsList, setMarqueePropsList] = React.useState<MarqueePropsList>([])
-  // TODO useMemo
-  const [marqueeGenerator] = React.useState<MarqueePropsGenerator>(() =>
+  const marqueeGenerator = React.useMemo((): MarqueePropsGenerator =>
     new MarqueePropsGenerator(props.room, props.hash, props.duration, (mpl: MarqueePropsList): void => {
       setMarqueePropsList(mpl)
-    })
+    }),
+    [props]
   )
 
-  // TODO Need to work with css class .App
+  // TODO Need to work with css class screen
   const marqueeHeight = 64
 
-  console.log('App.watermark', props.watermark)
   return (
-    <div className="App">
+    <div className="screen">
       <MarqueeList
         marquees={marqueePropsList}
         marqueeHeight={marqueeHeight}
@@ -48,7 +46,7 @@ export const App: React.FC<AppProps> = (props: React.PropsWithChildren<AppProps>
       }
       <WebSocketClient
         url={props.url}
-        noComments={props.watermark?.noComments === 'true'}
+        noComments={props.watermark?.noComments}
         onOpen={marqueeGenerator.onOpen}
         onClose={marqueeGenerator.onClose}
         onMessage={marqueeGenerator.onMessage}

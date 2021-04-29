@@ -31,7 +31,7 @@ export type SettingsV1 = Settings & {
     opacity: number
     color: string
     fontSize: string
-    position: string
+    position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
     offset: string
     noComments: boolean
   }

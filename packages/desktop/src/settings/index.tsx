@@ -20,6 +20,7 @@ import {
   GeneralSettingsState,
   WatermarkSettingsState,
   SettingsState,
+  isWatermarkPosition
 } from './types'
 
 type TabPanelProps = {
@@ -108,10 +109,15 @@ const App: React.FC = (): JSX.Element => {
 
   function onWatermarkSettingsUpdate(key: keyof WatermarkSettings, value: string, error: boolean): void {
     const w = settingsState.watermark
-    if (key === 'html' || key === 'color' || key === 'fontSize' || key === 'position' || key === 'offset') {
+    if (key === 'html' || key === 'color' || key === 'fontSize' || key === 'offset') {
       w[key].setValue({ data: value, error })
     } else if (key === 'opacity') {
       w[key].setValue({ data: Number(value), error })
+    } else if (key === 'position') {
+      if (!isWatermarkPosition(value)) {
+        throw new Error(`Unexpeced value of position: ${value}`)
+      }
+      w[key].setValue({ data: value, error })
     } else if (key === 'noComments') {
       w[key].setValue({ data: Boolean(value), error })
     } else {
@@ -144,7 +150,7 @@ const App: React.FC = (): JSX.Element => {
       }
     }
     console.log('onsubmit', settings)
-    window.settingsProxy.postSettings(settings)
+    window.settings.postSettings(settings)
     window.close()
   }
 

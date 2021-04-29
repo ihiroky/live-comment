@@ -3,6 +3,7 @@ import {
   Settings,
   Value,
   ValueState,
+  WatermarkPosition,
   GeneralSettingsState,
   WatermarkSettingsState,
   SettingsState
@@ -34,13 +35,13 @@ export function useSettingsState(): SettingsState {
     opacity: useValue(0.7),
     color: useValue('black'),
     fontSize: useValue('64px'),
-    position: useValue('bottom-right'),
+    position: useValue<WatermarkPosition>('bottom-right'),
     offset: useValue('3%'),
     noComments: useValue<boolean>(false)
   }
 
   React.useEffect((): void => {
-    window.settingsProxy.requestSettings().then((settings: Settings): void => {
+    window.settings.requestSettings().then((settings: Settings): void => {
       console.log('requestSettings', settings)
 
       const g = settings.general

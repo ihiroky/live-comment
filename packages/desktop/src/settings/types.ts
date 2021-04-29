@@ -10,7 +10,7 @@ type ScreenProps = Readonly<{
 
 declare global {
   interface Window {
-    settingsProxy: {
+    settings: {
       requestSettings: () => Promise<SettingsV1>,
       postSettings: (settings: SettingsV1) => Promise<void>,
       getScreenPropsList: () => Promise<ScreenProps[]>
@@ -32,12 +32,27 @@ export type GeneralSettings = Readonly<{
   screen: Value<number>
 }>
 
+export const WatermarkPositions = [
+  'top-left',
+  'top-right',
+  'bottom-left',
+  'bottom-right'
+] as const
+
+export type WatermarkPosition = typeof WatermarkPositions[number]
+
+export function isWatermarkPosition(v: unknown): v is WatermarkPosition {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return WatermarkPositions.includes(v as any)
+}
+
+
 export type WatermarkSettings = Readonly<{
   html: Value<string>
   opacity: Value<number>
   color: Value<string>
   fontSize: Value<string>
-  position: Value<string>
+  position: Value<WatermarkPosition>
   offset: Value<string>,
   noComments: Value<boolean>,
 }>
@@ -61,7 +76,7 @@ export type WatermarkSettingsState = Readonly<{
   opacity: ValueState<number>
   color: ValueState<string>
   fontSize: ValueState<string>
-  position: ValueState<string>
+  position: ValueState<WatermarkPosition>
   offset: ValueState<string>,
   noComments: ValueState<boolean>,
 }>

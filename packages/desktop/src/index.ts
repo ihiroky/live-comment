@@ -116,21 +116,11 @@ function getWorkArea(index: number | undefined): electron.Rectangle {
   return display.workArea
 }
 
-function createScreenUrl(settings: Settings.SettingsV1): string {
-  // TODO Pass parameters like setting form because type check is disabled here
-  return `file://${path.resolve('resources/screen/index.html')}`
-    + `?duration=${settings.general.duration}`
-    + `&url=${settings.general.url}`
-    + `&room=${settings.general.room}`
-    + `&password=${settings.general.password}`
-    + `&watermark=${encodeURIComponent(JSON.stringify(settings.watermark))}`
-}
 
 function applySettings(mainWindow: BrowserWindow, settings: Settings.SettingsV1): void {
   const workArea = getWorkArea(settings.general.screen)
-  const screenUrl = createScreenUrl(settings)
   mainWindow.setBounds(workArea)
-  mainWindow.loadURL(screenUrl)
+  mainWindow.loadURL(`file://${path.resolve('resources/main/index.html')}`)
   mainWindow.webContents.setZoomFactor(Number(settings.general.zoom) / 100)
 }
 
@@ -146,7 +136,9 @@ async function asyncShowMainWindow(): Promise<void> {
     focusable: false,  // Must be set false to enable 'alwaysOnTop' on Linux
     alwaysOnTop: true,
     webPreferences: {
-      contextIsolation: true
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.resolve('dist/js/preload/main.js')
     }
   })
   applySettings(mainWindow_, settings)
@@ -163,6 +155,7 @@ async function asyncShowMainWindow(): Promise<void> {
 function onReady(): void {
   electron.ipcMain.handle(CHANNEL_REQUEST_SETTINGS, asyncLoadSettings)
   electron.ipcMain.handle(CHANNEL_POST_SETTINGS, asyncSaveSettings)
+  electron.ipcMain.handle(CHANNEL_REQUEST_SCREEN_PROPS, asyncLoadSettings)
 
   moveToRootDirectory()
   showTrayIcon()

@@ -60,7 +60,7 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
   const [screenOptions, setScreenOptions] = React.useState<ScreenProps[]>([])
 
   React.useEffect((): void => {
-    window.settingsProxy.getScreenPropsList().then((screenPropsList: ScreenProps[]): void => {
+    window.settings.getScreenPropsList().then((screenPropsList: ScreenProps[]): void => {
       console.log('General screenPropsList', screenPropsList)
       const options = screenPropsList.map((p: ScreenProps): ScreenProps => ({ ...p }))
       console.log('screen options', options)

@@ -13,7 +13,7 @@ type ScreenProps = {
   thumbnailDataUrl: string
 }
 
-electron.contextBridge.exposeInMainWorld('settingsProxy', {
+electron.contextBridge.exposeInMainWorld('settings', {
   requestSettings: (): Promise<SettingsV1> => {
     return electron.ipcRenderer.invoke(CHANNEL_REQUEST_SETTINGS)
   },

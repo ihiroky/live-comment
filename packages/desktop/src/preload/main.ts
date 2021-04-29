@@ -7,8 +7,8 @@ import {
 
 const CHANNEL_REQUEST_SCREEN_PROPS = '#request-screen-props'
 
-electron.contextBridge.exposeInMainWorld('settingsProxy', {
-  requestProps: (): Promise<SettingsV1> => {
+electron.contextBridge.exposeInMainWorld('main', {
+  request: (): Promise<SettingsV1> => {
     return electron.ipcRenderer.invoke(CHANNEL_REQUEST_SCREEN_PROPS)
   },
 })
