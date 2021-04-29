@@ -45,7 +45,7 @@ function isV1(settings: Settings): settings is SettingsV1 {
   return settings.version === CURRENT_VERSION
 }
 
-function setDefaultIfNotExists<T>(key: string, obj: Record<string, T>, defaultObj: Record<string, T>): void {
+function setDefaultIfNotMatchType<T>(key: string, obj: Record<string, T>, defaultObj: Record<string, T>): void {
   const defalutValue = defaultObj[key]
   if (typeof obj[key] !== typeof defalutValue) {
     obj[key] = defalutValue
@@ -58,11 +58,11 @@ export function parse(json: string): SettingsV1 {
   if (isV1(s)) {
     let gkey: keyof SettingsV1['general']
     for (gkey in d.general) {
-      setDefaultIfNotExists(gkey, s.general, d.general)
+      setDefaultIfNotMatchType(gkey, s.general, d.general)
     }
     let wkey: keyof SettingsV1['watermark']
     for (wkey in d.watermark) {
-      setDefaultIfNotExists(wkey, s.watermark, d.watermark)
+      setDefaultIfNotMatchType(wkey, s.watermark, d.watermark)
     }
     return s
   }
