@@ -15,6 +15,9 @@ let tray_: electron.Tray | null = null
 
 function moveToRootDirectory(): void {
   const exePath = electron.app.getPath('exe')
+  if (exePath.endsWith('node_modules/electron/dist/electron')) {
+    return
+  }
   const rootDirectory = (process.platform === 'darwin')
     ? path.dirname(path.dirname(exePath))
     : path.dirname(exePath)
