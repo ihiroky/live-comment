@@ -1,10 +1,12 @@
-interface Settings {
+type Settings = {
   version: string
 }
 
+export const CURRENT_VERSION = '1'
+
 // TODO Retain proper type
 
-interface SettingsV0 extends Settings {
+type SettingsV0 = Settings & {
   version: '0'
   url: string
   room: string
@@ -14,89 +16,67 @@ interface SettingsV0 extends Settings {
   screen: string
 }
 
-export interface SettingsV1 extends Settings {
-  version: '1'
+export type SettingsV1 = Settings & {
+  version: typeof CURRENT_VERSION
   general: {
     url: string
     room: string
     password: string
-    duration: string
-    zoom: string,
-    screen: string
+    duration: number
+    zoom: number,
+    screen: number
   },
   watermark: {
     html: string
-    opacity: string
+    opacity: number
     color: string
     fontSize: string
     position: string
     offset: string
-    noComments: string
+    noComments: boolean
   }
 }
-
-export const CURRENT_VERSION = '0'
 
 function isV0(settings: Settings): settings is SettingsV0 {
   return settings.version === '0'
 }
 
 function isV1(settings: Settings): settings is SettingsV1 {
-  return settings.version === '1'
+  return settings.version === CURRENT_VERSION
 }
 
-export function toRecord(settings: SettingsV1): Record<string, string> {
-  return {
-    url: settings.general.url,
-    room: settings.general.room,
-    password: settings.general.password,
-    duration: settings.general.duration,
-    zoom: settings.general.zoom,
-    screen: settings.general.screen,
-    watermark: JSON.stringify(settings.watermark),
-  }
-}
-
-export function fromRecord(settings: Record<string, string>): SettingsV1 {
-  return {
-    version: '1',
-    general: {
-      url: settings.url,
-      room: settings.room,
-      password: settings.password,
-      duration: settings.duration,
-      zoom: settings.zoom,
-      screen: settings.screen
-    },
-    watermark: JSON.parse(settings.watermark)
+function setDefaultIfNotExists<T>(key: string, obj: Record<string, T>, defaultObj: Record<string, T>): void {
+  if (obj[key] === null || obj[key] === undefined) {
+    obj[key] = defaultObj[key]
   }
 }
 
 export function parse(json: string): SettingsV1 {
   const s = JSON.parse(json)
+  const d = loadDefault()
   if (isV1(s)) {
+    let gkey: keyof SettingsV1['general']
+    for (gkey in d.general) {
+      setDefaultIfNotExists(gkey, s.general, d.general)
+    }
+    let wkey: keyof SettingsV1['watermark']
+    for (wkey in d.watermark) {
+      setDefaultIfNotExists(wkey, s.watermark, d.watermark)
+    }
     return s
   }
   if (isV0(s)) {
     return {
       version: '1',
       general: {
-        url: s.url ?? 'ws://localhost:8080',
-        room: s.room ?? '',
-        password: s.password ?? '',
-        duration: s.duration ?? '7',
-        zoom: s.zoom ?? '100',
-        screen: s.screen ?? ''
+        url: s.url ?? d.general.url,
+        room: s.room ?? d.general.room,
+        password: s.password ?? d.general.password,
+        duration: !isNaN(Number(s.duration)) ? Number(s.duration) : d.general.duration,
+        zoom: !isNaN(Number(s.zoom)) ? Number(s.zoom) : d.general.zoom,
+        screen: !isNaN(Number(s.screen)) ? Number(s.screen) : d.general.screen
       },
-      watermark: {
-        html: '',
-        opacity: '0.7',
-        color: '#333333',
-        fontSize: '64px',
-        position: 'bottom-right',
-        offset: '3%',
-        noComments: 'false',
-      }
+      watermark: d.watermark
     }
   }
   return loadDefault()
@@ -109,18 +89,18 @@ export function loadDefault(): SettingsV1 {
       url: 'ws://localhost:8080',
       room: '',
       password: '',
-      duration: '7',
-      zoom: '100',
-      screen: ''
+      duration: 7,
+      zoom: 100,
+      screen: 0
     },
     watermark: {
       html: '',
-      opacity: '0.7',
+      opacity: 0.7,
       color: '#333333',
       fontSize: '64px',
       position: 'bottom-right',
       offset: '3%',
-      noComments: 'false'
+      noComments: false
     }
   }
 }

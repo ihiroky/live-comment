@@ -5,6 +5,7 @@ import * as Settings from './Settings'
 
 const CHANNEL_REQUEST_SETTINGS = '#request-settings'
 const CHANNEL_POST_SETTINGS = '#post-settings'
+const CHANNEL_REQUEST_SCREEN_PROPS = '#request-screen-props'
 
 let mainWindow_: electron.BrowserWindow | null = null
 let settingWindow_: electron.BrowserWindow | null = null
@@ -37,7 +38,7 @@ async function asyncGetUserConfigPromise(checkIfExists: boolean): Promise<fs.Pat
   return userConfigPath
 }
 
-async function asyncLoadSettings(): Promise<Record<string, string>> {
+async function asyncLoadSettings(): Promise<Settings.SettingsV1> {
   console.debug(CHANNEL_REQUEST_SETTINGS)
   try {
     const userConfigPath: fs.PathLike = await asyncGetUserConfigPromise(true)
@@ -47,24 +48,23 @@ async function asyncLoadSettings(): Promise<Record<string, string>> {
       settings.general.url = process.argv[1]
     }
     console.debug(CHANNEL_REQUEST_SETTINGS, settings)
-    return Settings.toRecord(settings)
+    return settings
   } catch (e: unknown) {
     console.warn(`Failed to load user configuration file. Load default settings.`, e)
-    return Settings.toRecord(Settings.loadDefault())
+    return Settings.loadDefault()
   }
 }
 
-async function asyncSaveSettings(e: electron.IpcMainInvokeEvent, settings: Record<string, string>): Promise<void> {
+async function asyncSaveSettings(e: electron.IpcMainInvokeEvent, settings: Settings.SettingsV1): Promise<void> {
   console.debug(CHANNEL_POST_SETTINGS, settings)
   try {
-    const typed = Settings.fromRecord(settings)
     const userConfigPath: fs.PathLike = await asyncGetUserConfigPromise(false)
-    const contents = JSON.stringify(typed)
+    const contents = JSON.stringify(settings)
     await fs.promises.writeFile(userConfigPath, contents, { encoding: 'utf8', mode: 0o600 })
     console.log(`Screen settings updated: ${contents}`)  // TODO Drop password?
 
     if (mainWindow_) {
-      applySettings(mainWindow_, typed)
+      applySettings(mainWindow_, settings)
     }
   } catch (e: unknown) {
     console.warn('Failed to save user configuration.', e)
@@ -127,7 +127,7 @@ function createScreenUrl(settings: Settings.SettingsV1): string {
 }
 
 function applySettings(mainWindow: BrowserWindow, settings: Settings.SettingsV1): void {
-  const workArea = getWorkArea(parseInt(settings.general.screen))
+  const workArea = getWorkArea(settings.general.screen)
   const screenUrl = createScreenUrl(settings)
   mainWindow.setBounds(workArea)
   mainWindow.loadURL(screenUrl)
@@ -149,7 +149,7 @@ async function asyncShowMainWindow(): Promise<void> {
       contextIsolation: true
     }
   })
-  applySettings(mainWindow_, Settings.fromRecord(settings))
+  applySettings(mainWindow_, settings)
   mainWindow_.setIgnoreMouseEvents(true)
   mainWindow_.webContents.openDevTools({ mode: 'detach' })
   mainWindow_.once('ready-to-show', (): void  => {

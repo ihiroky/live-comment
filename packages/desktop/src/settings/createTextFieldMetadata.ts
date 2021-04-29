@@ -1,28 +1,28 @@
-import { Field } from './hooks'
+import { Value } from './types'
 
-export type TextFieldMetadata<T> = {
+export type TextFieldMetadata<T, V> = {
   name: keyof T,
   label: string,
   rowsMax: number,
   validate: (value: string) => boolean,
   errorMessage: string
-  field: Field
+  value: Value<V>
 }
 
-export function createTextFieldMetadata<T>(
+export function createTextFieldMetadata<T, V>(
   name: keyof T,
-  field: Field,
+  value: Value<V>,
   label: string,
   rowsMax: number,
   validate: (value: string) => boolean,
   errorMessage: string
-): TextFieldMetadata<T> {
+): TextFieldMetadata<T, V> {
   return {
     name,
     label,
     rowsMax,
     validate,
     errorMessage,
-    field
+    value
   }
 }
