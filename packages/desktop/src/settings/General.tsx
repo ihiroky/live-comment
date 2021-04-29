@@ -6,7 +6,7 @@ import {
   InputLabel,
   Select
 } from '@material-ui/core'
-import { GeneralSettings } from './hooks'
+import { GeneralSettings } from './types'
 import {
   TextFieldMetadata,
   createTextFieldMetadata
@@ -15,16 +15,6 @@ import {
 type ScreenProps = {
   name: string
   thumbnailDataUrl: string
-}
-
-declare global {
-  interface Window {
-    settingsProxy: {
-      requestSettings: () => Promise<Record<string, string>>,
-      postSettings: (settings: Record<string, string>) => Promise<void>,
-      getScreenPropsList: () => Promise<ScreenProps[]>
-    }
-  }
 }
 
 const useStyles = makeStyles((theme: Theme) => (
@@ -50,7 +40,7 @@ const useStyles = makeStyles((theme: Theme) => (
 ))
 
 
-interface GeneralProps extends GeneralSettings {
+type GeneralProps = GeneralSettings & {
   onUpdate(name: keyof GeneralSettings, value: string, error: boolean): void
 }
 
@@ -60,7 +50,7 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
   const validatePassword = React.useCallback((v: string): boolean => v.length > 0, [])
   const validateDuration = React.useCallback((v: string): boolean => !isNaN(Number(v)) && Number(v) >= 3, [])
   const validateZoom = React.useCallback((v: string): boolean => !isNaN(Number(v)) && Number(v) >= 30 && Number(v) <= 500, [])
-  const textFields: TextFieldMetadata<GeneralSettings>[] = [
+  const textFields: TextFieldMetadata<GeneralSettings, string | number>[] = [
     createTextFieldMetadata('url', props.url, 'Server URL', 1, validateUrl, 'Input URL like "wss://hoge/app".'),
     createTextFieldMetadata('room', props.room, 'Room', 1, validateRoom, 'Input room name.'),
     createTextFieldMetadata('password', props.password, 'Password', 1, validatePassword, 'Input password.'),
@@ -70,7 +60,7 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
   const [screenOptions, setScreenOptions] = React.useState<ScreenProps[]>([])
 
   React.useEffect((): void => {
-    window.settingsProxy.getScreenPropsList().then((screenPropsList: ScreenProps[]): void => {
+    window.settings.getScreenPropsList().then((screenPropsList: ScreenProps[]): void => {
       console.log('General screenPropsList', screenPropsList)
       const options = screenPropsList.map((p: ScreenProps): ScreenProps => ({ ...p }))
       console.log('screen options', options)
@@ -80,7 +70,7 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
 
   function onTextFieldChange(e: React.ChangeEvent<HTMLInputElement>): void {
     console.log(e.target.name, e.target.value)
-    const field = textFields.find((f: TextFieldMetadata<GeneralSettings>): boolean => f.name === e.target.name)
+    const field = textFields.find((f: TextFieldMetadata<GeneralSettings, unknown>): boolean => f.name === e.target.name)
     if (!field) {
       throw new Error(`Unexpected field: ${e.target.name}`)
     }
@@ -100,15 +90,15 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
     <div className={classes.root}>
       <div className={classes.fields}>
         {
-          textFields.map((f: TextFieldMetadata<GeneralSettings>): React.ReactNode => (
+          textFields.map((f: TextFieldMetadata<GeneralSettings, unknown>): React.ReactNode => (
             <TextField
               fullWidth
               key={f.name}
               name={f.name}
               label={f.label}
-              value={f.field.value}
-              error={f.field.error}
-              helperText={f.field.error ? f.errorMessage : ''}
+              value={f.value.data}
+              error={f.value.error}
+              helperText={f.value.error ? f.errorMessage : ''}
               onChange={onTextFieldChange}
             />
           ))
@@ -121,12 +111,12 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
               labelId="screen-select-label"
               id="screen-select"
               name="screen-name"
-              value={props.screen.value}
+              value={props.screen.data}
               onChange={onSelectChange}
             >
               {
                 screenOptions.map((p: ScreenProps, i: number): React.ReactNode => (
-                  <option key={p.name} value={String(i)}>{p.name}</option>
+                  <option key={p.name} value={i}>{p.name}</option>
                 ))
               }
             </Select>
@@ -134,7 +124,7 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
           }
           <img
             style={{ paddingLeft: '10px' }}
-            src={screenOptions.find((p: ScreenProps, i: number): boolean => String(i) === props.screen.value)?.thumbnailDataUrl}
+            src={screenOptions.find((p: ScreenProps, i: number): boolean => i === props.screen.data)?.thumbnailDataUrl}
           />
         </div>
       </div>

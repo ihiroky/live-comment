@@ -1,14 +1,14 @@
 import React from 'react'
 import dompurify from 'dompurify'
 
-export interface WatermarkProps {
+export type WatermarkProps = {
   html: string
-  opacity?: number
-  color?: string
-  fontSize?: string
-  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
-  offset?: string
-  noComments?: 'true' | 'false'
+  opacity: number
+  color: string
+  fontSize: string
+  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+  offset: string
+  noComments: boolean
 }
 
 

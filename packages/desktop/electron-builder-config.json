@@ -7,7 +7,6 @@
     "dist/js/**/*.js"
   ],
   "extraFiles": [
-    { "from": "../screen/build/", "to": "./resources/screen/" },
     "resources/**",
     "dist/js/preload/*.js"
   ],

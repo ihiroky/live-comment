@@ -1,5 +1,10 @@
 import electron from 'electron'
 
+// Only type definition can be imported.
+import {
+  SettingsV1
+} from '../Settings'
+
 const CHANNEL_REQUEST_SETTINGS = '#request-settings'
 const CHANNEL_POST_SETTINGS = '#post-settings'
 
@@ -8,11 +13,11 @@ type ScreenProps = {
   thumbnailDataUrl: string
 }
 
-electron.contextBridge.exposeInMainWorld('settingsProxy', {
-  requestSettings: (): Promise<Record<string, string>> => {
+electron.contextBridge.exposeInMainWorld('settings', {
+  requestSettings: (): Promise<SettingsV1> => {
     return electron.ipcRenderer.invoke(CHANNEL_REQUEST_SETTINGS)
   },
-  postSettings: (settings: Record<string, string>): Promise<void> => {
+  postSettings: (settings: SettingsV1): Promise<void> => {
     return electron.ipcRenderer.invoke(CHANNEL_POST_SETTINGS, settings)
   },
   async getScreenPropsList(): Promise<ScreenProps[]> {

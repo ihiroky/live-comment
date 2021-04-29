@@ -1,131 +1,65 @@
 import React from 'react'
+import {
+  Settings,
+  Value,
+  ValueState,
+  WatermarkPosition,
+  GeneralSettingsState,
+  WatermarkSettingsState,
+  SettingsState
+} from './types'
 
-type ScreenProps = {
-  name: string
-  thumbnailDataUrl: string
-}
-
-declare global {
-  interface Window {
-    settingsProxy: {
-      requestSettings: () => Promise<Record<string, string>>,
-      postSettings: (settings: Record<string, string>) => Promise<void>,
-      getScreenPropsList: () => Promise<ScreenProps[]>
-    }
-  }
-}
-
-export type Field = {
-  value: string
-  error: boolean
-}
-
-export interface GeneralSettings {
-  url: Field
-  room: Field
-  password: Field
-  duration: Field
-  zoom: Field
-  screen: Field
-}
-
-export interface WatermarkSettings {
-  html: Field
-  opacity: Field
-  color: Field
-  fontSize: Field
-  position: Field
-  offset: Field,
-  noComments: Field,
-}
-
-type FieldState = {
-  field: Field,
-  setField: React.Dispatch<React.SetStateAction<Field>>
-}
-
-function useFieldValue(): FieldState {
-  const [field, setField] = React.useState<Field>({
-    value: '',
+function useValue<T>(initialValue: T): ValueState<T> {
+  const [value, setValue] = React.useState<Value<T>>({
+    data: initialValue,
     error: false
   })
   return {
-    field,
-    setField
+    value,
+    setValue
   }
 }
 
-type GeneralFieldsState = {
-  [key in keyof GeneralSettings]: FieldState
-}
-
-type WatermarkFieldsState = {
-  [key in keyof WatermarkSettings]: FieldState
-}
-
-export type SettingsState = {
-  general: GeneralFieldsState
-  watermark: WatermarkFieldsState
-}
-
-export function toGeneralSettings(state: GeneralFieldsState): GeneralSettings {
-  return {
-    url: state.url.field,
-    room: state.room.field,
-    password: state.password.field,
-    duration: state.duration.field,
-    zoom: state.zoom.field,
-    screen: state.screen.field
-  }
-}
-
-export function toWatermarkSettings(state: WatermarkFieldsState): WatermarkSettings {
-  return {
-    html: state.html.field,
-    opacity: state.opacity.field,
-    color: state.color.field,
-    fontSize: state.fontSize.field,
-    position: state.position.field,
-    offset: state.offset.field,
-    noComments: state.noComments.field
-  }
-}
 
 export function useSettingsState(): SettingsState {
-  const general: GeneralFieldsState = {
-    url: useFieldValue(),
-    room: useFieldValue(),
-    password: useFieldValue(),
-    duration: useFieldValue(),
-    zoom: useFieldValue(),
-    screen: useFieldValue()
+  const general: GeneralSettingsState = {
+    url: useValue(''),
+    room: useValue(''),
+    password: useValue(''),
+    duration: useValue(7),
+    zoom: useValue(100),
+    screen: useValue(0)
   }
-  const watermark: WatermarkFieldsState = {
-    html: useFieldValue(),
-    opacity: useFieldValue(),
-    color: useFieldValue(),
-    fontSize: useFieldValue(),
-    position: useFieldValue(),
-    offset: useFieldValue(),
-    noComments: useFieldValue()
+  const watermark: WatermarkSettingsState = {
+    html: useValue(''),
+    opacity: useValue(0.7),
+    color: useValue('black'),
+    fontSize: useValue('64px'),
+    position: useValue<WatermarkPosition>('bottom-right'),
+    offset: useValue('3%'),
+    noComments: useValue<boolean>(false)
   }
 
   React.useEffect((): void => {
-    window.settingsProxy.requestSettings().then((settings: Record<string, string>): void => {
+    window.settings.requestSettings().then((settings: Settings): void => {
       console.log('requestSettings', settings)
-      let gkey: keyof GeneralFieldsState
-      for (gkey in general) {
-        const state = general[gkey]
-        state.setField({ value: settings[gkey], error: false })
-        console.log(gkey, settings[gkey])
-      }
-      let wkey: keyof WatermarkFieldsState
-      const wm = JSON.parse(settings.watermark)
-      for (wkey in watermark) {
-        const state = watermark[wkey]
-        state.setField({ value: wm[wkey], error: false })
-        console.log(wkey, wm[wkey])
-      }
+
+      const g = settings.general
+      general.url.setValue({ data: g.url, error: false })
+      general.room.setValue({ data: g.room, error: false })
+      general.password.setValue({ data: g.password, error: false })
+      general.duration.setValue({ data: g.duration, error: false })
+      general.zoom.setValue({ data: g.zoom, error: false })
+      general.screen.setValue({ data: g.screen, error: false })
+
+      const w = settings.watermark
+      watermark.html.setValue({ data: w.html, error: false })
+      watermark.opacity.setValue({ data: w.opacity, error: false })
+      watermark.color.setValue({ data: w.color, error: false })
+      watermark.fontSize.setValue({ data: w.fontSize, error: false })
+      watermark.position.setValue({ data: w.position, error: false })
+      watermark.offset.setValue({ data: w.offset, error: false})
+      watermark.noComments.setValue({ data: w.noComments, error: false })
     })
   }, [])
 

@@ -12,18 +12,18 @@ import {
 } from '@material-ui/core'
 import { General } from './General'
 import { Watermark } from './Watermark'
+import { useSettingsState } from './hooks'
 import {
+  Settings,
   GeneralSettings,
-  toGeneralSettings,
   WatermarkSettings,
-  toWatermarkSettings,
+  GeneralSettingsState,
+  WatermarkSettingsState,
   SettingsState,
-  useSettingsState
-} from './hooks'
+  isWatermarkPosition
+} from './types'
 
-import { CURRENT_VERSION } from '../Settings'
-
-interface TabPanelProps {
+type TabPanelProps = {
   children?: React.ReactNode
   index: number,
   value: number
@@ -62,10 +62,32 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }))
 
+function toGeneralSettings(state: GeneralSettingsState): GeneralSettings {
+  return {
+    url: state.url.value,
+    room: state.room.value,
+    password: state.password.value,
+    duration: state.duration.value,
+    zoom: state.zoom.value,
+    screen: state.screen.value
+  }
+}
+
+function toWatermarkSettings(state: WatermarkSettingsState): WatermarkSettings {
+  return {
+    html: state.html.value,
+    opacity: state.opacity.value,
+    color: state.color.value,
+    fontSize: state.fontSize.value,
+    position: state.position.value,
+    offset: state.offset.value,
+    noComments: state.noComments.value
+  }
+}
+
 const App: React.FC = (): JSX.Element => {
 
   const settingsState: SettingsState = useSettingsState()
-
   const [value, setValue] = React.useState<number>(0)
 
   // eslint-disable-next-line @typescript-eslint/ban-types
@@ -75,47 +97,73 @@ const App: React.FC = (): JSX.Element => {
   }
 
   function onGeneralSettingsUpdate(key: keyof GeneralSettings, value: string, error: boolean): void {
-    const field = settingsState.general[key]
-    field.setField({ value, error })
+    const g = settingsState.general
+    if (key === 'url' || key === 'room' || key === 'password') {
+      g[key].setValue({ data: value, error })
+    } else if (key === 'duration' || key === 'zoom' || key === 'screen') {
+      g[key].setValue({ data: Number(value), error })
+    } else {
+      throw new Error(`Unexpected key: ${key}`)
+    }
   }
 
   function onWatermarkSettingsUpdate(key: keyof WatermarkSettings, value: string, error: boolean): void {
-    const field = settingsState.watermark[key]
-    console.log(key, value, error, field.field.value, field.field.error)
-    field.setField({ value, error })
+    const w = settingsState.watermark
+    if (key === 'html' || key === 'color' || key === 'fontSize' || key === 'offset') {
+      w[key].setValue({ data: value, error })
+    } else if (key === 'opacity') {
+      w[key].setValue({ data: Number(value), error })
+    } else if (key === 'position') {
+      if (!isWatermarkPosition(value)) {
+        throw new Error(`Unexpeced value of position: ${value}`)
+      }
+      w[key].setValue({ data: value, error })
+    } else if (key === 'noComments') {
+      w[key].setValue({ data: Boolean(value), error })
+    } else {
+      throw new Error(`Unexpected key: ${key}`)
+    }
   }
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>): void {
     e.preventDefault()
-    const settings: Record<string, string> = {
-      version: CURRENT_VERSION,
+    const g = settingsState.general
+    const w = settingsState.watermark
+    const settings: Settings = {
+      version: '1',
+      general: {
+        url: g.url.value.data,
+        room: g.room.value.data,
+        password: g.password.value.data,
+        duration: g.duration.value.data,
+        zoom: g.zoom.value.data,
+        screen: g.screen.value.data
+      },
+      watermark: {
+        html: w.html.value.data,
+        opacity: w.opacity.value.data,
+        color: w.color.value.data,
+        fontSize: w.fontSize.value.data,
+        position: w.position.value.data,
+        offset: w.offset.value.data,
+        noComments: w.noComments.value.data
+      }
     }
-    let gkey: keyof GeneralSettings
-    for (gkey in settingsState.general) {
-      settings[gkey] = settingsState.general[gkey].field.value
-    }
-    let wkey: keyof WatermarkSettings
-    const wm: Record<string, string> = {}
-    for (wkey in settingsState.watermark) {
-      wm[wkey] = settingsState.watermark[wkey].field.value
-    }
-    settings.watermark = JSON.stringify(wm)
-
     console.log('onsubmit', settings)
-    window.settingsProxy.postSettings(settings)
+    window.settings.postSettings(settings)
     window.close()
   }
 
   function hasError(): boolean {
     let gkey: keyof GeneralSettings
     for (gkey in settingsState.general) {
-      if (settingsState.general[gkey].field.error) {
+      if (settingsState.general[gkey].value.error) {
         return true
       }
     }
     let wkey: keyof WatermarkSettings
     for (wkey in settingsState.watermark) {
-      if (settingsState.watermark[wkey].field.error) {
+      if (settingsState.watermark[wkey].value.error) {
         return true
       }
     }
@@ -124,6 +172,7 @@ const App: React.FC = (): JSX.Element => {
 
   const classes = useStyles();
 
+  // TODO fix TabPanel height
   return (
     <form className={classes.root} onSubmit={onSubmit}>
       <AppBar position="static">
