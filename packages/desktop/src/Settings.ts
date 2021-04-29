@@ -46,8 +46,9 @@ function isV1(settings: Settings): settings is SettingsV1 {
 }
 
 function setDefaultIfNotExists<T>(key: string, obj: Record<string, T>, defaultObj: Record<string, T>): void {
-  if (obj[key] === null || obj[key] === undefined) {
-    obj[key] = defaultObj[key]
+  const defalutValue = defaultObj[key]
+  if (typeof obj[key] !== typeof defalutValue) {
+    obj[key] = defalutValue
   }
 }
 
