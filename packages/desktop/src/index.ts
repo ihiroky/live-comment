@@ -47,9 +47,6 @@ async function asyncLoadSettings(): Promise<Settings.SettingsV1> {
     const userConfigPath: fs.PathLike = await asyncGetUserConfigPromise(true)
     const json = await fs.promises.readFile(userConfigPath, { encoding: 'utf8' })
     const settings = Settings.parse(json)
-    if (process.argv[1]) {
-      settings.general.url = process.argv[1]
-    }
     console.debug(CHANNEL_REQUEST_SETTINGS, settings)
     return settings
   } catch (e: unknown) {
