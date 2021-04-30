@@ -26,13 +26,13 @@ export function useSettingsState(): SettingsState {
     url: useValue(''),
     room: useValue(''),
     password: useValue(''),
-    duration: useValue(7),
-    zoom: useValue(100),
+    duration: useValue('7'),
+    zoom: useValue('100'),
     screen: useValue(0)
   }
   const watermark: WatermarkSettingsState = {
     html: useValue(''),
-    opacity: useValue(0.7),
+    opacity: useValue('0.7'),
     color: useValue('black'),
     fontSize: useValue('64px'),
     position: useValue<WatermarkPosition>('bottom-right'),
@@ -48,13 +48,13 @@ export function useSettingsState(): SettingsState {
       general.url.setValue({ data: g.url, error: false })
       general.room.setValue({ data: g.room, error: false })
       general.password.setValue({ data: g.password, error: false })
-      general.duration.setValue({ data: g.duration, error: false })
-      general.zoom.setValue({ data: g.zoom, error: false })
+      general.duration.setValue({ data: String(g.duration), error: false })
+      general.zoom.setValue({ data: String(g.zoom), error: false })
       general.screen.setValue({ data: g.screen, error: false })
 
       const w = settings.watermark
       watermark.html.setValue({ data: w.html, error: false })
-      watermark.opacity.setValue({ data: w.opacity, error: false })
+      watermark.opacity.setValue({ data: String(w.opacity), error: false })
       watermark.color.setValue({ data: w.color, error: false })
       watermark.fontSize.setValue({ data: w.fontSize, error: false })
       watermark.position.setValue({ data: w.position, error: false })

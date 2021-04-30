@@ -27,8 +27,8 @@ export type GeneralSettings = Readonly<{
   url: Value<string>
   room: Value<string>
   password: Value<string>
-  duration: Value<number>
-  zoom: Value<number>
+  duration: Value<string>
+  zoom: Value<string>
   screen: Value<number>
 }>
 
@@ -49,7 +49,7 @@ export function isWatermarkPosition(v: unknown): v is WatermarkPosition {
 
 export type WatermarkSettings = Readonly<{
   html: Value<string>
-  opacity: Value<number>
+  opacity: Value<string>
   color: Value<string>
   fontSize: Value<string>
   position: Value<WatermarkPosition>
@@ -66,14 +66,14 @@ export type GeneralSettingsState = Readonly<{
   url: ValueState<string>
   room: ValueState<string>
   password: ValueState<string>
-  duration: ValueState<number>
-  zoom: ValueState<number>
+  duration: ValueState<string>
+  zoom: ValueState<string>
   screen: ValueState<number>
 }>
 
 export type WatermarkSettingsState = Readonly<{
   html: ValueState<string>
-  opacity: ValueState<number>
+  opacity: ValueState<string>
   color: ValueState<string>
   fontSize: ValueState<string>
   position: ValueState<WatermarkPosition>

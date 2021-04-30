@@ -95,6 +95,7 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
               fullWidth
               key={f.name}
               name={f.name}
+              type={f.name === 'password' ? 'password' : 'text'}
               label={f.label}
               value={f.value.data}
               error={f.value.error}
