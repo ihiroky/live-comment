@@ -19,7 +19,10 @@ function plugins() {
       'process.env.NODE_ENV': `"${env}"`,
       'preventAssignment': true
     }),
-    nodeResolve({ browser: true }),
+    nodeResolve({
+      browser: true,
+      preferBuiltins: false
+    }),
     commonjs(),
     env === 'production' && terser(),
   ]
