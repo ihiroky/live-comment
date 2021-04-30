@@ -1,6 +1,6 @@
 {
   "name": "server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "live-comment server",
   "main": "dist/index.js",
   "repository": "https://github.com/ihiroky/live-comment/server",
