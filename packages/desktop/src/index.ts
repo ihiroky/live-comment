@@ -119,6 +119,14 @@ function getWorkArea(index: number | undefined): electron.Rectangle {
 
 function applySettings(mainWindow: BrowserWindow, settings: Settings.SettingsV1): void {
   const workArea = getWorkArea(settings.general.screen)
+  // Windows may not render the window if workArea is used directly.
+  const adjustedWorkArea: electron.Rectangle = {
+    x: workArea.x,
+    y: workArea.y,
+    width: workArea.width,
+    height: workArea.height - 1
+  }
+  mainWindow.setBounds(adjustedWorkArea)
   mainWindow.setBounds(workArea)
   mainWindow.loadURL(`file://${path.resolve('resources/main/index.html')}`)
   mainWindow.webContents.setZoomFactor(Number(settings.general.zoom) / 100)
