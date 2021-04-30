@@ -143,7 +143,9 @@ async function asyncShowMainWindow(): Promise<void> {
   })
   applySettings(mainWindow_, settings)
   mainWindow_.setIgnoreMouseEvents(true)
-  mainWindow_.webContents.openDevTools({ mode: 'detach' })
+  if (process.argv.includes('--open-dev-tools')) {
+    mainWindow_.webContents.openDevTools({ mode: 'detach' })
+  }
   mainWindow_.once('ready-to-show', (): void  => {
     mainWindow_?.show()
   })
