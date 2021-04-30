@@ -98,9 +98,9 @@ const App: React.FC = (): JSX.Element => {
 
   function onGeneralSettingsUpdate(key: keyof GeneralSettings, value: string, error: boolean): void {
     const g = settingsState.general
-    if (key === 'url' || key === 'room' || key === 'password') {
+    if (key === 'url' || key === 'room' || key === 'password' || key === 'duration' || key === 'zoom') {
       g[key].setValue({ data: value, error })
-    } else if (key === 'duration' || key === 'zoom' || key === 'screen') {
+    } else if (key === 'screen') {
       g[key].setValue({ data: Number(value), error })
     } else {
       throw new Error(`Unexpected key: ${key}`)
@@ -109,10 +109,8 @@ const App: React.FC = (): JSX.Element => {
 
   function onWatermarkSettingsUpdate(key: keyof WatermarkSettings, value: string, error: boolean): void {
     const w = settingsState.watermark
-    if (key === 'html' || key === 'color' || key === 'fontSize' || key === 'offset') {
+    if (key === 'html' || key === 'opacity' || key === 'color' || key === 'fontSize' || key === 'offset') {
       w[key].setValue({ data: value, error })
-    } else if (key === 'opacity') {
-      w[key].setValue({ data: Number(value), error })
     } else if (key === 'position') {
       if (!isWatermarkPosition(value)) {
         throw new Error(`Unexpeced value of position: ${value}`)
@@ -135,13 +133,13 @@ const App: React.FC = (): JSX.Element => {
         url: g.url.value.data,
         room: g.room.value.data,
         password: g.password.value.data,
-        duration: g.duration.value.data,
-        zoom: g.zoom.value.data,
+        duration: Number(g.duration.value.data),
+        zoom: Number(g.zoom.value.data),
         screen: g.screen.value.data
       },
       watermark: {
         html: w.html.value.data,
-        opacity: w.opacity.value.data,
+        opacity: Number(w.opacity.value.data),
         color: w.color.value.data,
         fontSize: w.fontSize.value.data,
         position: w.position.value.data,
