@@ -19,7 +19,7 @@
     "typescript": "^4.2.3"
   },
   "dependencies": {
-    "common": "0.1.0",
+    "common": "0.1.1",
     "tslib": "^2.0.0",
     "uuid": "^8.3.0",
     "ws": "^7.3.1"

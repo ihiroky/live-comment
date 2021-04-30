@@ -1,5 +1,5 @@
 {
-  "name": "live-comment-desktop",
+  "name": "live-comment",
   "version": "0.1.1",
   "description": "live-comment desktop",
   "main": "dist/js/index.js",
@@ -37,7 +37,7 @@
     "react-dom": "^17.0.2",
     "rollup": "^2.44.0",
     "rollup-plugin-terser": "^7.0.2",
-    "screen": "0.1.0",
+    "screen": "0.1.1",
     "typescript": "^4.2.3"
   }
 }
