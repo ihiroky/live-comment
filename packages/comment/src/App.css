@@ -1,7 +1,7 @@
 .App {
   width: 100vw;
   height: 100vh;
-  background-color: lightsteelblue;
+  background-color: #ccffcc;
   padding: 0px;
   margin: 0px;
   display: flex;
@@ -27,7 +27,7 @@
 
 .message {
   text-align: left;
-  background-color: lightskyblue;
+  background-color: #99ffcc;
   border-radius: 6px;
   padding: 10px;
   margin: 10px 20px;
