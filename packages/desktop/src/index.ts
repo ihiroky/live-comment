@@ -108,7 +108,7 @@ function showTrayIcon(): void {
     { label: 'Settings', click: showSettingWindow },
     { label: 'Quit', role: 'quit' }
   ])
-  tray_ = new electron.Tray('resources/icon.png')
+  tray_ = new electron.Tray(path.resolve('resources/icon.png'))
   tray_.setToolTip(electron.app.name)
   tray_.setContextMenu(menu)
 }
