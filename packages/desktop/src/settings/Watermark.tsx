@@ -13,6 +13,7 @@ import {
   TextFieldMetadata,
   createTextFieldMetadata
 } from './createTextFieldMetadata'
+import { getLogger } from 'common'
 
 const useStyles = makeStyles((theme: Theme) => ({
   root: {
@@ -26,9 +27,12 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }))
 
+const log = getLogger('settings/Watermark')
+
 type WatermarkProps = WatermarkSettings & {
   onUpdate(key: keyof WatermarkSettings, value: string, error: boolean): void
 }
+
 
 export const Watermark: React.FC<React.PropsWithChildren<WatermarkProps>> = (props: WatermarkProps): JSX.Element => {
   const validateOpacity = (v: string): boolean => Number(v) >= 0 && Number(v) <= 1
@@ -44,23 +48,23 @@ export const Watermark: React.FC<React.PropsWithChildren<WatermarkProps>> = (pro
   ]
 
   function onTextFieldChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    console.log(e.target.name, e.target.value)
+    log.debug('[onTextFeildChange]', e.target.name, e.target.value)
     const field = textFields.find((f: TextFieldMetadata<WatermarkSettings, unknown>): boolean => f.name === e.target.name)
     if (!field) {
       throw new Error(`Unexpected field: ${e.target.name}`)
     }
     const error = !field.validate(e.target.value)
-    console.log('watermark error', error)
+    log.debug('[onTextFieldChange] Watermark error', error)
     props.onUpdate(field.name, e.target.value, error)
   }
 
   function onSelectChange(e: React.ChangeEvent<{ name?: string, value: unknown }>): void {
-    console.log(e.target.name, '-', e.target.value)
+    log.debug('[onSelectChange]', e.target.name, '-', e.target.value)
     props.onUpdate('position', String(e.target.value), false)
   }
 
   function onCheckboxChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    console.log(e.target.name, '-', e.target.checked)
+    log.debug('[onCheckboxChange]', e.target.name, '-', e.target.checked)
     props.onUpdate('noComments', String(e.target.checked), false)
   }
 

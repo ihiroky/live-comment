@@ -1,11 +1,13 @@
 const Errors = [
   'ACN_FAILED',
+  'TOO_MANY_PENDING_MESSAGES',
 ] as const
 
 type Error = typeof Errors[number]
 
 export const CloseCode = {
-  ACN_FAILED: 4000
+  ACN_FAILED: 4000,
+  TOO_MANY_PENDING_MESSAGES: 4001
 }
 
 export interface Message {

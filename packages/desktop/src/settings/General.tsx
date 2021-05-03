@@ -11,11 +11,14 @@ import {
   TextFieldMetadata,
   createTextFieldMetadata
 } from './createTextFieldMetadata'
+import { getLogger } from 'common'
 
 type ScreenProps = {
   name: string
   thumbnailDataUrl: string
 }
+
+const log = getLogger('settings/General')
 
 const useStyles = makeStyles((theme: Theme) => (
   {
@@ -61,15 +64,15 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
 
   React.useEffect((): void => {
     window.settings.getScreenPropsList().then((screenPropsList: ScreenProps[]): void => {
-      console.log('General screenPropsList', screenPropsList)
+      log.debug('[getScreenPropsList] General screenPropsList', screenPropsList)
       const options = screenPropsList.map((p: ScreenProps): ScreenProps => ({ ...p }))
-      console.log('screen options', options)
+      log.debug('[getScreenPropsList] screen options', options)
       setScreenOptions(options)
     })
   }, [])
 
   function onTextFieldChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    console.log(e.target.name, e.target.value)
+    log.debug('[onTextFieldChanged]', e.target.name, e.target.value)
     const field = textFields.find((f: TextFieldMetadata<GeneralSettings, unknown>): boolean => f.name === e.target.name)
     if (!field) {
       throw new Error(`Unexpected field: ${e.target.name}`)
@@ -79,7 +82,7 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
   }
 
   function onSelectChange(e: React.ChangeEvent<{ name?: string, value: unknown }>): void {
-    console.log(e.target.name, '-', e.target.value)
+    log.debug('[onSelectChanged]', e.target.name, e.target.value)
     const strValue = String(e.target.value)
     const numValue = Number(e.target.value)
     props.onUpdate('screen', strValue, !isNaN(numValue))

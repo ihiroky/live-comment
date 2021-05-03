@@ -2,10 +2,13 @@ import path from 'path'
 import fs from 'fs'
 import electron, { BrowserWindow } from 'electron'
 import * as Settings from './Settings'
+import { getLogger } from 'common'
 
 const CHANNEL_REQUEST_SETTINGS = '#request-settings'
 const CHANNEL_POST_SETTINGS = '#post-settings'
 const CHANNEL_REQUEST_SCREEN_PROPS = '#request-screen-props'
+
+const log = getLogger('index')
 
 let mainWindow_: electron.BrowserWindow | null = null
 let settingWindow_: electron.BrowserWindow | null = null
@@ -26,7 +29,7 @@ function moveToRootDirectory(): void {
   const rootDirectory = (process.platform === 'darwin')
     ? path.dirname(path.dirname(exePath))
     : path.dirname(exePath)
-  console.log('exePath', exePath, ', root', rootDirectory)
+  log.debug('[moveToRootDirectory] exePath', exePath, ', root', rootDirectory)
   process.chdir(rootDirectory)
 }
 
@@ -47,32 +50,32 @@ async function asyncGetUserConfigPromise(checkIfExists: boolean): Promise<fs.Pat
 }
 
 async function asyncLoadSettings(): Promise<Settings.SettingsV1> {
-  console.debug(CHANNEL_REQUEST_SETTINGS)
+  log.debug('[asyncLoadSettings] called.')
   try {
     const userConfigPath: fs.PathLike = await asyncGetUserConfigPromise(true)
     const json = await fs.promises.readFile(userConfigPath, { encoding: 'utf8' })
     const settings = Settings.parse(json)
-    console.debug(CHANNEL_REQUEST_SETTINGS, settings)
+    log.debug('[asyncLoadSettings]', settings)
     return settings
   } catch (e: unknown) {
-    console.warn(`Failed to load user configuration file. Load default settings.`, e)
+    log.warn('[asyncLoadSettings] Failed to load user configuration file. Load default settings.', e)
     return Settings.loadDefault()
   }
 }
 
 async function asyncSaveSettings(e: electron.IpcMainInvokeEvent, settings: Settings.SettingsV1): Promise<void> {
-  console.debug(CHANNEL_POST_SETTINGS, settings)
+  log.debug('[asyncSaveSttings]', settings)
   try {
     const userConfigPath: fs.PathLike = await asyncGetUserConfigPromise(false)
     const contents = JSON.stringify(settings)
     await fs.promises.writeFile(userConfigPath, contents, { encoding: 'utf8', mode: 0o600 })
-    console.log(`Screen settings updated: ${contents}`)  // TODO Drop password?
+    log.debug(`[asyncSaveSettings] Screen settings updated: ${contents}`)
 
     if (mainWindow_) {
       applySettings(mainWindow_, settings)
     }
   } catch (e: unknown) {
-    console.warn('Failed to save user configuration.', e)
+    log.warn('[asyncSaveSettings] Failed to save user configuration.', e)
   }
 }
 
@@ -117,7 +120,7 @@ function getWorkArea(index: number | undefined): electron.Rectangle {
   const display = index
     ? electron.screen.getAllDisplays()[index]
     : electron.screen.getPrimaryDisplay()
-  console.log('getWorkArea', index, display.size)
+  log.debug('[getWorkArea]', index, display.size)
   return display.workArea
 }
 

@@ -11,7 +11,6 @@ export type WatermarkProps = {
   noComments: boolean
 }
 
-
 function calcCssProperties(props: WatermarkProps): React.CSSProperties {
   const cssProps: React.CSSProperties = {
     position: 'absolute',
@@ -45,7 +44,6 @@ function calcCssProperties(props: WatermarkProps): React.CSSProperties {
 }
 
 export function Watermark(props: React.PropsWithChildren<WatermarkProps>): JSX.Element {
-  console.log('watermark', props)
   const style: React.CSSProperties = React.useMemo<React.CSSProperties>(
     (): React.CSSProperties => calcCssProperties(props),
     [props]

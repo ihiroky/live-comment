@@ -26,7 +26,6 @@ electron.contextBridge.exposeInMainWorld('settings', {
       thumbnailSize: { width: 300, height: 200 }
     }
     const sources: electron.DesktopCapturerSource[] = await electron.desktopCapturer.getSources(options)
-    console.log('sources', sources)
     return sources.map((src: electron.DesktopCapturerSource): ScreenProps => ({
       name: src.name,
       thumbnailDataUrl: src.thumbnail.toDataURL()

@@ -22,12 +22,15 @@ import {
   SettingsState,
   isWatermarkPosition
 } from './types'
+import { getLogger } from 'common'
 
 type TabPanelProps = {
   children?: React.ReactNode
   index: number,
   value: number
 }
+
+const log = getLogger('settings/index')
 
 function TabPanel(props: TabPanelProps): JSX.Element {
   const { children, index, value } = props
@@ -92,7 +95,7 @@ const App: React.FC = (): JSX.Element => {
 
   // eslint-disable-next-line @typescript-eslint/ban-types
   function onChange(e: React.ChangeEvent<{}>, newValue: number): void {
-    console.log('onChange', value, newValue)
+    log.debug('[onChange]', value, newValue)
     setValue(newValue)
   }
 
@@ -147,7 +150,7 @@ const App: React.FC = (): JSX.Element => {
         noComments: w.noComments.value.data
       }
     }
-    console.log('onsubmit', settings)
+    log.debug('[onSubmit]', settings)
     window.settings.postSettings(settings)
     window.close()
   }

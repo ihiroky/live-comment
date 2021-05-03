@@ -19,3 +19,5 @@ export {
 export function createHash(s: string): string {
   return sha512(s)
 }
+
+export { getLogger } from './Logger'

@@ -4,7 +4,8 @@ import {
   CommentMessage,
   isCommentMessage,
   CloseCode,
-  WebSocketControl
+  WebSocketControl,
+  getLogger
 } from 'common'
 import React from 'react'
 
@@ -18,6 +19,7 @@ export type MarqueeProps = {
 export type MarqueePropsList = Readonly<Readonly<MarqueeProps>[]>
 
 const MAX_MESSAGES = 500
+const log = getLogger('MarqueePropsGenerator')
 
 function calcMinimumEmptyLevel(messages: MarqueeProps[]): number {
   if (messages.length === 0 || messages[0].level > 0) {
@@ -94,7 +96,7 @@ export class MarqueePropsGenerator {
   }
 
   onOpen(control: WebSocketControl): void {
-    console.log('onOpen', control)
+    log.debug('[onOpen]', control)
     const message: AcnMessage = {
       type: 'acn',
       room: this.room,
@@ -126,22 +128,22 @@ export class MarqueePropsGenerator {
     const waitMillis = 3000 + 7000 * Math.random()
     this.reconnectTimer = window.setTimeout((): void => {
       this.reconnectTimer = 0
-      console.log('[onClose] Try to reconnect.')
+      log.info('[onClose] Try to reconnect.')
       this.webSocketControl?.reconnect()
     }, waitMillis)
-    console.log(`[onClose] Reconnect after ${waitMillis}ms.`)
+    log.info(`[onClose] Reconnect after ${waitMillis}ms.`)
   }
 
   onMessage(message: Message): void {
     const now = Date.now()
     if (!isCommentMessage(message)) {
-      console.log(message)
+      log.warn('[onMessage] Unexpected message:', message)
       return
     }
 
     const marquees = this.marquees.filter(m => now - m.key <= this.duration)
     if (marquees.length >= MAX_MESSAGES)  {
-      console.debug('Dropped:', message.comment)
+      log.warn('[onMessage] Dropped:', message.comment)
       return
     }
 
