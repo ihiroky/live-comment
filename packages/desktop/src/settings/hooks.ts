@@ -8,6 +8,9 @@ import {
   WatermarkSettingsState,
   SettingsState
 } from './types'
+import { getLogger } from 'common'
+
+const log = getLogger('settings/hooks')
 
 function useValue<T>(initialValue: T): ValueState<T> {
   const [value, setValue] = React.useState<Value<T>>({
@@ -42,7 +45,7 @@ export function useSettingsState(): SettingsState {
 
   React.useEffect((): void => {
     window.settings.requestSettings().then((settings: Settings): void => {
-      console.log('requestSettings', settings)
+      log.debug('[requestSettings]', settings)
 
       const g = settings.general
       general.url.setValue({ data: g.url, error: false })

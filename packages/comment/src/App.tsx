@@ -7,6 +7,7 @@ import {
   Message,
   AcnMessage,
   isCommentMessage,
+  getLogger
 } from 'common'
 import { SendCommentForm } from './SendCommentForm'
 
@@ -25,6 +26,9 @@ type AcnState = {
   hash: string
   reconnectTimer: number
 }
+
+const log = getLogger('App')
+
 export default class App extends React.Component<AppProps, AppState> {
 
   private ref: React.RefObject<HTMLDivElement>
@@ -49,10 +53,11 @@ export default class App extends React.Component<AppProps, AppState> {
   }
 
   private onOpen(control: WebSocketControl): void {
-    console.log('onOpen', control)
+    log.debug('[onOpen]', control)
     if (this.acnState.room.length === 0 || this.acnState.hash.length === 0) {
       window.location.href = './login'
       return
+
     }
 
     this.webSocketControl = control
@@ -77,17 +82,17 @@ export default class App extends React.Component<AppProps, AppState> {
         const waitMillis = 3000 + 7000 * Math.random()
         this.acnState.reconnectTimer = window.setTimeout((): void => {
           this.acnState.reconnectTimer = 0
-          console.log('[onClose] Try to reconnect.')
+          log.info('[onClose] Try to reconnect.')
           this.webSocketControl?.reconnect()
         }, waitMillis)
-        console.log(`[onClose] Reconnect after ${waitMillis}ms.`)
+        log.debug(`[onClose] Reconnect after ${waitMillis}ms.`)
         break
     }
   }
 
   private onMessage(message: Message): void {
     if (!isCommentMessage(message)) {
-      console.log('Unexpected message:', message)
+      log.warn('[onMessage] Unexpected message:', message)
       return
     }
     const key = Date.now()
@@ -109,7 +114,7 @@ export default class App extends React.Component<AppProps, AppState> {
   }
 
   componentDidMount(): void {
-    console.log('componentDidMount')
+    log.debug('[componentDidMount]')
     this.messageListDiv = document.getElementsByClassName('message-list')[0]
 
     const json = window.localStorage.getItem('LoginForm.credential')
@@ -118,13 +123,14 @@ export default class App extends React.Component<AppProps, AppState> {
       return
     }
     const loginConfig = JSON.parse(json)
-    console.log('componentDidMount', loginConfig)
+    log.debug('[componentDidMount]', loginConfig)
     this.acnState.room = loginConfig.room
     this.acnState.hash = loginConfig.hash
     window.localStorage.removeItem('LoginForm.credential')
   }
 
   componentWillUnmount(): void {
+    log.debug('[componentWillUnmount]')
     this.webSocketControl?.close()
     this.webSocketControl = null
     if (this.acnState.reconnectTimer) {
