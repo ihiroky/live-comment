@@ -9,7 +9,8 @@ import {
   ErrorMessage,
   isAcnMessage,
   isCommentMessage,
-  getLogger
+  getLogger,
+  CommentMessage
 } from 'common'
 
 interface ServerConfig {
@@ -43,18 +44,17 @@ function receiveHeartbeat(this: WebSocket, data: Buffer): void {
   self.lastPongTime = Date.now()
 }
 
-function sendMessage(ws: WebSocket, message: WebSocket.Data): void {
-  const s = ws as ClientSession
+function sendMessage(c: ClientSession, message: WebSocket.Data): void {
   const charCount = message.toString().length
-  s.pendingMessageCount++
-  s.pendingCharCount += charCount
-  s.send(message, (err: Error | undefined) => {
+  c.pendingMessageCount++
+  c.pendingCharCount += charCount
+  c.send(message, (err: Error | undefined) => {
     if (err) {
-      log.error('[sendMessage] Error on sending message:', s.id, err)
+      log.error('[sendMessage] Error on sending message:', c.id, err)
       return
     }
-    s.pendingMessageCount--
-    s.pendingCharCount -= charCount
+    c.pendingMessageCount--
+    c.pendingCharCount -= charCount
   })
 }
 
@@ -86,6 +86,21 @@ function onAuthenticate(client: ClientSession, m: AcnMessage): void {
   })
 }
 
+function onComment(server: WebSocket.Server, data: WebSocket.Data, sender: ClientSession, comment: CommentMessage): void {
+  if (!sender.room) {
+    log.error('[onMessage] Unauthenticated client:', sender.id)
+    sender.close()
+  }
+  log.trace('[onMessage]', comment.comment, 'from', sender.id, 'to', sender.room)
+  server.clients.forEach((c: WebSocket): void => {
+    const receiver = c as ClientSession
+    if (receiver.room === sender.room) {
+      sendMessage(receiver, data)
+    }
+  })
+}
+
+
 function onConnected(this: WebSocket.Server, ws: WebSocket): void {
   const server = this
   const client = ws as ClientSession
@@ -99,12 +114,7 @@ function onConnected(this: WebSocket.Server, ws: WebSocket): void {
     const data = message.toString()
     const m = JSON.parse(data)
     if (isCommentMessage(m)) {
-      if (!client.room) {
-        log.error('[onMessage] Unauthenticated client:', client.id)
-        client.close()
-      }
-      log.trace(`[onMessage] ${m.comment} from ${client.id}`)
-      server.clients.forEach(c => sendMessage(c, message))
+      onComment(server, message, client, m)
     } else if (isAcnMessage(m)) {
       onAuthenticate(client, m)
     } else {
