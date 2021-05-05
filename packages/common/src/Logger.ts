@@ -25,7 +25,8 @@ JsLogger.useDefaults({
       pad0(now.getMonth() + 1) + '/' +
       pad0(now.getDate()) + ' ' +
       pad0(now.getHours()) + ':' +
-      pad0(now.getMinutes()) + '.' +
+      pad0(now.getMinutes()) + ':' +
+      pad0(now.getSeconds()) + '.' +
       pad00(now.getMilliseconds())
     messages.unshift(timestamp, `[${context.name}]`, context.level.name.toUpperCase())
   }
