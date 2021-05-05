@@ -20,4 +20,9 @@ export function createHash(s: string): string {
   return sha512(s)
 }
 
-export { getLogger } from './Logger'
+export {
+  getLogger,
+  LogLevel,
+  LogLevels,
+  parseLogLevel
+} from './Logger'

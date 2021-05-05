@@ -1,7 +1,7 @@
 import WebSocket from 'ws'
 import { v4 as uuidv4 } from 'uuid'
 import http from 'http'
-import fs from 'fs'
+import { Configuration, Room } from './Configuration'
 
 import {
   CloseCode,
@@ -13,13 +13,6 @@ import {
   CommentMessage
 } from 'common'
 
-interface ServerConfig {
-  rooms: {
-    room: string
-    hash: string
-  }[]
-}
-
 export interface ClientSession extends WebSocket {
   alive: boolean
   id: string
@@ -28,7 +21,7 @@ export interface ClientSession extends WebSocket {
   blocked: boolean
   pendingMessageCount: number
   pendingCharCount: number
-  room: string
+  room?: string
 }
 
 const PING_INTERVAL_MILLIS = 7 * 1000
@@ -58,25 +51,18 @@ function sendMessage(c: ClientSession, message: WebSocket.Data): void {
   })
 }
 
-function onAuthenticate(client: ClientSession, m: AcnMessage): void {
+function onAuthenticate(client: ClientSession, m: AcnMessage, configuration: Configuration): void {
   log.debug('[onAuthenticate] From', client.id)
-  fs.readFile('server.config.json', { encoding: 'utf8' }, (err: NodeJS.ErrnoException | null, data: string): void => {
-    if (err) {
-      log.error('[onAuthenticate] Failed to load server.conig.json', err)
-      return
-    }
-    const config = JSON.parse(data) as ServerConfig
-    for (const r of config.rooms) {
-      if (r.room === m.room) {
-        if (r.hash === m.hash) {
-          log.debug('[onAuthentication] Room:', m.room)
-          client.room = m.room
-          return
-        }
+  configuration.rooms.then((rooms: Room[]): void => {
+    for (const r of rooms) {
+      if (r.room === m.room && r.hash === m.hash) {
+        log.debug('[onAuthentication] Room:', m.room)
+        client.room = m.room
+        return
       }
     }
-    log.debug('No room or invalid hash:', data)
-    // TODO add type
+    log.debug('No room or invalid hash:', m)
+
     const message: ErrorMessage = {
       type: 'error',
       error: 'ACN_FAILED',
@@ -91,7 +77,7 @@ function onComment(server: WebSocket.Server, data: WebSocket.Data, sender: Clien
     log.error('[onMessage] Unauthenticated client:', sender.id)
     sender.close()
   }
-  log.trace('[onMessage]', comment.comment, 'from', sender.id, 'to', sender.room)
+  log.debug('[onMessage]', comment.comment, 'from', sender.id, 'to', sender.room)
   server.clients.forEach((c: WebSocket): void => {
     const receiver = c as ClientSession
     if (receiver.room === sender.room) {
@@ -101,8 +87,7 @@ function onComment(server: WebSocket.Server, data: WebSocket.Data, sender: Clien
 }
 
 
-function onConnected(this: WebSocket.Server, ws: WebSocket): void {
-  const server = this
+function onConnected(server: WebSocket.Server, ws: WebSocket, configuration: Configuration): void {
   const client = ws as ClientSession
   client.id = uuidv4()
   client.alive = true
@@ -116,7 +101,7 @@ function onConnected(this: WebSocket.Server, ws: WebSocket): void {
     if (isCommentMessage(m)) {
       onComment(server, message, client, m)
     } else if (isAcnMessage(m)) {
-      onAuthenticate(client, m)
+      onAuthenticate(client, m, configuration)
     } else {
       log.debug('[onMessage]Unexpected message:', m)
     }
@@ -159,9 +144,12 @@ function checkPendingCount(client: ClientSession): void {
   }
 }
 
-export function createWebSocketServer(server: http.Server): WebSocket.Server {
+export function createWebSocketServer(server: http.Server, configuration: Configuration): WebSocket.Server {
+  log.setLevel(configuration.logLevel)
   const wss = new WebSocket.Server({ server })
-  wss.on('connection', onConnected)
+  wss.on('connection', function(ws: WebSocket, _: http.IncomingMessage): void {
+    onConnected(this, ws, configuration)
+  })
 
   const healthCheckIntervalId: NodeJS.Timeout = setInterval((): void => {
     wss.clients.forEach((ws: WebSocket) => {
