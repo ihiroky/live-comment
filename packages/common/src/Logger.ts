@@ -25,12 +25,54 @@ JsLogger.useDefaults({
       pad0(now.getMonth() + 1) + '/' +
       pad0(now.getDate()) + ' ' +
       pad0(now.getHours()) + ':' +
-      pad0(now.getMinutes()) + '.' +
+      pad0(now.getMinutes()) + ':' +
+      pad0(now.getSeconds()) + '.' +
       pad00(now.getMilliseconds())
     messages.unshift(timestamp, `[${context.name}]`, context.level.name.toUpperCase())
   }
 })
 
-export function getLogger(scope: string): ILogger {
+export type LogLevel = ILogLevel
+
+type Logger = {
+  trace(...x: any[]): void;
+  debug(...x: any[]): void;
+  info(...x: any[]): void;
+  log(...x: any[]): void;
+  warn(...x: any[]): void;
+  error(...x: any[]): void;
+  time(label: string): void;
+  timeEnd(label: string): void;
+  setLevel(level: LogLevel): void;
+  getLevel(): LogLevel;
+  enabledFor(level: LogLevel): boolean;
+}
+
+export function getLogger(scope: string): Logger {
   return JsLogger.get(scope)
+}
+
+export const LogLevels = {
+  OFF: JsLogger.OFF,
+  ERROR: JsLogger.ERROR,
+  WARN: JsLogger.WARN,
+  INFO: JsLogger.INFO,
+  DEBUG: JsLogger.DEBUG,
+  TRACE: JsLogger.TRACE
+}
+
+export function parseLogLevel(v: any): LogLevel {
+  if (v === undefined) {
+    return JsLogger.INFO
+  }
+  const s = String(v).toUpperCase()
+  switch(s) {
+    case 'OFF':   return JsLogger.OFF
+    case 'ERROR': return JsLogger.ERROR
+    case 'WARN':  return JsLogger.WARN
+    case 'INFO':  return JsLogger.INFO
+    case 'DEBUG': return JsLogger.DEBUG
+    case 'TRACE': return JsLogger.TRACE
+    default:      return JsLogger.INFO
+  }
 }
