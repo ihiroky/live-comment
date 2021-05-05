@@ -152,6 +152,7 @@ export function createWebSocketServer(server: http.Server, configuration: Config
   })
 
   const healthCheckIntervalId: NodeJS.Timeout = setInterval((): void => {
+    wss.emit('helthcheck')
     wss.clients.forEach((ws: WebSocket) => {
       const client = ws as ClientSession
       checkPingPong(client)

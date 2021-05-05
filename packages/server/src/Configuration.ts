@@ -96,41 +96,56 @@ const argv = yargs(hideBin(process.argv))
 const log = getLogger('Configuration')
 log.setLevel(argv.loglevel)
 
-function loadConfig(configPath: string): Promise<ServerConfig> {
-  return fs.promises.readFile(configPath, { encoding: 'utf8' })
-    .then((content: string): ServerConfig => {
-      const c = JSON.parse(content)
-      if (!Array.isArray(c.rooms) || c.rooms.length === 0) {
-        log.error('Room definition does not exist.')
-        return {
-          rooms: []
-        }
+function parseConfigJson(json: string): ServerConfig {
+  const c = JSON.parse(json)
+  if (!Array.isArray(c.rooms) || c.rooms.length === 0) {
+    log.error('Room definition does not exist.')
+    return {
+      rooms: []
+    }
+  }
+  for (const r of c.rooms) {
+    if (!isRoom(r)) {
+      log.error(`Unexpected room definition: ${JSON.stringify(r)}`)
+      return {
+        rooms: []
       }
-      for (const r of c.rooms) {
-        if (!isRoom(r)) {
-          log.error(`Unexpected room definition: ${JSON.stringify(r)}`)
-          return {
-            rooms: []
-          }
-        }
-      }
-      return c
-    })
+    }
+  }
+  return c
 }
 
 export class Configuration {
 
   private path: string
   private cache: Promise<ServerConfig>
+  private lastUpdated: number
 
   constructor() {
     this.path = argv.configPath
-    this.cache = loadConfig(this.path)
+    this.lastUpdated = fs.statSync(this.path).mtimeMs
+    const serverConfig = parseConfigJson(fs.readFileSync(this.path, { encoding: 'utf8' }))
+    this.cache = Promise.resolve(serverConfig)
+
   }
 
-  reloadAsync(): Promise<void> {
-    this.cache = loadConfig(this.path)
-    return this.cache.then((): void => {})
+  reloadIfUpdatedAsync(): Promise<void> {
+    return fs.promises.stat(this.path).then((stat: fs.Stats): Promise<void> => {
+      if (stat.mtimeMs <= this.lastUpdated) {
+        log.debug('[reloadIfUpdatedAsync] No update detected.')
+        return Promise.resolve()
+      }
+      log.info('[reloadIfUpdatedAsync] Update detected.')
+      this.lastUpdated = stat.mtimeMs
+      return new Promise<void>((resolve: () => void): void => {
+        this.cache = fs.promises.readFile(this.path, { encoding: 'utf8' })
+          .then((json: string): ServerConfig => parseConfigJson(json))
+        this.cache.then((): void => {
+          log.info('[reloadIfUpdatedAsync] Update completed.')
+          resolve()
+        })
+      })
+    })
   }
 
   get port(): number {
