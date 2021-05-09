@@ -26,9 +26,9 @@ jobs:
 
       - name: Archive comment app
         uses: ihiroky/archive-action@v1
-          with:
-            file_path: build/comment.zip
-            root_dir: packages/comment/build
+        with:
+          file_path: build/comment.zip
+          root_dir: packages/comment/build
 
       - name: Gets latest created release info
         id: latest_release_info
