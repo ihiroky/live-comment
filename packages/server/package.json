@@ -10,7 +10,7 @@
   "scripts": {
     "self-signed-cert": "bash ./create_pem.sh",
     "start": "node dist/index.js",
-    "build": "yarn --cwd ../common tsc -b && tsc -b && ncc build dist/index.js -o dist/bundled"
+    "build": "yarn --cwd ../common tsc -b && tsc -b && ncc build dist/index.js -m -s -o dist/bundled"
   },
   "devDependencies": {
     "@types/node": "^14.0.27",
