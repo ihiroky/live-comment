@@ -1,4 +1,4 @@
-name: Build/release
+name: Build and release
 
 on: push
 
@@ -18,6 +18,35 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 14
+
+      - name: Build comment app
+        run: |
+          yarn install
+          yarn --cwd packages/comment build
+
+      - name: Archive comment app
+        uses: ihiroky/archive-action@v1
+          with:
+            file_path: build/comment.zip
+            root_dir: packages/comment/build
+
+      - name: Gets latest created release info
+        id: latest_release_info
+        uses: ihiroky/action-latest-release-info@master
+      - run: |
+          echo draft:${{ steps.latest_release_info.outputs.draft }}
+          echo upload_url:${{ steps.latest_release_info.outputs.upload_url }}
+        shell: bash
+
+      - name: Upload asset to github release if draft release exists.
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        if: ${{ steps.latest_release_info.outputs.draft == true }}
+        with:
+          upload_url: ${{ steps.latest_release_info.outputs.upload_url }}
+          asset_path: build/comment.zip
+          asset_name: comment.zip
+          asset_content_type: application/zip
 
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
