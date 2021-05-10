@@ -1,4 +1,4 @@
-name: Build and release comment app
+name: Build and release server-side apps
 
 on: push
 
@@ -15,16 +15,26 @@ jobs:
         with:
           node-version: 14
 
-      - name: Build comment app
+      - name: Build apps
         run: |
           yarn install
           yarn --cwd packages/comment build
+          yarn --cwd packages/server  build
 
-      - name: Archive comment app
+      - name: Create release directory tree
+        run: |
+          mkdir -p build/release
+          cp -a packages/comment/build       build/release/comment
+          mkdir -p build/release/server
+          cp -a packages/server/dist         build/release/server
+          cp -a packages/server/src/start.sh build/release/server
+        shell: bash
+
+      - name: Archive apps
         uses: ihiroky/archive-action@v1
         with:
-          file_path: build/comment.zip
-          root_dir: packages/comment/build
+          file_path: build/server-apps.zip
+          root_dir: build/release/
 
       - name: Gets latest created release info
         id: latest_release_info
@@ -44,6 +54,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.latest_release_info.outputs.upload_url }}
-          asset_path: build/comment.zip
-          asset_name: comment.zip
+          asset_path: build/server-apps.zip
+          asset_name: server-apps.zip
           asset_content_type: application/zip
