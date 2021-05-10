@@ -35,5 +35,8 @@
       "arch": ["x64"]
     }],
     "publish": ["github"]
+  },
+  "nsis": {
+    "runAfterFinish": false
   }
 }
