@@ -23,18 +23,18 @@ jobs:
 
       - name: Create release directory tree
         run: |
-          mkdir -p build/release
-          cp -a packages/comment/build       build/release/comment
-          mkdir -p build/release/server
-          cp -a packages/server/dist         build/release/server
-          cp -a packages/server/src/start.sh build/release/server
+          mkdir -p build/apps
+          cp -a packages/comment/build       build/apps/comment
+          mkdir -p build/apps/server
+          cp -a packages/server/dist         build/apps/server
+          cp -a packages/server/src/start.sh build/apps/server
         shell: bash
 
       - name: Archive apps
         uses: ihiroky/archive-action@v1
         with:
           file_path: build/server-apps.zip
-          root_dir: build/release/
+          root_dir: build/apps/
 
       - name: Gets latest created release info
         id: latest_release_info
@@ -57,3 +57,9 @@ jobs:
           asset_path: build/server-apps.zip
           asset_name: server-apps.zip
           asset_content_type: application/zip
+
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: server-apps-${{ github.run_number }}
+          path: build/apps/
