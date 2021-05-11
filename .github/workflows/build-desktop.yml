@@ -30,4 +30,5 @@ jobs:
       - name: Archive artifacts
         uses: actions/upload-artifact@v2
         with:
+          name: live-comment-for-${{ matrix.os }}-${{ github.run_number }}
           path: packages/desktop/dist/live-comment*
