@@ -127,14 +127,6 @@ function getWorkArea(index: number | undefined): electron.Rectangle {
 
 function applySettings(mainWindow: BrowserWindow, settings: Settings.SettingsV1): void {
   const workArea = getWorkArea(settings.general.screen)
-  // Windows may not render the window if workArea is used directly.
-  const adjustedWorkArea: electron.Rectangle = {
-    x: workArea.x,
-    y: workArea.y,
-    width: workArea.width,
-    height: workArea.height - 1
-  }
-  mainWindow.setBounds(adjustedWorkArea)
   mainWindow.setBounds(workArea)
   mainWindow.loadURL(`file://${path.resolve('resources/main/index.html')}`)
   mainWindow.webContents.setZoomFactor(Number(settings.general.zoom) / 100)
@@ -146,10 +138,8 @@ async function asyncShowMainWindow(): Promise<void> {
   // TODO toggle dev tools of main window from setting form
 
   mainWindow_ = new electron.BrowserWindow({
-    show: false,
     frame: false,
     transparent: true,
-    focusable: false,  // Must be set false to enable 'alwaysOnTop' on Linux
     alwaysOnTop: true,
     webPreferences: {
       nodeIntegration: false,
@@ -157,14 +147,12 @@ async function asyncShowMainWindow(): Promise<void> {
       preload: path.resolve('dist/js/preload/main.js')
     }
   })
+  mainWindow_.setAlwaysOnTop(true, 'screen-saver')
   applySettings(mainWindow_, settings)
   mainWindow_.setIgnoreMouseEvents(true)
   if (process.argv.includes('--open-dev-tools')) {
     mainWindow_.webContents.openDevTools({ mode: 'detach' })
   }
-  mainWindow_.once('ready-to-show', (): void  => {
-    mainWindow_?.show()
-  })
   mainWindow_.on('closed', (): void => {
     mainWindow_ = null
   })
