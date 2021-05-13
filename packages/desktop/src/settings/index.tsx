@@ -120,7 +120,7 @@ const App: React.FC = (): JSX.Element => {
       }
       w[key].setValue({ data: value, error })
     } else if (key === 'noComments') {
-      w[key].setValue({ data: Boolean(value), error })
+      w[key].setValue({ data: value.toLowerCase() === 'true', error })
     } else {
       throw new Error(`Unexpected key: ${key}`)
     }
