@@ -42,7 +42,7 @@ export function CommandPalette(props: CommandPaletteProps): JSX.Element {
   return (
     <form className={classes.root} onSubmit={onSubmit}>
       <TextField
-        placeholder="Place F1 to cancel."
+        placeholder="Type command, then press enter to execute. Press F1 to close."
         className={classes.text}
         variant="outlined"
         autoFocus
