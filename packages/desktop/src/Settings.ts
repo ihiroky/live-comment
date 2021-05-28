@@ -12,7 +12,7 @@ type SettingsV0 = Settings & {
   room: string
   password: string
   duration: string
-  zoom: string,
+  zoom: string
   screen: string
 }
 
@@ -23,9 +23,9 @@ export type SettingsV1 = Settings & {
     room: string
     password: string
     duration: number
-    zoom: number,
+    zoom: number
     screen: number
-  },
+  }
   watermark: {
     html: string
     opacity: number

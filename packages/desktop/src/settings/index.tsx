@@ -26,7 +26,7 @@ import { getLogger } from 'common'
 
 type TabPanelProps = {
   children?: React.ReactNode
-  index: number,
+  index: number
   value: number
 }
 

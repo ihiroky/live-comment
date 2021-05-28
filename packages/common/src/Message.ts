@@ -1,3 +1,5 @@
+import { isObject } from './isObject'
+
 const Errors = [
   'ACN_FAILED',
   'TOO_MANY_PENDING_MESSAGES',
@@ -30,14 +32,23 @@ export interface ErrorMessage  extends Message {
   message: string
 }
 
-export function isCommentMessage(m: any): m is CommentMessage {
+export function isCommentMessage(m: unknown): m is CommentMessage {
+  if (!isObject(m)) {
+    return false
+  }
   return m.type === 'comment'
 }
 
-export function isAcnMessage(m: any): m is AcnMessage {
+export function isAcnMessage(m: unknown): m is AcnMessage {
+  if (!isObject(m)) {
+    return false
+  }
   return m.type === 'acn'
 }
 
-export function isErrorMessage(m: any): m is ErrorMessage {
+export function isErrorMessage(m: unknown): m is ErrorMessage {
+  if (!isObject(m)) {
+    return false
+  }
   return m.type === 'error'
 }

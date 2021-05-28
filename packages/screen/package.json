@@ -18,6 +18,7 @@
   },
   "scripts": {
     "clean": "node -e \"require('fs').rmdirSync('dist/', { recursive: true })\"",
+    "lint": "eslint --ext ts,tsx --max-warnings 0 src",
     "build": "yarn --cwd ../common tsc -b && tsc -b"
   },
   "eslintConfig": {
