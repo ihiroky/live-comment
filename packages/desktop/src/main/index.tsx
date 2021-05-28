@@ -8,6 +8,7 @@ declare global {
   interface Window {
     main: {
       request(): Promise<SettingsV1>
+      onCommandExecuted(command: string): Promise<void>
     }
   }
 }
@@ -22,6 +23,7 @@ window.main.request().then((settings: SettingsV1): void => {
           hash={createHash(settings.general.password)}
           duration={settings.general.duration * 1000}
           watermark={settings.watermark}
+          onCommandExecuted={window.main.onCommandExecuted}
         />
       </React.StrictMode>
     )

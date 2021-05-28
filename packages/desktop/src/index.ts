@@ -1,17 +1,20 @@
 import path from 'path'
 import fs from 'fs'
-import electron, { BrowserWindow } from 'electron'
+import electron from 'electron'
 import * as Settings from './Settings'
 import { getLogger } from 'common'
+import { IgnoreMouseEvents } from './IgnoreMouseEvents'
 
 const CHANNEL_REQUEST_SETTINGS = '#request-settings'
 const CHANNEL_POST_SETTINGS = '#post-settings'
 const CHANNEL_REQUEST_SCREEN_PROPS = '#request-screen-props'
+const CHANNEL_ON_SCREEN_COMMAND_EXECUTED = '#on-screen-command-executed'
 
 const log = getLogger('index')
 
 let mainWindow_: electron.BrowserWindow | null = null
 let settingWindow_: electron.BrowserWindow | null = null
+let ignoreMouseEvents_: IgnoreMouseEvents | null = null
 
 // https://www.electronjs.org/docs/faq#my-apps-tray-disappeared-after-a-few-minutes
 let tray_: electron.Tray | null = null
@@ -124,8 +127,7 @@ function getWorkArea(index: number | undefined): electron.Rectangle {
   return display.workArea
 }
 
-
-function applySettings(mainWindow: BrowserWindow, settings: Settings.SettingsV1): void {
+function applySettings(mainWindow: electron.BrowserWindow, settings: Settings.SettingsV1): void {
   const workArea = getWorkArea(settings.general.screen)
   mainWindow.setBounds(workArea)
   mainWindow.loadURL(`file://${path.resolve('resources/main/index.html')}`)
@@ -156,12 +158,21 @@ async function asyncShowMainWindow(): Promise<void> {
   mainWindow_.on('closed', (): void => {
     mainWindow_ = null
   })
+
+  ignoreMouseEvents_ = new IgnoreMouseEvents(mainWindow_)
+  ignoreMouseEvents_.registerGlobalShortcut()
+}
+
+function asyncOnScreenCommandExecuted(): Promise<void> {
+  ignoreMouseEvents_?.resetIgnoreMouseEvents()
+  return Promise.resolve()
 }
 
 function onReady(): void {
   electron.ipcMain.handle(CHANNEL_REQUEST_SETTINGS, asyncLoadSettings)
   electron.ipcMain.handle(CHANNEL_POST_SETTINGS, asyncSaveSettings)
   electron.ipcMain.handle(CHANNEL_REQUEST_SCREEN_PROPS, asyncLoadSettings)
+  electron.ipcMain.handle(CHANNEL_ON_SCREEN_COMMAND_EXECUTED, asyncOnScreenCommandExecuted)
 
   moveToRootDirectory()
   showTrayIcon()
