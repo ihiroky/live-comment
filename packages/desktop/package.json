@@ -1,6 +1,6 @@
 {
-  "name": "live-comment-desktop",
-  "version": "0.1.0",
+  "name": "live-comment",
+  "version": "0.2.0",
   "description": "live-comment desktop",
   "main": "dist/js/index.js",
   "homepage": "https://github.com/ihiroky/live-comment",
@@ -16,6 +16,9 @@
     "build": "yarn --cwd ../screen build && tsc -b && rollup -c",
     "build:dir": "electron-builder -c electron-builder-config.json --dir",
     "start": "electron . --enable-logging"
+  },
+  "dependencies": {
+    "common": "0.1.1"
   },
   "devDependencies": {
     "@material-ui/core": "^4.11.3",
@@ -37,6 +40,7 @@
     "react-dom": "^17.0.2",
     "rollup": "^2.44.0",
     "rollup-plugin-terser": "^7.0.2",
+    "screen": "0.1.1",
     "typescript": "^4.2.3"
   }
 }

@@ -1,4 +1,4 @@
-name: Build/release
+name: Build and release desktop app
 
 on: push
 
@@ -26,3 +26,9 @@ jobs:
           release: ${{ startsWith(github.ref, 'refs/tags/v') }}
           package_root: packages/desktop/
           args: -c electron-builder-config.json
+
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: live-comment-for-${{ matrix.os }}-${{ github.run_number }}
+          path: packages/desktop/dist/live-comment*

@@ -1,6 +1,7 @@
 import React from 'react'
+import { getLogger } from './Logger'
 
-import { Message } from './Message'
+import { CommentMessage, Message } from './Message'
 
 export interface WebSocketControl {
   send(message: Message): void
@@ -9,12 +10,15 @@ export interface WebSocketControl {
 }
 
 export type WebSocketClientPropsType = {
-  onOpen?: (control: WebSocketControl) => void,
+  onOpen?: (control: WebSocketControl) => void
   onClose?: (ev: CloseEvent) => void
   onError?: (ev: Event) => void
   onMessage: (message: Message) => void
   url: string
+  noComments?: boolean
 }
+
+const log = getLogger('WebSocketClient')
 
 export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
 
@@ -26,6 +30,14 @@ export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
   }
 
   componentDidMount(): void {
+    if (this.props.noComments) {
+      log.debug('[componentDidMount] No comments mode.')
+      const comment: CommentMessage = {
+        type: 'comment',
+        comment: 'Entering no comments mode.'
+      }
+      this.props.onMessage(comment)
+    }
     if (!this.webSocket) {
       this.webSocket = this.createWebSocket()
     }
@@ -35,6 +47,7 @@ export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
     if (this.webSocket) {
       this.webSocket.close()
       this.webSocket = null
+      log.debug('[componentWillUnmount] Websocket closed.')
     }
   }
 
@@ -46,6 +59,7 @@ export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
     if (this.webSocket) {
       const json = JSON.stringify(message)
       this.webSocket.send(json)
+      log.trace('[send]', message)
     }
   }
 
@@ -53,47 +67,52 @@ export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
     if (this.webSocket) {
       this.webSocket.close()
       this.webSocket = null
+      log.debug('[close]')
     }
   }
 
   private createWebSocket(): WebSocket {
     const webSocket = new WebSocket(this.props.url)
     webSocket.addEventListener('open', (ev: Event): void => {
-      console.log('webSocket open', ev)
+      log.debug('[onopen]', ev)
       if (this.props.onOpen) {
         this.props.onOpen({
           send: (message: Message): void => {
             this.send(message)
           },
           reconnect: (): void => {
-            console.log('[reconnect]')
+            log.debug('[WebSocketControl.reconnect] Start.')
             this.webSocket?.close()
             this.webSocket = this.createWebSocket()
-            console.log('[reconnect] ', this.webSocket.url)
+            log.debug('[WebSocketControl.reconnect] End.')
           },
           close: (): void => {
+            log.debug('[WebSocketControl.close]')
             this.close()
           }
         })
       }
     })
     webSocket.addEventListener('close', (ev: CloseEvent): void => {
-      console.log('webSocket close', ev)
+      log.debug('[onclose]', ev)
       if (this.props.onClose) {
         this.props.onClose(ev)
       }
       this.webSocket = null
     })
     webSocket.addEventListener('error', (ev: Event): void => {
-      console.log('webSocket error', ev)
+      log.debug('[onerror]', ev)
       if (this.props.onError) {
         this.props.onError(ev)
       }
     })
     webSocket.addEventListener('message', (ev: MessageEvent<string>): void => {
+      log.trace('[onmessage]', ev)
       const message: Message = JSON.parse(ev.data)
       this.props.onMessage(message)
     })
+
+    log.info('[createWebSocket] Websocket created.', this.props.url)
     return webSocket
   }
 }

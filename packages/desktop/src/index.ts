@@ -1,23 +1,38 @@
 import path from 'path'
 import fs from 'fs'
-import electron, { BrowserWindow } from 'electron'
+import electron from 'electron'
 import * as Settings from './Settings'
+import { getLogger } from 'common'
+import { IgnoreMouseEvents } from './IgnoreMouseEvents'
 
 const CHANNEL_REQUEST_SETTINGS = '#request-settings'
 const CHANNEL_POST_SETTINGS = '#post-settings'
+const CHANNEL_REQUEST_SCREEN_PROPS = '#request-screen-props'
+const CHANNEL_ON_SCREEN_COMMAND_EXECUTED = '#on-screen-command-executed'
+
+const log = getLogger('index')
 
 let mainWindow_: electron.BrowserWindow | null = null
 let settingWindow_: electron.BrowserWindow | null = null
+let ignoreMouseEvents_: IgnoreMouseEvents | null = null
 
 // https://www.electronjs.org/docs/faq#my-apps-tray-disappeared-after-a-few-minutes
 let tray_: electron.Tray | null = null
 
 function moveToRootDirectory(): void {
   const exePath = electron.app.getPath('exe')
+
+  // Do not change working directory if run `yarn electron .`.
+  // Linux:   .../electron
+  // Windows: ...\\electron.exe
+  // Mac:     .../Electron
+  if (/[/\\][Ee]lectron(\.exe)?/.test(exePath)) {
+    return
+  }
   const rootDirectory = (process.platform === 'darwin')
     ? path.dirname(path.dirname(exePath))
     : path.dirname(exePath)
-  console.log('exePath', exePath, ', root', rootDirectory)
+  log.debug('[moveToRootDirectory] exePath', exePath, ', root', rootDirectory)
   process.chdir(rootDirectory)
 }
 
@@ -37,36 +52,33 @@ async function asyncGetUserConfigPromise(checkIfExists: boolean): Promise<fs.Pat
   return userConfigPath
 }
 
-async function asyncLoadSettings(): Promise<Record<string, string>> {
-  console.debug(CHANNEL_REQUEST_SETTINGS)
+async function asyncLoadSettings(): Promise<Settings.SettingsV1> {
+  log.debug('[asyncLoadSettings] called.')
   try {
     const userConfigPath: fs.PathLike = await asyncGetUserConfigPromise(true)
     const json = await fs.promises.readFile(userConfigPath, { encoding: 'utf8' })
     const settings = Settings.parse(json)
-    if (process.argv[1]) {
-      settings.url = process.argv[1]
-    }
+    log.debug('[asyncLoadSettings]', settings)
     return settings
   } catch (e: unknown) {
-    console.warn(`Failed to load user configuration file. Load default settings.`, e)
+    log.warn('[asyncLoadSettings] Failed to load user configuration file. Load default settings.', e)
     return Settings.loadDefault()
   }
 }
 
-async function asyncSaveSettings(e: electron.IpcMainInvokeEvent, settings: Record<string, string>): Promise<void> {
-  console.debug(CHANNEL_POST_SETTINGS, settings)
+async function asyncSaveSettings(e: electron.IpcMainInvokeEvent, settings: Settings.SettingsV1): Promise<void> {
+  log.debug('[asyncSaveSttings]', settings)
   try {
-    Settings.validate(settings)
     const userConfigPath: fs.PathLike = await asyncGetUserConfigPromise(false)
     const contents = JSON.stringify(settings)
     await fs.promises.writeFile(userConfigPath, contents, { encoding: 'utf8', mode: 0o600 })
-    console.log(`Screen settings updated: ${contents}`)  // TODO Drop password?
+    log.debug(`[asyncSaveSettings] Screen settings updated: ${contents}`)
 
     if (mainWindow_) {
       applySettings(mainWindow_, settings)
     }
   } catch (e: unknown) {
-    console.warn('Failed to save user configuration.', e)
+    log.warn('[asyncSaveSettings] Failed to save user configuration.', e)
   }
 }
 
@@ -77,7 +89,7 @@ function showSettingWindow(): void {
 
   const settingWindow = new electron.BrowserWindow({
     width: 600,
-    height: 600,
+    height: 650,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -102,7 +114,7 @@ function showTrayIcon(): void {
     { label: 'Settings', click: showSettingWindow },
     { label: 'Quit', role: 'quit' }
   ])
-  tray_ = new electron.Tray('resources/icon.png')
+  tray_ = new electron.Tray(path.resolve('resources/icon.png'))
   tray_.setToolTip(electron.app.name)
   tray_.setContextMenu(menu)
 }
@@ -111,25 +123,15 @@ function getWorkArea(index: number | undefined): electron.Rectangle {
   const display = index
     ? electron.screen.getAllDisplays()[index]
     : electron.screen.getPrimaryDisplay()
-  console.log('getWorkArea', index, display.size)
+  log.debug('[getWorkArea]', index, display.size)
   return display.workArea
 }
 
-function createScreenUrl(settings: Record<string, string>): string {
-  // TODO Pass parameters like setting form because type check is disabled here
-  return `file://${path.resolve('resources/screen/index.html')}`
-    + `?duration=${settings.duration}`
-    + `&url=${settings.url}`
-    + `&room=${settings.room}`
-    + `&password=${settings.password}`
-}
-
-function applySettings(mainWindow: BrowserWindow, settings: Record<string, string>): void {
-  const workArea = getWorkArea(parseInt(settings.screen))
-  const screenUrl = createScreenUrl(settings)
+function applySettings(mainWindow: electron.BrowserWindow, settings: Settings.SettingsV1): void {
+  const workArea = getWorkArea(settings.general.screen)
   mainWindow.setBounds(workArea)
-  mainWindow.loadURL(screenUrl)
-  mainWindow.webContents.setZoomFactor(Number(settings.zoom) / 100)
+  mainWindow.loadURL(`file://${path.resolve('resources/main/index.html')}`)
+  mainWindow.webContents.setZoomFactor(Number(settings.general.zoom) / 100)
 }
 
 async function asyncShowMainWindow(): Promise<void> {
@@ -138,29 +140,39 @@ async function asyncShowMainWindow(): Promise<void> {
   // TODO toggle dev tools of main window from setting form
 
   mainWindow_ = new electron.BrowserWindow({
-    show: false,
     frame: false,
     transparent: true,
-    focusable: false,  // Must be set false to enable 'alwaysOnTop' on Linux
     alwaysOnTop: true,
     webPreferences: {
-      contextIsolation: true
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.resolve('dist/js/preload/main.js')
     }
   })
+  mainWindow_.setAlwaysOnTop(true, 'screen-saver')
   applySettings(mainWindow_, settings)
   mainWindow_.setIgnoreMouseEvents(true)
-  mainWindow_.webContents.openDevTools({ mode: 'detach' })
-  mainWindow_.once('ready-to-show', (): void  => {
-    mainWindow_?.show()
-  })
+  if (process.argv.includes('--open-dev-tools')) {
+    mainWindow_.webContents.openDevTools({ mode: 'detach' })
+  }
   mainWindow_.on('closed', (): void => {
     mainWindow_ = null
   })
+
+  ignoreMouseEvents_ = new IgnoreMouseEvents(mainWindow_)
+  ignoreMouseEvents_.registerGlobalShortcut()
+}
+
+function asyncOnScreenCommandExecuted(): Promise<void> {
+  ignoreMouseEvents_?.resetIgnoreMouseEvents()
+  return Promise.resolve()
 }
 
 function onReady(): void {
   electron.ipcMain.handle(CHANNEL_REQUEST_SETTINGS, asyncLoadSettings)
   electron.ipcMain.handle(CHANNEL_POST_SETTINGS, asyncSaveSettings)
+  electron.ipcMain.handle(CHANNEL_REQUEST_SCREEN_PROPS, asyncLoadSettings)
+  electron.ipcMain.handle(CHANNEL_ON_SCREEN_COMMAND_EXECUTED, asyncOnScreenCommandExecuted)
 
   moveToRootDirectory()
   showTrayIcon()

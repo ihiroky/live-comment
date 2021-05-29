@@ -1,10 +1,12 @@
-interface Settings {
+type Settings = {
   version: string
 }
 
+export const CURRENT_VERSION = '1'
+
 // TODO Retain proper type
 
-interface SettingsV0 extends Settings {
+type SettingsV0 = Settings & {
   version: '0'
   url: string
   room: string
@@ -14,56 +16,92 @@ interface SettingsV0 extends Settings {
   screen: string
 }
 
-export const CURRENT_VERSION = '0'
+export type SettingsV1 = Settings & {
+  version: typeof CURRENT_VERSION
+  general: {
+    url: string
+    room: string
+    password: string
+    duration: number
+    zoom: number,
+    screen: number
+  },
+  watermark: {
+    html: string
+    opacity: number
+    color: string
+    fontSize: string
+    position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+    offset: string
+    noComments: boolean
+  }
+}
 
 function isV0(settings: Settings): settings is SettingsV0 {
   return settings.version === '0'
 }
 
-export function parse(json: string): Record<string, string> {
+function isV1(settings: Settings): settings is SettingsV1 {
+  return settings.version === CURRENT_VERSION
+}
+
+function setDefaultIfNotMatchType<T>(key: string, obj: Record<string, T>, defaultObj: Record<string, T>): void {
+  const defalutValue = defaultObj[key]
+  if (typeof obj[key] !== typeof defalutValue) {
+    obj[key] = defalutValue
+  }
+}
+
+export function parse(json: string): SettingsV1 {
   const s = JSON.parse(json)
-  const result: Record<string, string> = loadDefault()
+  const d = loadDefault()
+  if (isV1(s)) {
+    let gkey: keyof SettingsV1['general']
+    for (gkey in d.general) {
+      setDefaultIfNotMatchType(gkey, s.general, d.general)
+    }
+    let wkey: keyof SettingsV1['watermark']
+    for (wkey in d.watermark) {
+      setDefaultIfNotMatchType(wkey, s.watermark, d.watermark)
+    }
+    return s
+  }
   if (isV0(s)) {
-    result.url = s.url ?? 'ws://localhost:8080'
-    result.room = s.room ?? ''
-    result.password = s.password ?? ''
-    result.duration = s.duration ?? '7'
-    result.zoom = s.zoom ?? '100'
-    result.screen = s.screen ?? ''
-    return result
+    return {
+      version: '1',
+      general: {
+        url: s.url ?? d.general.url,
+        room: s.room ?? d.general.room,
+        password: s.password ?? d.general.password,
+        duration: !isNaN(Number(s.duration)) ? Number(s.duration) : d.general.duration,
+        zoom: !isNaN(Number(s.zoom)) ? Number(s.zoom) : d.general.zoom,
+        screen: !isNaN(Number(s.screen)) ? Number(s.screen) : d.general.screen
+      },
+      watermark: d.watermark
+    }
   }
   return loadDefault()
 }
 
-export function validate(record: Record<string, string>): void {
-  if (!record.url) {
-    throw new Error('No url exists.')
-  }
-  if (!record.room) {
-    throw new Error('No room exists.')
-  }
-  if (!record.password) {
-    throw new Error('No password exists.')
-  }
-  if (!record.duration) {
-    throw new Error('No duration exists.')
-  }
-  if (!record.zoom) {
-    throw new Error('No zoomFactor exists.')
-  }
-  if (!record.screen) {
-    throw new Error('No screen exists.')
-  }
-}
-
-export function loadDefault(): Record<string, string> {
+export function loadDefault(): SettingsV1 {
   return {
-    version: '0',
-    url: 'ws://localhost:8080',
-    room: '',
-    password: '',
-    duration: '7',
-    zoom: '100',
-    screen: ''
+    version: '1',
+    general: {
+      url: 'ws://localhost:8080',
+      room: '',
+      password: '',
+      duration: 7,
+      zoom: 100,
+      screen: 0
+    },
+    watermark: {
+      html: '',
+      opacity: 0.7,
+      color: '#333333',
+      fontSize: '64px',
+      position: 'bottom-right',
+      offset: '3%',
+      noComments: false
+    }
   }
 }

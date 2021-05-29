@@ -6,7 +6,7 @@
 
 - node
 - yarn
-- Http server (optional)
+- Http server
 
 ### Server
 
@@ -20,7 +20,7 @@ yarn --cwd packages/comment build
 yarn --cwd packages/server build
 ```
 
-- Configure reverse proxy (optional)
+- Configure reverse proxy
 
 e.g. Nginx
 ```
@@ -46,9 +46,9 @@ If you don't use reverse proxy, /path/to/live-comment/packages/comment/build mus
 
 - Start websocket server
 ```bash
-cd /path/to/live-comment/
+cd /path/to/live-comment/packages/server
 vi server.config.json  # Add room name and password :(
-nohup yarn --cwd packages/server start >nohup.out 2>&1 &
+node dist/js/index.js
 ```
 
 ### Client
@@ -63,10 +63,9 @@ git clone https://github.com/ihiroky/live-comment.git
 cd live-comment
 yarn install
 cd packages/desktop
-yarn build
-yarn electron-builer -c electron-builder-config.json -w  # for Windows
-yarn electron-builer -c electron-builder-config.json -m  # for Mac
-yarn electron-builer -c electron-builder-config.json -l  # for Linux
+yarn electron-builder -c electron-builder-config.json -l # for Linux
+yarn electron-builder -c electron-builder-config.json -w # for Windows
+yarn electron-builder -c electron-builder-config.json -m # for Mac
 ```
 
 Then, install generated package in live-comment/packages/desktop/dist directory.
@@ -93,13 +92,13 @@ yarn start  # Starts http/ws server on port 8080
 ```bash
 cd packages/comment
 yarn start  # Starts http server on port 3000
+# Access http://localhost:3000/login
 ```
 
 ### Start desktop application
 ```bash
 cd packages/desktop
-yarn build:screen
 yarn build
-cd dist/linux-unpacked
-./live-comment ws://localhost:8080  # Connect to the streaming server regardless of its settings.
+yarn electron . --open-dev-tools
+# And change Server URL to ws://localhost:8080/app in the settings.
 ```

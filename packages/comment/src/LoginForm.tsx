@@ -6,7 +6,10 @@ import {
   Button,
   Grid
 } from '@material-ui/core'
-import { createHash } from 'common'
+import {
+  createHash,
+  getLogger
+} from 'common'
 
 interface TextFieldState {
   value: string,
@@ -33,6 +36,8 @@ const useStyles = makeStyles((theme: Theme) => (
     }
   }
 ))
+
+const log = getLogger('LoginForm')
 
 export const LoginForm: React.FC = (): JSX.Element => {
   const [notification, setNotification] = React.useState<{ message: string }>({
@@ -69,8 +74,10 @@ export const LoginForm: React.FC = (): JSX.Element => {
   }
 
   function onTextFieldChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    console.log(e.target.name, e.target.value)
-    setNotification({ message: '' })
+    log.trace('[onTextFieldChanged]', e.target.name, e.target.value)
+    if (notification.message.length > 0) {
+      setNotification({ message: '' })
+    }
     switch (e.target.name) {
       case 'room': {
         const error = e.target.value.length === 0

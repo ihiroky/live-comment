@@ -1,7 +1,7 @@
 import WebSocket from 'ws'
 import { v4 as uuidv4 } from 'uuid'
 import http from 'http'
-import fs from 'fs'
+import { Configuration, Room } from './Configuration'
 
 import {
   CloseCode,
@@ -9,15 +9,9 @@ import {
   ErrorMessage,
   isAcnMessage,
   isCommentMessage,
+  getLogger,
+  CommentMessage
 } from 'common'
-
-interface ServerConfig {
-  rooms: {
-    room: string
-    hash: string
-  }[]
-}
-
 
 export interface ClientSession extends WebSocket {
   alive: boolean
@@ -27,53 +21,48 @@ export interface ClientSession extends WebSocket {
   blocked: boolean
   pendingMessageCount: number
   pendingCharCount: number
-  room: string
+  room?: string
 }
 
 const PING_INTERVAL_MILLIS = 7 * 1000
 const MAX_PENDING_MESSAGE_COUNT = 500
 const MAX_PENDING_CHAR_COUNT = 5000
 
+const log = getLogger('websocket')
+
 function receiveHeartbeat(this: WebSocket, data: Buffer): void {
   const self = this as ClientSession
-  console.log('heartbeat', self.id, data)
+  log.debug('[receiveHeartbeat] From', self.id)
   self.alive = true
   self.lastPongTime = Date.now()
 }
 
-function sendMessage(ws: WebSocket, message: WebSocket.Data): void {
-  const s = ws as ClientSession
+function sendMessage(c: ClientSession, message: WebSocket.Data): void {
   const charCount = message.toString().length
-  s.pendingMessageCount++
-  s.pendingCharCount += charCount
-  s.send(message, (err: Error | undefined) => {
+  c.pendingMessageCount++
+  c.pendingCharCount += charCount
+  c.send(message, (err: Error | undefined) => {
     if (err) {
-      console.error('Error on sending message:', s.id, err)
+      log.error('[sendMessage] Error on sending message:', c.id, err)
       return
     }
-    s.pendingMessageCount--
-    s.pendingCharCount -= charCount
+    c.pendingMessageCount--
+    c.pendingCharCount -= charCount
   })
 }
 
-function onAuthenticate(client: ClientSession, m: AcnMessage): void {
-  fs.readFile('server.config.json', { encoding: 'utf8' }, (err: NodeJS.ErrnoException | null, data: string): void => {
-    if (err) {
-      console.error('Failed to load server.conig.json', err)
-      return
-    }
-    const config = JSON.parse(data) as ServerConfig
-    for (const r of config.rooms) {
-      if (r.room === m.room) {
-        if (r.hash === m.hash) {
-          console.log('Room:', m.room)
-          client.room = m.room
-          return
-        }
+function onAuthenticate(client: ClientSession, m: AcnMessage, configuration: Configuration): void {
+  log.debug('[onAuthenticate] From', client.id)
+  configuration.rooms.then((rooms: Room[]): void => {
+    for (const r of rooms) {
+      if (r.room === m.room && r.hash === m.hash) {
+        log.debug('[onAuthentication] Room:', m.room)
+        client.room = m.room
+        return
       }
     }
-    console.log('No room or invalid hash:', data)
-    // TODO add type
+    log.debug('No room or invalid hash:', m)
+
     const message: ErrorMessage = {
       type: 'error',
       error: 'ACN_FAILED',
@@ -83,8 +72,22 @@ function onAuthenticate(client: ClientSession, m: AcnMessage): void {
   })
 }
 
-function onConnected(this: WebSocket.Server, ws: WebSocket): void {
-  const server = this
+function onComment(server: WebSocket.Server, data: WebSocket.Data, sender: ClientSession, comment: CommentMessage): void {
+  if (!sender.room) {
+    log.error('[onMessage] Unauthenticated client:', sender.id)
+    sender.close()
+  }
+  log.debug('[onMessage]', comment.comment, 'from', sender.id, 'to', sender.room)
+  server.clients.forEach((c: WebSocket): void => {
+    const receiver = c as ClientSession
+    if (receiver.room === sender.room) {
+      sendMessage(receiver, data)
+    }
+  })
+}
+
+
+function onConnected(server: WebSocket.Server, ws: WebSocket, configuration: Configuration): void {
   const client = ws as ClientSession
   client.id = uuidv4()
   client.alive = true
@@ -96,34 +99,28 @@ function onConnected(this: WebSocket.Server, ws: WebSocket): void {
     const data = message.toString()
     const m = JSON.parse(data)
     if (isCommentMessage(m)) {
-      if (!client.room) {
-        console.error('Unauthenticated client:', client.id)
-        client.close()
-      }
-      console.log(`[onCommentMessage] ${m.comment} from ${client.id}`)
-      server.clients.forEach(c => sendMessage(c, message))
+      onComment(server, message, client, m)
     } else if (isAcnMessage(m)) {
-      console.log(`AcnMessage: ${data}`)
-      onAuthenticate(client, m)
+      onAuthenticate(client, m, configuration)
     } else {
-      console.error(`Unexpected message: ${m}`)
+      log.debug('[onMessage]Unexpected message:', m)
     }
   })
   client.on('error', function (e: Error): void {
     const client = this as ClientSession
-    console.error('Socket error', client.id, e)
+    log.info('[onError] Socket error', client.id, e)
   })
   client.on('close', function (this: WebSocket, code: number, reason: string): void {
     const c = this as ClientSession
-    console.log('[close]', c.id, code, reason)
+    log.info('[onClose]', c.id, code, reason)
   })
-  console.log('connected', client.id)
+  log.info('[onConnected]', client.id)
 }
 
 function checkPingPong(client: ClientSession): void {
   if (!client.alive) {
     client.terminate()
-    console.error(`Terminate ${client.id} due to no pong.`)
+    log.info(`[checkPingPong] Terminate ${client.id} due to no pong.`)
     return
   }
 
@@ -133,18 +130,29 @@ function checkPingPong(client: ClientSession): void {
 
 function checkPendingCount(client: ClientSession): void {
   if (client.pendingMessageCount > MAX_PENDING_MESSAGE_COUNT || client.pendingCharCount > MAX_PENDING_CHAR_COUNT) {
-    console.error(
-      `Terminate ${client.id} due to message retention.`,
+    log.error(
+      '[checkPendingCount]',
+      `Terminate ${client.id} due to too many pending messages.`,
       `messages:${client.pendingMessageCount}, characters:${client.pendingCharCount}`
     )
+    const message: ErrorMessage = {
+      type: 'error',
+      error: 'TOO_MANY_PENDING_MESSAGES',
+      message: 'I can not stand it any longer.'
+    }
+    client.close(CloseCode.TOO_MANY_PENDING_MESSAGES, JSON.stringify(message))
   }
 }
 
-export function createWebSocketServer(server: http.Server): WebSocket.Server {
+export function createWebSocketServer(server: http.Server, configuration: Configuration): WebSocket.Server {
+  log.setLevel(configuration.logLevel)
   const wss = new WebSocket.Server({ server })
-  wss.on('connection', onConnected)
+  wss.on('connection', function(ws: WebSocket, _: http.IncomingMessage): void {
+    onConnected(this, ws, configuration)
+  })
 
   const healthCheckIntervalId: NodeJS.Timeout = setInterval((): void => {
+    wss.emit('helthcheck')
     wss.clients.forEach((ws: WebSocket) => {
       const client = ws as ClientSession
       checkPingPong(client)
