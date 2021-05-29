@@ -11,8 +11,8 @@ type ScreenProps = Readonly<{
 declare global {
   interface Window {
     settings: {
-      requestSettings: () => Promise<SettingsV1>,
-      postSettings: (settings: SettingsV1) => Promise<void>,
+      requestSettings: () => Promise<SettingsV1>
+      postSettings: (settings: SettingsV1) => Promise<void>
       getScreenPropsList: () => Promise<ScreenProps[]>
     }
   }
@@ -53,12 +53,12 @@ export type WatermarkSettings = Readonly<{
   color: Value<string>
   fontSize: Value<string>
   position: Value<WatermarkPosition>
-  offset: Value<string>,
-  noComments: Value<boolean>,
+  offset: Value<string>
+  noComments: Value<boolean>
 }>
 
 export type ValueState<T> = Readonly<{
-  value: Value<T>,
+  value: Value<T>
   setValue: React.Dispatch<React.SetStateAction<Value<T>>>
 }>
 
@@ -77,8 +77,8 @@ export type WatermarkSettingsState = Readonly<{
   color: ValueState<string>
   fontSize: ValueState<string>
   position: ValueState<WatermarkPosition>
-  offset: ValueState<string>,
-  noComments: ValueState<boolean>,
+  offset: ValueState<string>
+  noComments: ValueState<boolean>
 }>
 
 export type SettingsState = Readonly<{

@@ -25,7 +25,8 @@
     "start": "yarn --cwd ../common tsc -b && react-scripts start",
     "build": "yarn --cwd ../common tsc -b && react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint --ext ts,tsx --max-warnings 0 src"
   },
   "eslintConfig": {
     "extends": "react-app"

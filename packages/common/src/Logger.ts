@@ -1,8 +1,8 @@
-import JsLogger, { ILogger, ILogLevel } from 'js-logger'
+import JsLogger, { ILogLevel } from 'js-logger'
 
 type IContext = {
-  level: ILogLevel;
-  name?: string;
+  level: ILogLevel
+  name?: string
 }
 
 function pad0(n: number): string {
@@ -19,7 +19,7 @@ function pad00(n: number): string {
 
 JsLogger.useDefaults({
   defaultLevel: JsLogger.INFO,
-  formatter: function(messages: any[], context: IContext): void {
+  formatter: function(messages: unknown[], context: IContext): void {
     const now = new Date()
     const timestamp = now.getFullYear() + '/' +
       pad0(now.getMonth() + 1) + '/' +
@@ -35,17 +35,17 @@ JsLogger.useDefaults({
 export type LogLevel = ILogLevel
 
 type Logger = {
-  trace(...x: any[]): void;
-  debug(...x: any[]): void;
-  info(...x: any[]): void;
-  log(...x: any[]): void;
-  warn(...x: any[]): void;
-  error(...x: any[]): void;
-  time(label: string): void;
-  timeEnd(label: string): void;
-  setLevel(level: LogLevel): void;
-  getLevel(): LogLevel;
-  enabledFor(level: LogLevel): boolean;
+  trace(...x: unknown[]): void
+  debug(...x: unknown[]): void
+  info(...x: unknown[]): void
+  log(...x: unknown[]): void
+  warn(...x: unknown[]): void
+  error(...x: unknown[]): void
+  time(label: string): void
+  timeEnd(label: string): void
+  setLevel(level: LogLevel): void
+  getLevel(): LogLevel
+  enabledFor(level: LogLevel): boolean
 }
 
 export function getLogger(scope: string): Logger {
@@ -61,7 +61,7 @@ export const LogLevels = {
   TRACE: JsLogger.TRACE
 }
 
-export function parseLogLevel(v: any): LogLevel {
+export function parseLogLevel(v: unknown): LogLevel {
   if (v === undefined) {
     return JsLogger.INFO
   }

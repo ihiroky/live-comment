@@ -8,6 +8,9 @@
   "author": "Hiroki Itoh <ihiroky@gmail.com>",
   "license": "MIT",
   "private": true,
+  "scripts": {
+    "lint": "eslint --ext ts,tsx --max-warnings 0 src"
+  },
   "devDependencies": {
     "@types/react": "^17.0.3",
     "@types/react-dom": "^17.0.3",

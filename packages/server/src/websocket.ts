@@ -32,7 +32,7 @@ const log = getLogger('websocket')
 
 function receiveHeartbeat(this: WebSocket, data: Buffer): void {
   const self = this as ClientSession
-  log.debug('[receiveHeartbeat] From', self.id)
+  log.debug('[receiveHeartbeat] From', self.id, data.toString())
   self.alive = true
   self.lastPongTime = Date.now()
 }
@@ -147,7 +147,8 @@ function checkPendingCount(client: ClientSession): void {
 export function createWebSocketServer(server: http.Server, configuration: Configuration): WebSocket.Server {
   log.setLevel(configuration.logLevel)
   const wss = new WebSocket.Server({ server })
-  wss.on('connection', function(ws: WebSocket, _: http.IncomingMessage): void {
+  wss.on('connection', function(ws: WebSocket, req: http.IncomingMessage): void {
+    log.debug('onconnect', req.socket.remoteAddress)
     onConnected(this, ws, configuration)
   })
 

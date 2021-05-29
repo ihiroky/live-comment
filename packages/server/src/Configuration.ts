@@ -5,7 +5,8 @@ import { hideBin } from 'yargs/helpers'
 import {
   parseLogLevel,
   LogLevel,
-  getLogger
+  getLogger,
+  isObject,
 } from 'common'
 
 export type Room = Readonly<{
@@ -13,7 +14,10 @@ export type Room = Readonly<{
   hash: string
 }>
 
-function isRoom(obj: any): obj is ServerConfig['rooms'][number] {
+function isRoom(obj: unknown): obj is ServerConfig['rooms'][number] {
+  if (!isObject(obj)) {
+    return false
+  }
   return typeof obj.room === 'string' && typeof obj.hash === 'string'
 }
 
