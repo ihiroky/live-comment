@@ -63,6 +63,7 @@ git clone https://github.com/ihiroky/live-comment.git
 cd live-comment
 yarn install
 cd packages/desktop
+yarn build
 yarn electron-builder -c electron-builder-config.json -l # for Linux
 yarn electron-builder -c electron-builder-config.json -w # for Windows
 yarn electron-builder -c electron-builder-config.json -m # for Mac
