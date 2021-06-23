@@ -30,7 +30,7 @@ export const Screen: React.FC<ScreenProps> = (props: React.PropsWithChildren<Scr
   )
 
   // TODO Need to work with css class screen
-  const marqueeHeight = 64
+  const marqueeHeight = 64 + 8
 
   return (
     <div className="screen">

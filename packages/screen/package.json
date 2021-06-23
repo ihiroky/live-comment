@@ -1,7 +1,7 @@
 {
   "name": "screen",
   "version": "0.1.1",
-  "main": "./dist/js/index.js",
+  "main": "./dist/index.js",
   "private": true,
   "devDependencies": {
     "@material-ui/core": "4.11.3",
@@ -19,8 +19,7 @@
   },
   "scripts": {
     "clean": "node -e \"require('fs').rmdirSync('dist/', { recursive: true })\"",
-    "lint": "eslint --ext ts,tsx --max-warnings 0 src",
-    "build": "yarn --cwd ../common tsc -b && tsc -b"
+    "lint": "eslint --ext ts,tsx --max-warnings 0 src"
   },
   "eslintConfig": {
     "extends": "react-app"

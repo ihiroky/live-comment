@@ -3,6 +3,7 @@ import nodeResolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import terser from 'rollup-plugin-terser';
 import replace from '@rollup/plugin-replace';
+import typescript from '@rollup/plugin-typescript'
 
 const env = process.env.NODE_ENV || 'development';
 
@@ -19,6 +20,7 @@ function plugins() {
       'process.env.NODE_ENV': `"${env}"`,
       'preventAssignment': true
     }),
+    typescript(),
     nodeResolve({
       browser: true,
       preferBuiltins: false
@@ -29,17 +31,25 @@ function plugins() {
 }
 
 export default [{
-  input: 'dist/js/settings/index.js',
+  input: 'src/main/index.tsx',
   output: {
-    file: 'resources/settings/index.js',
+    file: 'resources/main/index.js',
+    name: 'Screen',
+    format: 'iife'
+  },
+  plugins: plugins(),
+}, {
+  input: 'src/settings/index.tsx',
+  output: {
+    file: 'resources/settings.js',
     name: 'Settings',
     format: 'iife'
   },
   plugins: plugins(),
 }, {
-  input: 'dist/js/main/index.js',
+  input: 'src/poll/index.tsx',
   output: {
-    file: 'resources/main/index.js',
+    file: 'resources/poll.js',
     name: 'Screen',
     format: 'iife'
   },

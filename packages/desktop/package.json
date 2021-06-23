@@ -14,7 +14,7 @@
   "scripts": {
     "clean": "node -e \"require('fs').rmdirSync('dist', {recursive: true})\"",
     "lint": "eslint --ext ts,tsx --max-warnings 0 src",
-    "build": "yarn --cwd ../screen build && tsc -b && rollup -c",
+    "build": "tsc -b && rollup -c",
     "build:dir": "electron-builder -c electron-builder-config.json --dir",
     "start": "electron . --enable-logging"
   },
