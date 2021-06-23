@@ -1,6 +1,10 @@
 import {
   Message,
+  AcnMessage,
+  CommentMessage,
   isCommentMessage,
+  CloseCode,
+  WebSocketControl,
   getLogger
 } from 'common'
 import React from 'react'
@@ -60,15 +64,74 @@ function findLevelRightSpaceExists(marquees: MarqueeProps[]): number {
 
 export class MarqueePropsGenerator {
 
+  private readonly room: string
+  private readonly hash: string
   private readonly duration: number
   private readonly marqueePropsListUpdated: (marqueePropsList: MarqueePropsList) => void
   private marquees: MarqueeProps[]
+  private webSocketControl: WebSocketControl | null
+  private reconnectTimer: number
 
-  constructor(duration: number, listener: (marqueePropsList: MarqueePropsList) => void) {
+  constructor(room: string, hash: string, duration: number, listener: (marqueePropsList: MarqueePropsList) => void) {
+    this.room = room
+    this.hash = hash
     this.duration = duration
     this.marquees = []
+    this.webSocketControl = null
+    this.reconnectTimer = 0
     this.marqueePropsListUpdated = listener
+
+    this.onOpen = this.onOpen.bind(this)
+    this.onClose = this.onClose.bind(this)
     this.onMessage = this.onMessage.bind(this)
+  }
+
+  close(): void {
+    if (this.reconnectTimer) {
+      window.clearTimeout(this.reconnectTimer)
+    }
+    if (this.webSocketControl) {
+      this.webSocketControl.close()
+    }
+  }
+
+  onOpen(control: WebSocketControl): void {
+    log.debug('[onOpen]', control)
+    const message: AcnMessage = {
+      type: 'acn',
+      room: this.room,
+      hash: this.hash
+    }
+    control.send(message)
+    this.webSocketControl = control
+  }
+
+  onClose(ev: CloseEvent): void {
+    if (this.webSocketControl) {
+      this.webSocketControl.close()
+    }
+    if (ev.code === CloseCode.ACN_FAILED) {
+      const comment: CommentMessage = {
+        type: 'comment',
+        comment: 'Room authentication failed. Please check your setting 🙏'
+      }
+      this.onMessage(comment)
+      return
+    }
+
+    const comment: CommentMessage = {
+      type: 'comment',
+      comment: `Connection closed: ${ev.code}`
+    }
+    this.onMessage(comment)
+
+    const waitMillis = 3000 + 7000 * Math.random()
+    this.reconnectTimer = window.setTimeout((): void => {
+      this.reconnectTimer = 0
+      log.info('[onClose] Try to reconnect.')
+      this.webSocketControl?.reconnect()
+    }, waitMillis)
+    log.info(`[onClose] Reconnect after ${waitMillis}ms.`)
   }
 
   onMessage(message: Message): void {

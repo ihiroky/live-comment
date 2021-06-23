@@ -21,6 +21,7 @@ export class SendCommentForm extends React.Component<PropsType, StateType> {
   }
 
   onSubmit(e: React.FormEvent<HTMLFormElement>): void {
+    // TODO send with Shift + Enter
     const comment = this.state.comment
     if (comment) {
       const type = 'comment'

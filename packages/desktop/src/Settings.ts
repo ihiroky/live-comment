@@ -52,6 +52,29 @@ function setDefaultIfNotMatchType<T>(key: string, obj: Record<string, T>, defaul
   }
 }
 
+export function loadDefault(): SettingsV1 {
+  return {
+    version: '1',
+    general: {
+      url: 'ws://localhost:8080',
+      room: '',
+      password: '',
+      duration: 7,
+      zoom: 100,
+      screen: 0
+    },
+    watermark: {
+      html: '',
+      opacity: 0.7,
+      color: '#333333',
+      fontSize: '64px',
+      position: 'bottom-right',
+      offset: '3%',
+      noComments: false
+    }
+  }
+}
+
 export function parse(json: string): SettingsV1 {
   const s = JSON.parse(json)
   const d = loadDefault()
@@ -81,27 +104,4 @@ export function parse(json: string): SettingsV1 {
     }
   }
   return loadDefault()
-}
-
-export function loadDefault(): SettingsV1 {
-  return {
-    version: '1',
-    general: {
-      url: 'ws://localhost:8080',
-      room: '',
-      password: '',
-      duration: 7,
-      zoom: 100,
-      screen: 0
-    },
-    watermark: {
-      html: '',
-      opacity: 0.7,
-      color: '#333333',
-      fontSize: '64px',
-      position: 'bottom-right',
-      offset: '3%',
-      noComments: false
-    }
-  }
 }
