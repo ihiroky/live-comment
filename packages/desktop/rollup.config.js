@@ -20,7 +20,7 @@ function plugins() {
       'process.env.NODE_ENV': `"${env}"`,
       'preventAssignment': true
     }),
-    typescript(),
+    typescript({ tsconfig: './tsconfig-rollup.json' }),
     nodeResolve({
       browser: true,
       preferBuiltins: false
