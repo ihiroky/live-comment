@@ -85,7 +85,7 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
     log.debug('[onSelectChanged]', e.target.name, e.target.value)
     const strValue = String(e.target.value)
     const numValue = Number(e.target.value)
-    props.onUpdate('screen', strValue, !isNaN(numValue))
+    props.onUpdate('screen', strValue, isNaN(numValue))
   }
 
   const classes = useStyles();
