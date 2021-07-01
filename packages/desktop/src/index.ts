@@ -137,6 +137,9 @@ async function asyncShowMainWindow(): Promise<void> {
 
   // TODO toggle dev tools of main window from setting form
 
+  // Needed not to be hidden by full screen apps on Mac.
+  electron.app.dock?.hide()
+
   mainWindow_ = new electron.BrowserWindow({
     frame: false,
     transparent: true,
@@ -149,7 +152,6 @@ async function asyncShowMainWindow(): Promise<void> {
   })
   mainWindow_.setAlwaysOnTop(true, 'screen-saver')
   mainWindow_.setVisibleOnAllWorkspaces(true)
-  mainWindow_.setFullScreenable(false)  // Needed not to be hidden by full screen apps on Mac.
   applySettings(mainWindow_, settings)
   mainWindow_.setIgnoreMouseEvents(true)
   if (process.argv.includes('--open-dev-tools')) {
@@ -179,6 +181,7 @@ if (process.platform === 'linux') {
   electron.app.on('ready', onReady)
 }
 electron.app.on('window-all-closed', (): void => {
+  electron.app.dock?.show()
   if (process.platform !== 'darwin') {
     electron.app.quit()
   }
