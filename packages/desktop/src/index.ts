@@ -148,6 +148,8 @@ async function asyncShowMainWindow(): Promise<void> {
     }
   })
   mainWindow_.setAlwaysOnTop(true, 'screen-saver')
+  mainWindow_.setVisibleOnAllWorkspaces(true)
+  mainWindow_.setFullScreenable(false)  // Needed not to be hidden by full screen apps on Mac.
   applySettings(mainWindow_, settings)
   mainWindow_.setIgnoreMouseEvents(true)
   if (process.argv.includes('--open-dev-tools')) {
