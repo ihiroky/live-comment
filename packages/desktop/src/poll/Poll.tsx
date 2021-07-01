@@ -3,7 +3,7 @@ import {
   Grid,
   Paper,
   makeStyles,
-  TextField,
+  InputBase,
 } from '@material-ui/core'
 import { getLogger } from 'common'
 import { Entry, Mode } from './types'
@@ -27,6 +27,18 @@ const useStyles = makeStyles(() => ({
   },
   ui: {
     width: '800px',
+    padding: '8px'
+  },
+  title: {
+    width: '100%',
+    paddingBottom: '8px',
+    fontSize: '32px',
+    fontWeight: 'bold',
+  },
+  description: {
+    width: '100%',
+    fontSize: '24px',
+    fontWeight: 'bolder',
   },
 }))
 
@@ -60,6 +72,7 @@ export const Poll: React.FC<Props> = (props: Props): JSX.Element => {
   }
 
   function onOk(): void {
+    // TODO Check if data exists.
     setMode('poll')
     props.onCreated && props.onCreated()
   }
@@ -105,16 +118,29 @@ export const Poll: React.FC<Props> = (props: Props): JSX.Element => {
       <Paper className={classes.ui} elevation={3}>
         <Grid container spacing={1}>
           <Grid item xs={12}>
-            <TextField
-              style={{width: '100%'}}
-              disabled={mode !== 'edit'}
+            <InputBase
+              className={classes.title}
+              autoFocus
+              readOnly={mode !== 'edit'}
               value={title}
               onChange={e => setTitle(e.target.value)}
             />
           </Grid>
-          <PollResult mode={mode} data={data} onClosed={onClosed} onTypeChanged={onResultTypeChanged} />
-          <Choice mode={mode} entries={entries} onRemoveEntry={onRemoveEntry} />
-          <PollEdit mode={mode} onEntryAdded={onEntryAdded} onOk={onOk} onCanceled={onCanceled} />
+          <PollResult mode={mode} data={data} onClosed={onClosed} onTypeChanged={onResultTypeChanged}>
+            <Choice
+              mode={mode}
+              descClass={classes.description}
+              entries={entries}
+              onRemoveEntry={onRemoveEntry}
+            />
+          </PollResult>
+          <PollEdit
+            mode={mode}
+            descClass={classes.description}
+            onEntryAdded={onEntryAdded}
+            onOk={onOk}
+            onCanceled={onCanceled}
+          />
           <Polling mode={mode} onFinished={onFinished} />
         </Grid>
       </Paper>

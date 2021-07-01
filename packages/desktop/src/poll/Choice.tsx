@@ -5,15 +5,17 @@ import {
 } from '@material-ui/core'
 import { Entry, Mode } from './types'
 
-export function Choice({ entries, mode, onRemoveEntry }: {
+export function Choice({ entries, mode, descClass, onRemoveEntry }: {
   entries: Entry[]
   mode: Mode
+  descClass: string
   onRemoveEntry: (index: number) => void
 }): JSX.Element | null {
   if (mode === 'result-graph') {
     return null
   }
 
+  // TODO Emphasize top result
   return (
     <>
       {entries.map((entry: Entry, index: number): JSX.Element => (
@@ -21,11 +23,11 @@ export function Choice({ entries, mode, onRemoveEntry }: {
           <Grid container>
             <Grid item xs={1} />
             <Grid item xs={1}>{index + 1}</Grid>
-            <Grid item xs={8}>{entry.description}</Grid>
+            <Grid item xs={8} className={descClass}>{entry.description}</Grid>
             <Grid item xs={1}>
               {
                 mode === 'edit'
-                  ? <Button onClick={() => onRemoveEntry(index)}>Del</Button>
+                  ? <Button variant="outlined" onClick={() => onRemoveEntry(index)}>Del</Button>
                   : null
               }
               {

@@ -18,7 +18,7 @@ export function Polling({ mode, onFinished }: {
     <>
       <Grid item xs={10} />
       <Grid item xs={2}>
-        <Button onClick={onFinished}>Finish</Button>
+        <Button variant="outlined" onClick={onFinished}>Finish</Button>
       </Grid>
     </>
   )

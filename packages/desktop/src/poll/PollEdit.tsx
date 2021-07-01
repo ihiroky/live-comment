@@ -6,8 +6,9 @@ import {
 } from '@material-ui/core'
 import { Mode } from './types'
 
-export function PollEdit({ mode, onEntryAdded, onOk, onCanceled }: {
+export function PollEdit({ mode, descClass, onEntryAdded, onOk, onCanceled }: {
   mode: Mode
+  descClass: string
   onEntryAdded: (description: string) => void
   onOk: () => void
   onCanceled: () => void
@@ -28,18 +29,28 @@ export function PollEdit({ mode, onEntryAdded, onOk, onCanceled }: {
       <Grid item xs={1} />
       <Grid item xs={1}>-</Grid>
       <Grid item xs={8}>
-        <TextField style={{width: '100%'}} value={description} onChange={e => setDescription(e.target.value)}/>
+        <TextField
+          InputProps={{
+            classes: {
+              input: descClass
+            }
+          }}
+          style={{width: '100%'}}
+          placeholder="Write a new entry description."
+          value={description}
+          onChange={e => setDescription(e.target.value)}
+        />
       </Grid>
       <Grid item xs={1}>
-        <Button onClick={onClick}>Add</Button>
+        <Button variant="outlined" onClick={onClick}>Add</Button>
       </Grid>
       <Grid item xs={1} />
       <Grid item xs={8}></Grid>
       <Grid item xs={2}>
-        <Button onClick={onOk}>OK</Button>
+        <Button variant="outlined" onClick={onOk}>OK</Button>
       </Grid>
       <Grid item xs={2}>
-        <Button onClick={onCanceled}>Cancel</Button>
+        <Button variant="outlined" onClick={onCanceled}>Cancel</Button>
       </Grid>
     </>
   )

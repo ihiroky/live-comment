@@ -79,7 +79,7 @@ export function showPollWindow(): void {
   showSubWindow(
     'Poll',
     900,
-    600,
+    700,
     'poll.js',
   )
 }

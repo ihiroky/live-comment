@@ -27,7 +27,32 @@ export type PollResultProps = {
   onTypeChanged: (type: string) => void
 }
 
-export function PollResult({ mode, data, onClosed, onTypeChanged }: PollResultProps): JSX.Element | null {
+function TypeSelect({ type, onChange }: {
+  type: string
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+}): JSX.Element {
+  return (
+    <Grid item xs={12}>
+      <RadioGroup row aria-label="result" name="poll_result" defaultValue={type} value={type} onChange={onChange}>
+        <FormControlLabel value="result-list" control={<Radio />} label="List" />
+        <FormControlLabel value="result-graph" control={<Radio />} label="Graph" />
+      </RadioGroup>
+    </Grid>
+  )
+}
+
+function CloseButton({ onClosed }: { onClosed: PollResultProps['onClosed']}): JSX.Element {
+  return (
+    <>
+      <Grid item xs={10} />
+      <Grid item xs={2}>
+        <Button variant="outlined" onClick={onClosed}>Close</Button>
+      </Grid>
+    </>
+  )
+}
+
+export function PollResult({ mode, data, onClosed, onTypeChanged, children }: React.PropsWithChildren<PollResultProps>): JSX.Element | null {
   const options = {
     indexAxis: 'y',
     responsive: true,
@@ -47,25 +72,17 @@ export function PollResult({ mode, data, onClosed, onTypeChanged }: PollResultPr
     onTypeChanged(value)
   }
 
-  function TypeSelect({ type, onChange }: {
-    type: string
-    onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
-  }): JSX.Element {
-    return (
-      <Grid item xs={12}>
-        <RadioGroup row aria-label="result" name="poll_result" defaultValue={type} value={type} onChange={onChange}>
-          <FormControlLabel value="result-list" control={<Radio />} label="List" />
-          <FormControlLabel value="result-graph" control={<Radio />} label="Graph" />
-        </RadioGroup>
-      </Grid>
-    )
-  }
-
   if ((mode !== 'result-graph' && mode !== 'result-list') || data === null) {
-    return null
+    return <>{children}</>
   }
   if (mode === 'result-list') {
-    return <TypeSelect type={type} onChange={onChange} />
+    return (
+      <>
+        <TypeSelect type={type} onChange={onChange} />
+        {children}
+        <CloseButton onClosed={onClosed} />
+      </>
+    )
   }
   return (
     <>
@@ -73,10 +90,7 @@ export function PollResult({ mode, data, onClosed, onTypeChanged }: PollResultPr
       <Grid item xs={12}>
         <Bar type="horizontalBar" data={data} options={options} />
       </Grid>
-      <Grid item xs={10} />
-      <Grid item xs={2}>
-        <Button onClick={onClosed}>Close</Button>
-      </Grid>
+      <CloseButton onClosed={onClosed} />
     </>
   )
 }
