@@ -31,7 +31,9 @@ export function useSettingsState(): SettingsState {
     password: useValue(''),
     duration: useValue('7'),
     zoom: useValue('100'),
-    screen: useValue(0)
+    screen: useValue(0),
+    color: useValue('black'),
+    fontBorder: useValue<boolean>(false),
   }
   const watermark: WatermarkSettingsState = {
     html: useValue(''),
@@ -40,7 +42,7 @@ export function useSettingsState(): SettingsState {
     fontSize: useValue('64px'),
     position: useValue<WatermarkPosition>('bottom-right'),
     offset: useValue('3%'),
-    noComments: useValue<boolean>(false)
+    noComments: useValue<boolean>(false),
   }
 
   React.useEffect((): void => {
@@ -54,6 +56,8 @@ export function useSettingsState(): SettingsState {
       general.duration.setValue({ data: String(g.duration), error: false })
       general.zoom.setValue({ data: String(g.zoom), error: false })
       general.screen.setValue({ data: g.screen, error: false })
+      general.color.setValue({ data: g.color, error: false })
+      general.fontBorder.setValue({ data: g.fontBorder, error: false})
 
       const w = settings.watermark
       watermark.html.setValue({ data: w.html, error: false })

@@ -12,7 +12,7 @@ type SettingsV0 = Settings & {
   room: string
   password: string
   duration: string
-  zoom: string,
+  zoom: string
   screen: string
 }
 
@@ -23,8 +23,10 @@ export type SettingsV1 = Settings & {
     room: string
     password: string
     duration: number
-    zoom: number,
+    zoom: number
     screen: number
+    color: string
+    fontBorder: boolean
   },
   watermark: {
     html: string
@@ -75,7 +77,9 @@ export function parse(json: string): SettingsV1 {
         password: s.password ?? d.general.password,
         duration: !isNaN(Number(s.duration)) ? Number(s.duration) : d.general.duration,
         zoom: !isNaN(Number(s.zoom)) ? Number(s.zoom) : d.general.zoom,
-        screen: !isNaN(Number(s.screen)) ? Number(s.screen) : d.general.screen
+        screen: !isNaN(Number(s.screen)) ? Number(s.screen) : d.general.screen,
+        color: d.general.color,
+        fontBorder: d.general.fontBorder,
       },
       watermark: d.watermark
     }
@@ -92,7 +96,9 @@ export function loadDefault(): SettingsV1 {
       password: '',
       duration: 7,
       zoom: 100,
-      screen: 0
+      screen: 0,
+      color: '#111111',
+      fontBorder: false,
     },
     watermark: {
       html: '',

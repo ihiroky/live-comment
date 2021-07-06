@@ -4,7 +4,9 @@ import {
   Theme,
   TextField,
   InputLabel,
-  Select
+  Select,
+  FormControlLabel,
+  Checkbox
 } from '@material-ui/core'
 import { GeneralSettings } from './types'
 import {
@@ -53,12 +55,14 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
   const validatePassword = React.useCallback((v: string): boolean => v.length > 0, [])
   const validateDuration = React.useCallback((v: string): boolean => !isNaN(Number(v)) && Number(v) >= 3, [])
   const validateZoom = React.useCallback((v: string): boolean => !isNaN(Number(v)) && Number(v) >= 30 && Number(v) <= 500, [])
+  const validateColor = React.useCallback((v: string): boolean => v.length > 0, [])
   const textFields: TextFieldMetadata<GeneralSettings, string | number>[] = [
     createTextFieldMetadata('url', props.url, 'Server URL', 1, validateUrl, 'Input URL like "wss://hoge/app".'),
     createTextFieldMetadata('room', props.room, 'Room', 1, validateRoom, 'Input room name.'),
     createTextFieldMetadata('password', props.password, 'Password', 1, validatePassword, 'Input password.'),
     createTextFieldMetadata('duration', props.duration, 'Message duration (seconds)', 1, validateDuration, 'Must be >= 3.'),
-    createTextFieldMetadata('zoom', props.zoom, 'Zoom (%)', 1, validateZoom, 'Must be >= 50 and <= 500.')
+    createTextFieldMetadata('zoom', props.zoom, 'Zoom (%)', 1, validateZoom, 'Must be >= 50 and <= 500.'),
+    createTextFieldMetadata('color', props.color, 'Font color (color name or #hex)', 1, validateColor, 'Input color.'),
   ]
   const [screenOptions, setScreenOptions] = React.useState<ScreenProps[]>([])
 
@@ -88,6 +92,11 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
     props.onUpdate('screen', strValue, isNaN(numValue))
   }
 
+  function onCheckboxChange(e: React.ChangeEvent<HTMLInputElement>): void {
+    log.debug('[onCheckboxChange]', e.target.name, '-', e.target.checked)
+    props.onUpdate('fontBorder', String(e.target.checked), false)
+  }
+
   const classes = useStyles();
   return (
     <div className={classes.root}>
@@ -107,6 +116,18 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
             />
           ))
         }
+        <div>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={props.fontBorder.data}
+                color="primary"
+                onChange={onCheckboxChange}
+              />
+            }
+            label="Draw font border"
+          />
+        </div>
         <div className={classes.screen}>
         { screenOptions.length > 0 &&
           <div>
