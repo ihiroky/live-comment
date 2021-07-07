@@ -27,6 +27,7 @@ export type SettingsV1 = Settings & {
     screen: number
     fontColor: string
     fontBorderColor: string
+    gpu: boolean
   },
   watermark: {
     html: string
@@ -80,8 +81,9 @@ export function parse(json: string): SettingsV1 {
         screen: !isNaN(Number(s.screen)) ? Number(s.screen) : d.general.screen,
         fontColor: d.general.fontColor,
         fontBorderColor: d.general.fontBorderColor,
+        gpu: d.general.gpu,
       },
-      watermark: d.watermark
+      watermark: d.watermark,
     }
   }
   return loadDefault()
@@ -99,7 +101,8 @@ export function loadDefault(): SettingsV1 {
       zoom: 100,
       screen: 0,
       fontColor: '#111111',
-      fontBorderColor: (process.platform !== 'darwin') ? '#cccccc' : ''
+      fontBorderColor: '#cccccc',
+      gpu: process.platform === 'win32'
     },
     watermark: {
       html: '',

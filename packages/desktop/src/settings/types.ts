@@ -32,6 +32,7 @@ export type GeneralSettings = Readonly<{
   screen: Value<number>
   fontColor: Value<string>
   fontBorderColor: Value<string>
+  gpu: Value<boolean>
 }>
 
 export const WatermarkPositions = [
@@ -73,6 +74,7 @@ export type GeneralSettingsState = Readonly<{
   screen: ValueState<number>
   fontColor: ValueState<string>
   fontBorderColor: ValueState<string>
+  gpu: ValueState<boolean>
 }>
 
 export type WatermarkSettingsState = Readonly<{

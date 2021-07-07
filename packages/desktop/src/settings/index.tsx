@@ -75,6 +75,7 @@ function toGeneralSettings(state: GeneralSettingsState): GeneralSettings {
     screen: state.screen.value,
     fontColor: state.fontColor.value,
     fontBorderColor: state.fontBorderColor.value,
+    gpu: state.gpu.value,
   }
 }
 
@@ -112,6 +113,9 @@ const App: React.FC = (): JSX.Element => {
       case 'fontColor':
       case 'fontBorderColor':
         g[key].setValue({ data: value, error })
+        break
+      case 'gpu':
+        g[key].setValue({ data: value.toLowerCase() === 'true', error })
         break
       case 'screen':
         g[key].setValue({ data: Number(value), error })
@@ -158,6 +162,7 @@ const App: React.FC = (): JSX.Element => {
         screen: g.screen.value.data,
         fontColor: g.fontColor.value.data,
         fontBorderColor: g.fontBorderColor.value.data,
+        gpu: g.gpu.value.data,
       },
       watermark: {
         html: w.html.value.data,

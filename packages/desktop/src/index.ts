@@ -33,6 +33,25 @@ function moveToRootDirectory(): void {
   process.chdir(rootDirectory)
 }
 
+function loadSettings(): Settings.SettingsV1 {
+  const userDataPath = electron.app.getPath('userData')
+  const userConfigPath = path.join(userDataPath, 'user.config')
+  if (!fs.existsSync(userConfigPath)) {
+    return Settings.loadDefault()
+  }
+
+  try {
+    const stat: fs.Stats = fs.statSync(userConfigPath)
+    if (stat.isDirectory()) {
+      return Settings.loadDefault()
+    }
+    const json = fs.readFileSync(userConfigPath, { encoding: 'utf8' })
+    return Settings.parse(json)
+  } catch {
+    return Settings.loadDefault()
+  }
+}
+
 async function asyncGetUserConfigPromise(checkIfExists: boolean): Promise<fs.PathLike> {
   const userDataPath = electron.app.getPath('userData')
   const userConfigPath = path.join(userDataPath, 'user.config')
@@ -172,8 +191,11 @@ function onReady(): void {
   asyncShowMainWindow()  // No need to wait
 }
 
+const settings = loadSettings()
+if (!settings.general.gpu) {
+  electron.app.disableHardwareAcceleration()
+}
 if (process.platform === 'linux') {
-  electron.app.commandLine.appendSwitch('disable-gpu')
   electron.app.on('ready', (): void => {
     setTimeout(onReady, 100)
   })

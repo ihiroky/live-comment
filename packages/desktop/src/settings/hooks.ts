@@ -34,6 +34,7 @@ export function useSettingsState(): SettingsState {
     screen: useValue(0),
     fontColor: useValue('#111111'),
     fontBorderColor: useValue('#cccccc'),
+    gpu: useValue<boolean>(false),
   }
   const watermark: WatermarkSettingsState = {
     html: useValue(''),
@@ -58,6 +59,7 @@ export function useSettingsState(): SettingsState {
       general.screen.setValue({ data: g.screen, error: false })
       general.fontColor.setValue({ data: g.fontColor, error: false })
       general.fontBorderColor.setValue({ data: g.fontBorderColor, error: false})
+      general.gpu.setValue({ data: g.gpu, error: false })
 
       const w = settings.watermark
       watermark.html.setValue({ data: w.html, error: false })
