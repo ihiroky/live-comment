@@ -19,6 +19,7 @@ export const MarqueeList: React.FC<Props> = (props: React.PropsWithChildren<Prop
   if (props.fontBorderColor) {
     style['WebkitTextStroke'] = `1px ${props.fontBorderColor}`
   }
+  const offsetTop = props.marqueeHeight / 2
 
   return (
     <div className="message-list">{
@@ -28,7 +29,7 @@ export const MarqueeList: React.FC<Props> = (props: React.PropsWithChildren<Prop
           key={m.key}
           ref={m.ref}
           style={{
-            top: m.level * props.marqueeHeight,
+            top: m.level * props.marqueeHeight + offsetTop,
             animationDuration: props.duration + 'ms',
             ...style,
           }}>
