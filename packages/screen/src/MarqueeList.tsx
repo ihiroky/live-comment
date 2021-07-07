@@ -9,16 +9,15 @@ type Props = {
   marqueeHeight: number
   duration: number
   color: string
-  fontBorder: boolean
+  fontBorderColor: string
 }
 
 export const MarqueeList: React.FC<Props> = (props: React.PropsWithChildren<Props>): JSX.Element => {
   const style: CSSProperties = {
     color: props.color,
   }
-  if (props.fontBorder) {
-    // TODO change color with setting
-    style['WebkitTextStroke'] = '1px #ccc'
+  if (props.fontBorderColor) {
+    style['WebkitTextStroke'] = `1px ${props.fontBorderColor}`
   }
 
   return (

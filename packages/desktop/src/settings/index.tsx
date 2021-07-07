@@ -73,8 +73,8 @@ function toGeneralSettings(state: GeneralSettingsState): GeneralSettings {
     duration: state.duration.value,
     zoom: state.zoom.value,
     screen: state.screen.value,
-    color: state.color.value,
-    fontBorder: state.fontBorder.value,
+    fontColor: state.fontColor.value,
+    fontBorderColor: state.fontBorderColor.value,
   }
 }
 
@@ -103,30 +103,43 @@ const App: React.FC = (): JSX.Element => {
 
   function onGeneralSettingsUpdate(key: keyof GeneralSettings, value: string, error: boolean): void {
     const g = settingsState.general
-    if (key === 'url' || key === 'room' || key === 'password' || key === 'duration' || key === 'zoom' || key === 'color') {
-      g[key].setValue({ data: value, error })
-    } else if (key === 'screen') {
-      g[key].setValue({ data: Number(value), error })
-    } else if (key === 'fontBorder') {
-      g[key].setValue({ data: value.toLowerCase() === 'true', error })
-    } else {
-      throw new Error(`Unexpected key: ${key}`)
+    switch (key) {
+      case 'url':
+      case 'room':
+      case 'password':
+      case 'duration':
+      case 'zoom':
+      case 'fontColor':
+      case 'fontBorderColor':
+        g[key].setValue({ data: value, error })
+        break
+      case 'screen':
+        g[key].setValue({ data: Number(value), error })
+        break
+      default:
+        throw new Error(`Unexpected key: ${key}`)
     }
   }
 
   function onWatermarkSettingsUpdate(key: keyof WatermarkSettings, value: string, error: boolean): void {
     const w = settingsState.watermark
-    if (key === 'html' || key === 'opacity' || key === 'color' || key === 'fontSize' || key === 'offset') {
-      w[key].setValue({ data: value, error })
-    } else if (key === 'position') {
-      if (!isWatermarkPosition(value)) {
-        throw new Error(`Unexpeced value of position: ${value}`)
-      }
-      w[key].setValue({ data: value, error })
-    } else if (key === 'noComments') {
-      w[key].setValue({ data: value.toLowerCase() === 'true', error })
-    } else {
-      throw new Error(`Unexpected key: ${key}`)
+    switch (key) {
+      case 'html':
+      case 'opacity':
+      case 'color':
+      case 'fontSize':
+      case 'offset':
+        w[key].setValue({ data: value, error })
+        break
+      case 'position':
+        if (!isWatermarkPosition(value)) {
+          throw new Error(`Unexpeced value of position: ${value}`)
+        }
+        w[key].setValue({ data: value, error })
+        break
+      case 'noComments':
+        w[key].setValue({ data: value.toLowerCase() === 'true', error })
+        throw new Error(`Unexpected key: ${key}`)
     }
   }
 
@@ -143,8 +156,8 @@ const App: React.FC = (): JSX.Element => {
         duration: Number(g.duration.value.data),
         zoom: Number(g.zoom.value.data),
         screen: g.screen.value.data,
-        color: g.color.value.data,
-        fontBorder: g.fontBorder.value.data,
+        fontColor: g.fontColor.value.data,
+        fontBorderColor: g.fontBorderColor.value.data,
       },
       watermark: {
         html: w.html.value.data,

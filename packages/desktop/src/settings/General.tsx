@@ -62,7 +62,8 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
     createTextFieldMetadata('password', props.password, 'Password', 1, validatePassword, 'Input password.'),
     createTextFieldMetadata('duration', props.duration, 'Message duration (seconds)', 1, validateDuration, 'Must be >= 3.'),
     createTextFieldMetadata('zoom', props.zoom, 'Zoom (%)', 1, validateZoom, 'Must be >= 50 and <= 500.'),
-    createTextFieldMetadata('color', props.color, 'Font color (color name or #hex)', 1, validateColor, 'Input color.'),
+    createTextFieldMetadata('fontColor', props.fontColor, 'Font color (color name or #hex)', 1, validateColor, 'Input color.'),
+    createTextFieldMetadata('fontBorderColor', props.fontBorderColor, 'Font border color (color name or #hex, empty if no border)', 1, () => true, 'Input color.'),
   ]
   const [screenOptions, setScreenOptions] = React.useState<ScreenProps[]>([])
 
@@ -92,11 +93,6 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
     props.onUpdate('screen', strValue, isNaN(numValue))
   }
 
-  function onCheckboxChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    log.debug('[onCheckboxChange]', e.target.name, '-', e.target.checked)
-    props.onUpdate('fontBorder', String(e.target.checked), false)
-  }
-
   const classes = useStyles();
   return (
     <div className={classes.root}>
@@ -116,18 +112,6 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
             />
           ))
         }
-        <div>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={props.fontBorder.data}
-                color="primary"
-                onChange={onCheckboxChange}
-              />
-            }
-            label="Draw font border"
-          />
-        </div>
         <div className={classes.screen}>
         { screenOptions.length > 0 &&
           <div>

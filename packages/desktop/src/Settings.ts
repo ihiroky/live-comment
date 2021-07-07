@@ -25,8 +25,8 @@ export type SettingsV1 = Settings & {
     duration: number
     zoom: number
     screen: number
-    color: string
-    fontBorder: boolean
+    fontColor: string
+    fontBorderColor: string
   },
   watermark: {
     html: string
@@ -78,8 +78,8 @@ export function parse(json: string): SettingsV1 {
         duration: !isNaN(Number(s.duration)) ? Number(s.duration) : d.general.duration,
         zoom: !isNaN(Number(s.zoom)) ? Number(s.zoom) : d.general.zoom,
         screen: !isNaN(Number(s.screen)) ? Number(s.screen) : d.general.screen,
-        color: d.general.color,
-        fontBorder: d.general.fontBorder,
+        fontColor: d.general.fontColor,
+        fontBorderColor: d.general.fontBorderColor,
       },
       watermark: d.watermark
     }
@@ -88,17 +88,18 @@ export function parse(json: string): SettingsV1 {
 }
 
 export function loadDefault(): SettingsV1 {
+  // Afterimage remains in the screen on Mac.
   return {
     version: '1',
     general: {
       url: 'ws://localhost:8080',
       room: '',
       password: '',
-      duration: 7,
+      duration: 9,
       zoom: 100,
       screen: 0,
-      color: '#111111',
-      fontBorder: false,
+      fontColor: '#111111',
+      fontBorderColor: (process.platform !== 'darwin') ? '#cccccc' : ''
     },
     watermark: {
       html: '',

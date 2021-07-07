@@ -32,8 +32,8 @@ export function useSettingsState(): SettingsState {
     duration: useValue('7'),
     zoom: useValue('100'),
     screen: useValue(0),
-    color: useValue('black'),
-    fontBorder: useValue<boolean>(false),
+    fontColor: useValue('#111111'),
+    fontBorderColor: useValue('#cccccc'),
   }
   const watermark: WatermarkSettingsState = {
     html: useValue(''),
@@ -56,8 +56,8 @@ export function useSettingsState(): SettingsState {
       general.duration.setValue({ data: String(g.duration), error: false })
       general.zoom.setValue({ data: String(g.zoom), error: false })
       general.screen.setValue({ data: g.screen, error: false })
-      general.color.setValue({ data: g.color, error: false })
-      general.fontBorder.setValue({ data: g.fontBorder, error: false})
+      general.fontColor.setValue({ data: g.fontColor, error: false })
+      general.fontBorderColor.setValue({ data: g.fontBorderColor, error: false})
 
       const w = settings.watermark
       watermark.html.setValue({ data: w.html, error: false })

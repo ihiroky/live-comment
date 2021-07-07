@@ -21,8 +21,8 @@ window.main.request().then((settings: SettingsV1): void => {
           room={settings.general.room}
           hash={createHash(settings.general.password)}
           duration={settings.general.duration * 1000}
-          color={settings.general.color}
-          fontBorder={settings.general.fontBorder}
+          color={settings.general.fontColor}
+          fontBorderColor={settings.general.fontBorderColor}
           watermark={settings.watermark}
         />
       </React.StrictMode>
