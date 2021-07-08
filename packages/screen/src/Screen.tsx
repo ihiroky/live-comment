@@ -16,6 +16,8 @@ type ScreenProps = {
   room: string
   hash: string
   duration: number
+  color: string
+  fontBorderColor: string
   watermark?: WatermarkProps
 }
 
@@ -38,6 +40,8 @@ export const Screen: React.FC<ScreenProps> = (props: React.PropsWithChildren<Scr
         marquees={marqueePropsList}
         marqueeHeight={marqueeHeight}
         duration={props.duration}
+        color={props.color}
+        fontBorderColor={props.fontBorderColor}
       />
       {
         props.watermark

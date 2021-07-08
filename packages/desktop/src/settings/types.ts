@@ -30,6 +30,9 @@ export type GeneralSettings = Readonly<{
   duration: Value<string>
   zoom: Value<string>
   screen: Value<number>
+  fontColor: Value<string>
+  fontBorderColor: Value<string>
+  gpu: Value<boolean>
 }>
 
 export const WatermarkPositions = [
@@ -69,6 +72,9 @@ export type GeneralSettingsState = Readonly<{
   duration: ValueState<string>
   zoom: ValueState<string>
   screen: ValueState<number>
+  fontColor: ValueState<string>
+  fontBorderColor: ValueState<string>
+  gpu: ValueState<boolean>
 }>
 
 export type WatermarkSettingsState = Readonly<{

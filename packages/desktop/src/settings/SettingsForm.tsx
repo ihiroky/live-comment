@@ -29,7 +29,7 @@ type TabPanelProps = {
   value: number
 }
 
-const log = getLogger('settings/App')
+const log = getLogger('settings/index')
 
 function TabPanel(props: TabPanelProps): JSX.Element {
   const { children, index, value } = props
@@ -71,7 +71,10 @@ function toGeneralSettings(state: GeneralSettingsState): GeneralSettings {
     password: state.password.value,
     duration: state.duration.value,
     zoom: state.zoom.value,
-    screen: state.screen.value
+    screen: state.screen.value,
+    fontColor: state.fontColor.value,
+    fontBorderColor: state.fontBorderColor.value,
+    gpu: state.gpu.value,
   }
 }
 
@@ -100,28 +103,46 @@ export const SettingsForm: React.FC = (): JSX.Element => {
 
   function onGeneralSettingsUpdate(key: keyof GeneralSettings, value: string, error: boolean): void {
     const g = settingsState.general
-    if (key === 'url' || key === 'room' || key === 'password' || key === 'duration' || key === 'zoom') {
-      g[key].setValue({ data: value, error })
-    } else if (key === 'screen') {
-      g[key].setValue({ data: Number(value), error })
-    } else {
-      throw new Error(`Unexpected key: ${key}`)
+    switch (key) {
+      case 'url':
+      case 'room':
+      case 'password':
+      case 'duration':
+      case 'zoom':
+      case 'fontColor':
+      case 'fontBorderColor':
+        g[key].setValue({ data: value, error })
+        break
+      case 'gpu':
+        g[key].setValue({ data: value.toLowerCase() === 'true', error })
+        break
+      case 'screen':
+        g[key].setValue({ data: Number(value), error })
+        break
+      default:
+        throw new Error(`Unexpected key: ${key}`)
     }
   }
 
   function onWatermarkSettingsUpdate(key: keyof WatermarkSettings, value: string, error: boolean): void {
     const w = settingsState.watermark
-    if (key === 'html' || key === 'opacity' || key === 'color' || key === 'fontSize' || key === 'offset') {
-      w[key].setValue({ data: value, error })
-    } else if (key === 'position') {
-      if (!isWatermarkPosition(value)) {
-        throw new Error(`Unexpeced value of position: ${value}`)
-      }
-      w[key].setValue({ data: value, error })
-    } else if (key === 'noComments') {
-      w[key].setValue({ data: value.toLowerCase() === 'true', error })
-    } else {
-      throw new Error(`Unexpected key: ${key}`)
+    switch (key) {
+      case 'html':
+      case 'opacity':
+      case 'color':
+      case 'fontSize':
+      case 'offset':
+        w[key].setValue({ data: value, error })
+        break
+      case 'position':
+        if (!isWatermarkPosition(value)) {
+          throw new Error(`Unexpeced value of position: ${value}`)
+        }
+        w[key].setValue({ data: value, error })
+        break
+      case 'noComments':
+        w[key].setValue({ data: value.toLowerCase() === 'true', error })
+        throw new Error(`Unexpected key: ${key}`)
     }
   }
 
@@ -137,7 +158,10 @@ export const SettingsForm: React.FC = (): JSX.Element => {
         password: g.password.value.data,
         duration: Number(g.duration.value.data),
         zoom: Number(g.zoom.value.data),
-        screen: g.screen.value.data
+        screen: g.screen.value.data,
+        fontColor: g.fontColor.value.data,
+        fontBorderColor: g.fontBorderColor.value.data,
+        gpu: g.gpu.value.data,
       },
       watermark: {
         html: w.html.value.data,
@@ -146,7 +170,7 @@ export const SettingsForm: React.FC = (): JSX.Element => {
         fontSize: w.fontSize.value.data,
         position: w.position.value.data,
         offset: w.offset.value.data,
-        noComments: w.noComments.value.data
+        noComments: w.noComments.value.data,
       }
     }
     log.debug('[onSubmit]', settings)
@@ -193,7 +217,7 @@ export const SettingsForm: React.FC = (): JSX.Element => {
             <Button variant="outlined" type="submit" disabled={hasError()}>OK</Button>
           </Grid>
           <Grid item>
-            <Button variant="outlined" onClick={(): void => { window.close()}}>Cancel</Button>
+            <Button variant="outlined" onClick={() => window.close()}>Cancel</Button>
           </Grid>
         </Grid>
       </div>

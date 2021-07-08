@@ -37,6 +37,25 @@ function moveToRootDirectory(): void {
   process.chdir(rootDirectory)
 }
 
+function loadSettings(): Settings.SettingsV1 {
+  const userDataPath = electron.app.getPath('userData')
+  const userConfigPath = path.join(userDataPath, 'user.config')
+  if (!fs.existsSync(userConfigPath)) {
+    return Settings.loadDefault()
+  }
+
+  try {
+    const stat: fs.Stats = fs.statSync(userConfigPath)
+    if (stat.isDirectory()) {
+      return Settings.loadDefault()
+    }
+    const json = fs.readFileSync(userConfigPath, { encoding: 'utf8' })
+    return Settings.parse(json)
+  } catch {
+    return Settings.loadDefault()
+  }
+}
+
 async function asyncGetUserConfigPromise(checkIfExists: boolean): Promise<fs.PathLike> {
   const userDataPath = electron.app.getPath('userData')
   const userConfigPath = path.join(userDataPath, 'user.config')
@@ -118,6 +137,9 @@ async function asyncShowMainWindow(): Promise<void> {
 
   // TODO toggle dev tools of main window from setting form
 
+  // Needed not to be hidden by full screen apps on Mac.
+  electron.app.dock?.hide()
+
   mainWindow_ = new electron.BrowserWindow({
     frame: false,
     transparent: true,
@@ -129,6 +151,7 @@ async function asyncShowMainWindow(): Promise<void> {
     }
   })
   mainWindow_.setAlwaysOnTop(true, 'screen-saver')
+  mainWindow_.setVisibleOnAllWorkspaces(true)
   applySettings(mainWindow_, settings)
   mainWindow_.setIgnoreMouseEvents(true)
   if (process.argv.includes('--open-dev-tools')) {
@@ -150,8 +173,11 @@ function onReady(): void {
   asyncShowMainWindow()  // No need to wait
 }
 
+const settings = loadSettings()
+if (!settings.general.gpu) {
+  electron.app.disableHardwareAcceleration()
+}
 if (process.platform === 'linux') {
-  electron.app.commandLine.appendSwitch('disable-gpu')
   electron.app.on('ready', (): void => {
     setTimeout(onReady, 100)
   })
@@ -159,6 +185,7 @@ if (process.platform === 'linux') {
   electron.app.on('ready', onReady)
 }
 electron.app.on('window-all-closed', (): void => {
+  electron.app.dock?.show()
   if (process.platform !== 'darwin') {
     electron.app.quit()
   }

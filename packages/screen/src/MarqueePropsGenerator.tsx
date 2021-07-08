@@ -19,6 +19,7 @@ export type MarqueeProps = {
 export type MarqueePropsList = Readonly<Readonly<MarqueeProps>[]>
 
 const MAX_MESSAGES = 500
+const SPACE_BETWEEN_COMMENTS = 128
 const log = getLogger('MarqueePropsGenerator')
 
 function calcMinimumEmptyLevel(messages: MarqueeProps[]): number {
@@ -55,7 +56,11 @@ function findLevelRightSpaceExists(marquees: MarqueeProps[]): number {
     const element = m.ref.current
     if (element) {
       const rect = element.getBoundingClientRect()
-      existsNoRightSpaceMarquee = existsNoRightSpaceMarquee || (rect.right >= windowInnerWidth)
+      existsNoRightSpaceMarquee =
+        existsNoRightSpaceMarquee || (rect.right + SPACE_BETWEEN_COMMENTS >= windowInnerWidth)
+    } else {
+      // Not rendered yet.
+      existsNoRightSpaceMarquee = true
     }
     prev = m
   }

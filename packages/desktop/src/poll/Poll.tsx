@@ -4,6 +4,6 @@ type Props = {
   title: string
 }
 
-export const Poll: React.FC<Props> = (props: Props): JSX.Element => {
+export const Poll: React.FC<Props> = (): JSX.Element => {
   return <div></div>
 }
