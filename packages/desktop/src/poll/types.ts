@@ -1,4 +1,4 @@
-export type Entry ={
+export type Entry = {
   key: number
   description: string
   count: number

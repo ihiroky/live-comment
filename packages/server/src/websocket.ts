@@ -1,6 +1,6 @@
 import WebSocket from 'ws'
-import { v4 as uuidv4 } from 'uuid'
 import http from 'http'
+import crypto from 'crypto'
 import { Configuration, Room } from './Configuration'
 
 import {
@@ -8,10 +8,10 @@ import {
   AcnMessage,
   ErrorMessage,
   isAcnMessage,
-  isCommentMessage,
   getLogger,
   CommentMessage
 } from 'common'
+import { ApplicationMessage, isClientMessage } from 'common/src/Message'
 
 export interface ClientSession extends WebSocket {
   alive: boolean
@@ -72,24 +72,39 @@ function onAuthenticate(client: ClientSession, m: AcnMessage, configuration: Con
   })
 }
 
-function onComment(server: WebSocket.Server, data: WebSocket.Data, sender: ClientSession, comment: CommentMessage): void {
+function onMessage(
+  server: WebSocket.Server,
+  sender: ClientSession,
+  message: CommentMessage | ApplicationMessage
+): void {
   if (!sender.room) {
     log.error('[onMessage] Unauthenticated client:', sender.id)
     sender.close()
   }
-  log.debug('[onMessage]', comment.comment, 'from', sender.id, 'to', sender.room)
+  log.debug('[onMessage]', message, 'from', sender.id, 'to', sender.room)
+  message.cid = sender.id
+  const serialized = JSON.stringify(message)
   server.clients.forEach((c: WebSocket): void => {
     const receiver = c as ClientSession
     if (receiver.room === sender.room) {
-      sendMessage(receiver, data)
+      sendMessage(receiver, serialized)
     }
   })
 }
 
 
-function onConnected(server: WebSocket.Server, ws: WebSocket, configuration: Configuration): void {
+function onConnected(
+  server: WebSocket.Server,
+  ws: WebSocket,
+  req: http.IncomingMessage,
+  configuration: Configuration
+): void {
+  // TODO desktopだけ細かい情報を取れる特権をもつ: client識別子、特殊なコマンドを送れる等
+  //      AcnMessageにpreciseオプションついてたらおくる
   const client = ws as ClientSession
-  client.id = uuidv4()
+  client.id = crypto.createHash('sha224')
+    .update(req.socket.remoteAddress + ':' + req.socket.remotePort, 'ascii')
+    .digest('hex')
   client.alive = true
   client.connectedTime = Date.now()
   client.lastPongTime = 0
@@ -98,8 +113,8 @@ function onConnected(server: WebSocket.Server, ws: WebSocket, configuration: Con
   client.on('message', (message: WebSocket.Data): void => {
     const data = message.toString()
     const m = JSON.parse(data)
-    if (isCommentMessage(m)) {
-      onComment(server, message, client, m)
+    if (isClientMessage(m)) {
+      onMessage(server, client, m)
     } else if (isAcnMessage(m)) {
       onAuthenticate(client, m, configuration)
     } else {
@@ -149,11 +164,11 @@ export function createWebSocketServer(server: http.Server, configuration: Config
   const wss = new WebSocket.Server({ server })
   wss.on('connection', function(ws: WebSocket, req: http.IncomingMessage): void {
     log.debug('onconnect', req.socket.remoteAddress)
-    onConnected(this, ws, configuration)
+    onConnected(this, ws, req, configuration)
   })
 
   const healthCheckIntervalId: NodeJS.Timeout = setInterval((): void => {
-    wss.emit('helthcheck')
+    wss.emit('healthcheck')
     wss.clients.forEach((ws: WebSocket) => {
       const client = ws as ClientSession
       checkPingPong(client)
