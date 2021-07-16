@@ -4,7 +4,10 @@ import {
   Theme,
   TextField,
   InputLabel,
-  Select
+  Select,
+  FormControlLabel,
+  Checkbox,
+  Grid
 } from '@material-ui/core'
 import { GeneralSettings } from './types'
 import {
@@ -47,19 +50,42 @@ type GeneralProps = GeneralSettings & {
   onUpdate(name: keyof GeneralSettings, value: string, error: boolean): void
 }
 
+const validateUrl = (v: string): boolean => /^wss?:\/\/.*/.test(v)
+const validateRoom = (v: string): boolean => v.length > 0
+const validatePassword = (v: string): boolean => v.length > 0
+const validateDuration = (v: string): boolean => !isNaN(Number(v)) && Number(v) >= 3
+const validateZoom = (v: string): boolean => !isNaN(Number(v)) && Number(v) >= 30 && Number(v) <= 500
+const validateColor = (v: string): boolean => v.length > 0
+
+function TF({ data, onChange }: {
+  data: TextFieldMetadata<GeneralSettings, string | number>
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+}): JSX.Element {
+  return (
+    <TextField
+      fullWidth
+      key={data.name}
+      name={data.name}
+      type={data.name === 'password' ? 'password' : 'text'}
+      label={data.label}
+      value={data.value.data}
+      error={data.value.error}
+      helperText={data.value.error ? data.errorMessage : ''}
+      onChange={onChange}
+    />
+  )
+}
+
 export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: GeneralProps): JSX.Element => {
-  const validateUrl = React.useCallback((v: string): boolean => /^wss?:\/\/.*/.test(v), [])
-  const validateRoom = React.useCallback((v: string): boolean => v.length > 0, [])
-  const validatePassword = React.useCallback((v: string): boolean => v.length > 0, [])
-  const validateDuration = React.useCallback((v: string): boolean => !isNaN(Number(v)) && Number(v) >= 3, [])
-  const validateZoom = React.useCallback((v: string): boolean => !isNaN(Number(v)) && Number(v) >= 30 && Number(v) <= 500, [])
-  const textFields: TextFieldMetadata<GeneralSettings, string | number>[] = [
-    createTextFieldMetadata('url', props.url, 'Server URL', 1, validateUrl, 'Input URL like "wss://hoge/app".'),
-    createTextFieldMetadata('room', props.room, 'Room', 1, validateRoom, 'Input room name.'),
-    createTextFieldMetadata('password', props.password, 'Password', 1, validatePassword, 'Input password.'),
-    createTextFieldMetadata('duration', props.duration, 'Message duration (seconds)', 1, validateDuration, 'Must be >= 3.'),
-    createTextFieldMetadata('zoom', props.zoom, 'Zoom (%)', 1, validateZoom, 'Must be >= 50 and <= 500.')
-  ]
+  const urlField = createTextFieldMetadata('url', props.url, 'Server URL', 1, validateUrl, 'Input URL like "wss://hoge/app".')
+  const roomField = createTextFieldMetadata('room', props.room, 'Room', 1, validateRoom, 'Input room name.')
+  const passwordField = createTextFieldMetadata('password', props.password, 'Password', 1, validatePassword, 'Input password.')
+  const durationField = createTextFieldMetadata('duration', props.duration, 'Message duration (seconds)', 1, validateDuration, 'Must be >= 3.')
+  const zoomField = createTextFieldMetadata('zoom', props.zoom, 'Zoom (%)', 1, validateZoom, 'Must be >= 50 and <= 500.')
+  const fontColorField = createTextFieldMetadata('fontColor', props.fontColor, 'Font color (color name or #hex)', 1, validateColor, 'Input color.')
+  const fontBorderColorField = createTextFieldMetadata('fontBorderColor', props.fontBorderColor, 'Font border color (color name or #hex, empty if no border)', 1, () => true, 'Input color.')
+  const textFields = [urlField, roomField, passwordField, durationField, zoomField, fontColorField, fontBorderColorField]
+
   const [screenOptions, setScreenOptions] = React.useState<ScreenProps[]>([])
 
   React.useEffect((): void => {
@@ -88,25 +114,49 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
     props.onUpdate('screen', strValue, isNaN(numValue))
   }
 
+  function onCheckboxChange(e: React.ChangeEvent<HTMLInputElement>): void {
+    log.debug('[onCheckboxChange]', e.target.name, e.target.checked)
+    props.onUpdate('gpu', String(e.target.checked), false)
+  }
+
   const classes = useStyles();
+
   return (
     <div className={classes.root}>
       <div className={classes.fields}>
-        {
-          textFields.map((f: TextFieldMetadata<GeneralSettings, unknown>): React.ReactNode => (
-            <TextField
-              fullWidth
-              key={f.name}
-              name={f.name}
-              type={f.name === 'password' ? 'password' : 'text'}
-              label={f.label}
-              value={f.value.data}
-              error={f.value.error}
-              helperText={f.value.error ? f.errorMessage : ''}
-              onChange={onTextFieldChange}
+        <Grid container spacing={1}>
+          <Grid item xs={12}>
+            <TF data={urlField} onChange={onTextFieldChange} />
+          </Grid>
+          <Grid item xs={6}>
+            <TF data={roomField} onChange={onTextFieldChange} />
+          </Grid>
+          <Grid item xs={6}>
+            <TF data={passwordField} onChange={onTextFieldChange} />
+          </Grid>
+          <Grid item xs={6}>
+            <TF data={durationField} onChange={onTextFieldChange} />
+          </Grid>
+          <Grid item xs={6}>
+            <TF data={zoomField} onChange={onTextFieldChange} />
+          </Grid>
+          <Grid item xs={6}>
+            <TF data={fontColorField} onChange={onTextFieldChange} />
+          </Grid>
+          <Grid item xs={6}>
+            <TF data={fontBorderColorField} onChange={onTextFieldChange} />
+          </Grid>
+        </Grid>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={props.gpu.data}
+              color="primary"
+              onChange={onCheckboxChange}
             />
-          ))
-        }
+          }
+          label="Enable GPU Acceleration (restart me to enable)"
+        />
         <div className={classes.screen}>
         { screenOptions.length > 0 &&
           <div>

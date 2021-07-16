@@ -25,6 +25,9 @@ export type SettingsV1 = Settings & {
     duration: number
     zoom: number
     screen: number
+    fontColor: string
+    fontBorderColor: string
+    gpu: boolean
   }
   watermark: {
     html: string
@@ -59,9 +62,12 @@ export function loadDefault(): SettingsV1 {
       url: 'ws://localhost:8080',
       room: '',
       password: '',
-      duration: 7,
+      duration: 9,
       zoom: 100,
-      screen: 0
+      screen: 0,
+      fontColor: '#111111',
+      fontBorderColor: '#cccccc',
+      gpu: process.platform === 'win32'
     },
     watermark: {
       html: '',
@@ -74,6 +80,7 @@ export function loadDefault(): SettingsV1 {
     }
   }
 }
+
 
 export function parse(json: string): SettingsV1 {
   const s = JSON.parse(json)
@@ -98,9 +105,12 @@ export function parse(json: string): SettingsV1 {
         password: s.password ?? d.general.password,
         duration: !isNaN(Number(s.duration)) ? Number(s.duration) : d.general.duration,
         zoom: !isNaN(Number(s.zoom)) ? Number(s.zoom) : d.general.zoom,
-        screen: !isNaN(Number(s.screen)) ? Number(s.screen) : d.general.screen
+        screen: !isNaN(Number(s.screen)) ? Number(s.screen) : d.general.screen,
+        fontColor: d.general.fontColor,
+        fontBorderColor: d.general.fontBorderColor,
+        gpu: d.general.gpu,
       },
-      watermark: d.watermark
+      watermark: d.watermark,
     }
   }
   return loadDefault()
