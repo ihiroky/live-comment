@@ -1,5 +1,6 @@
 .screen {
   height: 100vh;
+  position: relative;
   overflow: hidden;
   font-size: 64px;
   font-weight: bold;
