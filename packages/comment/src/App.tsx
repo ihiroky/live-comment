@@ -7,9 +7,12 @@ import {
   Message,
   AcnMessage,
   isCommentMessage,
-  getLogger
+  getLogger,
+  LogLevels,
 } from 'common'
 import { SendCommentForm } from './SendCommentForm'
+import { isPollStartMessage, isPollFinishMessage, PollMessage, PollEntry } from 'poll'
+import { Button } from '@material-ui/core'
 
 type AppProps = {
   url: string
@@ -18,7 +21,12 @@ type AppProps = {
 }
 
 type AppState = {
-  comments: { key: number, comment: string }[]
+  comments: {
+    key: number,
+    comment: string
+    pinned: boolean
+  }[]
+  jsx: JSX.Element[]
 }
 
 type AcnState = {
@@ -27,7 +35,9 @@ type AcnState = {
   reconnectTimer: number
 }
 
+const POLL_START_ID = 'poll-start'
 const log = getLogger('App')
+log.setLevel(LogLevels.DEBUG)
 
 export default class App extends React.Component<AppProps, AppState> {
 
@@ -39,7 +49,8 @@ export default class App extends React.Component<AppProps, AppState> {
   constructor(props: Readonly<AppProps>) {
     super(props)
     this.state = {
-      comments: []
+      comments: [],
+      jsx: [],
     }
 
     this.ref = React.createRef()
@@ -90,20 +101,58 @@ export default class App extends React.Component<AppProps, AppState> {
     }
   }
 
+  private readonly  onPoll = (e: React.MouseEvent<HTMLButtonElement>, choice: PollEntry['key']): void => {
+    e.preventDefault()
+    const message: PollMessage = {
+      type: 'app',
+      cmd: 'poll/poll',
+      choice,
+    }
+    this.webSocketControl?.send(message)
+  }
+
   private onMessage(message: Message): void {
-    if (!isCommentMessage(message)) {
+    log.debug('[onMessage]', message)
+    if (!isCommentMessage(message)
+      && !isPollStartMessage(message)
+      && !isPollFinishMessage(message)
+    ) {
       log.warn('[onMessage] Unexpected message:', message)
       return
     }
-    const key = Date.now()
-    const comment = message.comment
 
+    const key = Date.now()
+    const jsx = this.state.jsx
     const comments = this.state.comments
-    if (comments.length === this.props.maxMessageCount) {
-      comments.unshift()
+    if (isCommentMessage(message)) {
+      const comment = message.comment
+      const pinned = !!message.pinned
+      if (comments.length === this.props.maxMessageCount) {
+        comments.unshift()
+      }
+      comments.push({ key, comment, pinned })
+    } else if (isPollStartMessage(message)) {
+      jsx.push(
+        <p key={key} className="message" id={POLL_START_ID}>
+          { message.entries.map(e => (
+            <>
+              <Button onClick={ev => this.onPoll(ev, e.key)}>{e.key}.</Button>
+              <span>{e.description}</span>
+            </>
+          )) }
+        </p>
+      )
+    } else if (isPollFinishMessage(message)) {
+      const dropIndices = jsx.filter(jsx => jsx.props.id === POLL_START_ID).map((_, i) => i)
+      for (let i = jsx.length - 1; i >= 0; i--) {
+        if (dropIndices.indexOf(i) > -1) {
+          jsx.splice(i, 1)
+        }
+      }
     }
-    comments.push({ key, comment })
-    this.setState({ comments })
+
+    this.setState({ comments, jsx })
+    // TODO Add option to autoscroll
     if (this.props.autoScroll && this.ref.current && this.messageListDiv) {
       this.messageListDiv.scrollTo(0, this.ref.current.offsetTop)
     }
@@ -145,6 +194,7 @@ export default class App extends React.Component<AppProps, AppState> {
         <div className="box">
           <div className="message-list">
             { this.state.comments.map(m => <p key={m.key} className="message">{m.comment}</p>) }
+            { this.state.jsx }
             <div ref={this.ref}></div>
           </div>
           <SendCommentForm onSubmit={this.onSubmit} />

@@ -11,7 +11,7 @@ import {
   getLogger,
   CommentMessage
 } from 'common'
-import { ApplicationMessage, isClientMessage } from 'common/src/Message'
+import { ApplicationMessage, isClientMessage } from 'common'
 
 export interface ClientSession extends WebSocket {
   alive: boolean

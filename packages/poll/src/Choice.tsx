@@ -3,10 +3,10 @@ import {
   Button,
   Grid,
 } from '@material-ui/core'
-import { Entry, Mode } from './types'
+import { Mode, PollEntry } from './types'
 
 export function Choice({ entries, mode, descClass, onRemoveEntry }: {
-  entries: Entry[]
+  entries: PollEntry[]
   mode: Mode
   descClass: string
   onRemoveEntry: (index: number) => void
@@ -18,7 +18,7 @@ export function Choice({ entries, mode, descClass, onRemoveEntry }: {
   // TODO Emphasize top result
   return (
     <>
-      {entries.map((entry: Entry, index: number): JSX.Element => (
+      {entries.map((entry: PollEntry, index: number): JSX.Element => (
         <Grid item xs={12} key={entry.key}>
           <Grid container>
             <Grid item xs={1} />

@@ -1,9 +1,8 @@
 import fs from 'fs'
 import nodeResolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import terser from 'rollup-plugin-terser';
+import { terser } from 'rollup-plugin-terser';
 import replace from '@rollup/plugin-replace';
-import typescript from '@rollup/plugin-typescript'
 
 const env = process.env.NODE_ENV || 'development';
 
@@ -20,7 +19,6 @@ function plugins() {
       'process.env.NODE_ENV': `"${env}"`,
       'preventAssignment': true
     }),
-    typescript({ tsconfig: './tsconfig-rollup.json' }),
     nodeResolve({
       browser: true,
       preferBuiltins: false
@@ -31,7 +29,7 @@ function plugins() {
 }
 
 export default [{
-  input: 'src/main/index.tsx',
+  input: 'dist/js/main/index.js',
   output: {
     file: 'resources/main/index.js',
     name: 'Screen',
@@ -39,7 +37,7 @@ export default [{
   },
   plugins: plugins(),
 }, {
-  input: 'src/settings/index.tsx',
+  input: 'dist/js/settings/index.js',
   output: {
     file: 'resources/settings.js',
     name: 'Settings',
@@ -47,7 +45,7 @@ export default [{
   },
   plugins: plugins(),
 }, {
-  input: 'src/poll/index.tsx',
+  input: 'dist/js/poll/index.js',
   output: {
     file: 'resources/poll.js',
     name: 'Screen',

@@ -10,10 +10,13 @@ export {
   Message,
   CommentMessage,
   AcnMessage,
+  ApplicationMessage,
   ErrorMessage,
   isCommentMessage,
+  isClientMessage,
   isAcnMessage,
   isErrorMessage,
+  isApplicationMessage,
 } from './Message'
 
 export function createHash(s: string): string {

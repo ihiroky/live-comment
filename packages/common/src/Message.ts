@@ -20,6 +20,7 @@ export interface Message {
 export interface CommentMessage extends Message {
   type: 'comment'
   comment: string
+  pinned?: boolean
 }
 
 export interface AcnMessage extends Message {

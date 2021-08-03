@@ -45,7 +45,8 @@
     "baseUrl": "./",                          /* Base directory to resolve non-absolute module names. */
     "paths": {                                /* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */
       "common": ["../common/dist/index"],
-      "screen": ["../screen/dist/index"]
+      "screen": ["../screen/dist/index"],
+      "poll": ["../poll/dist/index"]
     },
     // "rootDirs": [],                        /* List of root folders whose combined content represents the structure of the project at runtime. */
     // "typeRoots": [],                       /* List of folders to include type definitions from. */
@@ -71,6 +72,7 @@
   },
   "references": [
     { "path": "../common" },
-    { "path": "../screen" }
+    { "path": "../screen" },
+    { "path": "../poll" }
   ]
 }
