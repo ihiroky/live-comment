@@ -36,6 +36,13 @@
     "**/*.css"
   ],
   "rules": {
+    "eqeqeq": 1,
+    "indent": [1, 2, { "SwitchCase": 1 }],
+    "no-else-return": 1,
+    "no-console": 1,
+    "semi": [1, "never"],
+    "space-unary-ops": 1,
+    "yoda": 1,
     "@typescript-eslint/member-delimiter-style": [
       "error",
       {

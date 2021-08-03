@@ -194,7 +194,7 @@ export const SettingsForm: React.FC = (): JSX.Element => {
     return false
   }
 
-  const classes = useStyles();
+  const classes = useStyles()
 
   // TODO fix TabPanel height
   return (

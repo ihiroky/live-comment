@@ -59,7 +59,7 @@ export function PollResult({ mode, data, onClosed, onTypeChanged, children }: Re
     plugins: {
       legend: {
         display: false
-     },
+      },
       title: {
         display: false,
       },

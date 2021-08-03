@@ -11,7 +11,7 @@ import {
   LogLevels,
 } from 'common'
 import { SendCommentForm } from './SendCommentForm'
-import { isPollStartMessage, isPollFinishMessage, PollMessage, PollEntry } from 'poll'
+import { isPollStartMessage, isPollFinishMessage, PollMessage, PollEntry, PollStartMessage } from 'poll'
 import { Button } from '@material-ui/core'
 
 type AppProps = {
@@ -26,7 +26,12 @@ type AppState = {
     comment: string
     pinned: boolean
   }[]
-  jsx: JSX.Element[]
+  polls: {
+    key: number
+    id: PollStartMessage['id']
+    title: PollStartMessage['title']
+    entries: PollStartMessage['entries']
+  }[]
 }
 
 type AcnState = {
@@ -50,7 +55,7 @@ export default class App extends React.Component<AppProps, AppState> {
     super(props)
     this.state = {
       comments: [],
-      jsx: [],
+      polls: [],
     }
 
     this.ref = React.createRef()
@@ -101,13 +106,14 @@ export default class App extends React.Component<AppProps, AppState> {
     }
   }
 
-  private readonly  onPoll = (e: React.MouseEvent<HTMLButtonElement>, choice: PollEntry['key']): void => {
+  private readonly onPoll = (e: React.MouseEvent<HTMLButtonElement>, choice: PollEntry['key']): void => {
     e.preventDefault()
     const message: PollMessage = {
       type: 'app',
       cmd: 'poll/poll',
       choice,
     }
+    log.debug('[onPoll] ', message)
     this.webSocketControl?.send(message)
   }
 
@@ -122,7 +128,7 @@ export default class App extends React.Component<AppProps, AppState> {
     }
 
     const key = Date.now()
-    const jsx = this.state.jsx
+    const polls = this.state.polls
     const comments = this.state.comments
     if (isCommentMessage(message)) {
       const comment = message.comment
@@ -132,26 +138,20 @@ export default class App extends React.Component<AppProps, AppState> {
       }
       comments.push({ key, comment, pinned })
     } else if (isPollStartMessage(message)) {
-      jsx.push(
-        <p key={key} className="message" id={POLL_START_ID}>
-          { message.entries.map(e => (
-            <>
-              <Button onClick={ev => this.onPoll(ev, e.key)}>{e.key}.</Button>
-              <span>{e.description}</span>
-            </>
-          )) }
-        </p>
-      )
+      polls.push({
+        key,
+        id: message.id,
+        title: message.title,
+        entries: message.entries,
+      })
     } else if (isPollFinishMessage(message)) {
-      const dropIndices = jsx.filter(jsx => jsx.props.id === POLL_START_ID).map((_, i) => i)
-      for (let i = jsx.length - 1; i >= 0; i--) {
-        if (dropIndices.indexOf(i) > -1) {
-          jsx.splice(i, 1)
-        }
+      const dropIndex = polls.findIndex(poll => poll.id === message.id)
+      if (dropIndex > -1) {
+        polls.splice(dropIndex, 1)
       }
     }
 
-    this.setState({ comments, jsx })
+    this.setState({ comments, polls })
     // TODO Add option to autoscroll
     if (this.props.autoScroll && this.ref.current && this.messageListDiv) {
       this.messageListDiv.scrollTo(0, this.ref.current.offsetTop)
@@ -193,8 +193,27 @@ export default class App extends React.Component<AppProps, AppState> {
       <div className="App">
         <div className="box">
           <div className="message-list">
-            { this.state.comments.map(m => <p key={m.key} className="message">{m.comment}</p>) }
-            { this.state.jsx }
+            {
+              this.state.comments.map(
+                (m: AppState['comments'][number]) => <p key={m.key} className="message">{m.comment}</p>
+              )
+            }
+            {
+              this.state.polls.map(poll => (
+                <p key={poll.key} className="message" id={POLL_START_ID}>
+                  <p>Presenter stars a poll!</p>
+                  <p>{poll.title}</p>
+                  {
+                    poll.entries.map((e: Pick<PollEntry, 'key' | 'description'>, i: number) => (
+                      <p key={`poll-${poll.key}-${e.key}`}>
+                        <Button variant="outlined" onClick={ev => this.onPoll(ev, e.key)}>{i}.</Button>
+                        <span style={{ marginLeft: '8px' }}>{e.description}</span>
+                      </p>
+                    ))
+                  }
+                </p>
+              ))
+            }
             <div ref={this.ref}></div>
           </div>
           <SendCommentForm onSubmit={this.onSubmit} />

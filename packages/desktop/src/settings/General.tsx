@@ -119,7 +119,7 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
     props.onUpdate('gpu', String(e.target.checked), false)
   }
 
-  const classes = useStyles();
+  const classes = useStyles()
 
   return (
     <div className={classes.root}>
@@ -158,23 +158,23 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
           label="Enable GPU Acceleration (restart me to enable)"
         />
         <div className={classes.screen}>
-        { screenOptions.length > 0 &&
-          <div>
-            <InputLabel shrink id="screen-select-label">Screen</InputLabel>
-            <Select
-              labelId="screen-select-label"
-              id="screen-select"
-              name="screen-name"
-              value={props.screen.data}
-              onChange={onSelectChange}
-            >
-              {
-                screenOptions.map((p: ScreenProps, i: number): React.ReactNode => (
-                  <option key={p.name} value={i}>{p.name}</option>
-                ))
-              }
-            </Select>
-          </div>
+          { screenOptions.length > 0 &&
+            <div>
+              <InputLabel shrink id="screen-select-label">Screen</InputLabel>
+              <Select
+                labelId="screen-select-label"
+                id="screen-select"
+                name="screen-name"
+                value={props.screen.data}
+                onChange={onSelectChange}
+              >
+                {
+                  screenOptions.map((p: ScreenProps, i: number): React.ReactNode => (
+                    <option key={p.name} value={i}>{p.name}</option>
+                  ))
+                }
+              </Select>
+            </div>
           }
           <img
             style={{ paddingLeft: '10px' }}

@@ -20,6 +20,7 @@ import {
   PollMessage,
   PollStartMessage,
 } from './types'
+import { getRandomInteger } from './utils'
 
 
 function isPollMessage(m: Message): m is PollMessage {
@@ -41,8 +42,10 @@ export function Polling({ mode, url, room, hash, title, entries, onChange, onFin
   log.info('Polling', entries)
   const wscRef = React.useRef<WebSocketControl | null>(null)
   const progress = React.useRef<Progress>(new Map())
+  const pollId = React.useMemo(() => getRandomInteger(), [])
 
   const onMessage = React.useCallback((message: Message): void => {
+    log.debug('[onMessage]', message)
     if (!isPollMessage(message)) {
       return
     }
@@ -68,6 +71,7 @@ export function Polling({ mode, url, room, hash, title, entries, onChange, onFin
     const start: PollStartMessage = {
       type: 'app',
       cmd: 'poll/start',
+      id: 'poll-' + pollId,
       title,
       entries: entries.map(e => ({ key: e.key, description: e.description })),
     }
@@ -80,6 +84,7 @@ export function Polling({ mode, url, room, hash, title, entries, onChange, onFin
     const finish: PollFinishMessage = {
       type: 'app',
       cmd: 'poll/finish',
+      id:  'poll-' + pollId,
     }
     if (wscRef.current) {
       wscRef.current.send(finish)

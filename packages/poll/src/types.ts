@@ -9,6 +9,7 @@ export type PollEntry = {
 export interface PollStartMessage extends ApplicationMessage {
   type: 'app'
   cmd: 'poll/start'
+  id: string
   title: string
   entries: Pick<PollEntry, 'key' | 'description'>[]
 }
@@ -23,6 +24,7 @@ export interface PollMessage extends ApplicationMessage {
 export interface PollFinishMessage extends ApplicationMessage {
   type: 'app'
   cmd: 'poll/finish'
+  id: string
 }
 
 export function isPollMessage(m: unknown): m is PollMessage {

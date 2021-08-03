@@ -44,7 +44,7 @@ function showSubWindow(
     // https://github.com/electron/electron/issues/20700
     baseURLForDataURL: `${APP_ROOT_PROTOCOL}://resources/`,
   })
-    window.on('closed', (): void => {
+  window.on('closed', (): void => {
     delete openWindows_[id]
   })
   openWindows_[id] = window

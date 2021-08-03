@@ -2,8 +2,76 @@ import React from 'react'
 import {
   Button,
   Grid,
+  makeStyles,
 } from '@material-ui/core'
 import { Mode, PollEntry } from './types'
+
+const blinkDurationMillis = 1000
+const useStyles = makeStyles({
+  blink: {
+    animationName: '$flash',
+    animationTimingFunction: 'linear',
+    animationDuration: `${blinkDurationMillis}ms`
+  },
+  '@keyframes flash': {
+    '0%': {
+      background: 'transparent',
+    },
+    '50%': {
+      background: '#99ffcc',
+    },
+    '100%': {
+      background: 'transparent',
+    },
+  }
+})
+
+function useBlinksCountedUpEntries(entries: PollEntry[], blinkClass: string): void {
+  const [prevCounts, setPrevCounts] = React.useState<number[]>([])
+  const blinkReadyIdSetRef = React.useRef<Set<string>>(new Set())
+
+  React.useEffect(() => {
+    if (prevCounts.length !== entries.length) {
+      setPrevCounts(entries.map(e => e.count))
+      return
+    }
+    if (entries.every(e => e.count === 0)) {
+      return
+    }
+
+    const blinkIds = entries
+      .filter((e, i) => prevCounts[i] < e.count)
+      .map(e => String(e.key))
+    for (const id of blinkIds) {
+      const blinkReadyIdSet = blinkReadyIdSetRef.current
+      if (blinkReadyIdSet.has(id)) {
+        continue
+      }
+      const element = document.getElementById(String(id))
+      if (!element) {
+        continue
+      }
+
+      // https://developer.mozilla.org/ja/docs/Web/CSS/CSS_Animations/Tips#run_an_animation_again
+      const pureClassList = Array.from(element.classList).filter(c => c !== blinkClass)
+      element.className = pureClassList.join(' ')
+      blinkReadyIdSet.add(id)
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          element.className = [
+            ...pureClassList,
+            blinkClass
+          ].join(' ')
+          blinkReadyIdSet.delete(id)
+        })
+      })
+    }
+
+    entries.forEach((e: PollEntry, i: number): void => {
+      prevCounts[i] = e.count
+    })
+  }, [entries])
+}
 
 export function Choice({ entries, mode, descClass, onRemoveEntry }: {
   entries: PollEntry[]
@@ -11,6 +79,9 @@ export function Choice({ entries, mode, descClass, onRemoveEntry }: {
   descClass: string
   onRemoveEntry: (index: number) => void
 }): JSX.Element | null {
+  const classes = useStyles()
+  useBlinksCountedUpEntries(entries, classes.blink)
+
   if (mode === 'result-graph') {
     return null
   }
@@ -19,7 +90,7 @@ export function Choice({ entries, mode, descClass, onRemoveEntry }: {
   return (
     <>
       {entries.map((entry: PollEntry, index: number): JSX.Element => (
-        <Grid item xs={12} key={entry.key}>
+        <Grid item xs={12} key={entry.key} id={String(entry.key)}>
           <Grid container>
             <Grid item xs={1} />
             <Grid item xs={1}>{index + 1}</Grid>
