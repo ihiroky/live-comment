@@ -53,6 +53,38 @@ log.setLevel(LogLevels.DEBUG)
 
 // TODO User should be able to restart poll if the poll entry is closed by mistake.
 
+type PollControlProps = {
+  poll: AppState['polls'][number],
+  onPoll: (e: React.MouseEvent<HTMLButtonElement>, choice: PollEntry['key']) => void,
+  onClosePoll: (pollId: string) => void
+}
+
+const PollControl: React.FC<PollControlProps> = ({ poll, onPoll, onClosePoll }: PollControlProps): JSX.Element => {
+  return (
+    <div key={poll.key} className="message">
+    <div>Presenter starts a poll! Click the number you choose.</div>
+    <div style={{ fontWeight: 'bold', padding: '8px' }}>{poll.title}</div>
+    {
+      poll.entries.map((e: Pick<PollEntry, 'key' | 'description'>, i: number) => (
+        <div key={`poll-${poll.key}-${e.key}`} style={{ fontWeight: 'bolder' }}>
+          <Button variant="outlined" onClick={ev => onPoll(ev, e.key)}>{i}</Button>
+          <span style={{ marginLeft: '8px' }}>{e.description}</span>
+        </div>
+      ))
+    }
+    <div>
+      <Button
+        variant="outlined"
+        style={{ marginTop: '4px' }}
+        onClick={() => onClosePoll(poll.id)}
+      >
+        Close
+      </Button>
+    </div>
+  </div>
+  )
+}
+
 export default class App extends React.Component<AppProps, AppState> {
 
   private ref: React.RefObject<HTMLDivElement>
@@ -71,13 +103,9 @@ export default class App extends React.Component<AppProps, AppState> {
     this.messageListDiv = null
     this.webSocketControl = null
     this.acnState = { room: '', hash: '', reconnectTimer: 0 }
-    this.onOpen = this.onOpen.bind(this)
-    this.onClose = this.onClose.bind(this)
-    this.onMessage = this.onMessage.bind(this)
-    this.onSubmit = this.onSubmit.bind(this)
   }
 
-  private onOpen(control: WebSocketControl): void {
+  private onOpen = (control: WebSocketControl): void => {
     log.debug('[onOpen]', control)
     if (this.acnState.room.length === 0 || this.acnState.hash.length === 0) {
       window.location.href = './login'
@@ -94,7 +122,7 @@ export default class App extends React.Component<AppProps, AppState> {
     this.webSocketControl.send(acn)
   }
 
-  private onClose(ev: CloseEvent): void {
+  private onClose = (ev: CloseEvent): void => {
     if (this.webSocketControl) {
       this.webSocketControl.close()
     }
@@ -126,7 +154,7 @@ export default class App extends React.Component<AppProps, AppState> {
     this.webSocketControl?.send(message)
   }
 
-  private onMessage(message: Message): void {
+  private onMessage = (message: Message): void => {
     log.debug('[onMessage]', message)
     if (!isCommentMessage(message)
       && !isPollStartMessage(message)
@@ -168,7 +196,7 @@ export default class App extends React.Component<AppProps, AppState> {
     }
   }
 
-  private closePoll(pollId: string, refresh: boolean): void {
+  private closePoll = (pollId: string, refresh: boolean): void => {
     const polls = this.state.polls
     const dropIndex = polls.findIndex(poll => poll.id === pollId)
     if (dropIndex > -1) {
@@ -223,24 +251,9 @@ export default class App extends React.Component<AppProps, AppState> {
               )
             }
             {
-              this.state.polls.map(poll => (
-                /* TODO make component */
-                <div key={poll.key} className="message">
-                  <div>Presenter starts a poll! Click the number you choose.</div>
-                  <div style={{ fontWeight: 'bold', padding: '8px' }}>{poll.title}</div>
-                  {
-                    poll.entries.map((e: Pick<PollEntry, 'key' | 'description'>, i: number) => (
-                      <div key={`poll-${poll.key}-${e.key}`} style={{ fontWeight: 'bolder' }}>
-                        <Button variant="outlined" onClick={ev => this.onPoll(ev, e.key)}>{i}</Button>
-                        <span style={{ marginLeft: '8px' }}>{e.description}</span>
-                      </div>
-                    ))
-                  }
-                  <div>
-                    <Button variant="outlined" onClick={() => this.closePoll(poll.id, true)}>Close</Button>
-                  </div>
-                </div>
-              ))
+              this.state.polls.map(poll =>
+                <PollControl poll={poll} onPoll={this.onPoll} onClosePoll={pollId => this.closePoll(pollId, true)} />
+              )
             }
             <div ref={this.ref}></div>
           </div>
