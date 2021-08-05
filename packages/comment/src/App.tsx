@@ -11,8 +11,16 @@ import {
   LogLevels,
 } from 'common'
 import { SendCommentForm } from './SendCommentForm'
-import { isPollStartMessage, isPollFinishMessage, PollMessage, PollEntry, PollStartMessage } from 'poll'
-import { Button } from '@material-ui/core'
+import {
+  isPollStartMessage,
+  isPollFinishMessage,
+  PollMessage,
+  PollEntry,
+  PollStartMessage,
+} from 'poll'
+import {
+  Button,
+} from '@material-ui/core'
 
 type AppProps = {
   url: string
@@ -40,9 +48,10 @@ type AcnState = {
   reconnectTimer: number
 }
 
-const POLL_START_ID = 'poll-start'
 const log = getLogger('App')
 log.setLevel(LogLevels.DEBUG)
+
+// TODO User should be able to restart poll if the poll entry is closed by mistake.
 
 export default class App extends React.Component<AppProps, AppState> {
 
@@ -145,6 +154,7 @@ export default class App extends React.Component<AppProps, AppState> {
         entries: message.entries,
       })
     } else if (isPollFinishMessage(message)) {
+      this.closePoll(message.id, false)
       const dropIndex = polls.findIndex(poll => poll.id === message.id)
       if (dropIndex > -1) {
         polls.splice(dropIndex, 1)
@@ -155,6 +165,20 @@ export default class App extends React.Component<AppProps, AppState> {
     // TODO Add option to autoscroll
     if (this.props.autoScroll && this.ref.current && this.messageListDiv) {
       this.messageListDiv.scrollTo(0, this.ref.current.offsetTop)
+    }
+  }
+
+  private closePoll(pollId: string, refresh: boolean): void {
+    const polls = this.state.polls
+    const dropIndex = polls.findIndex(poll => poll.id === pollId)
+    if (dropIndex > -1) {
+      polls.splice(dropIndex, 1)
+      if (refresh) {
+        this.setState({
+          comments: this.state.comments,
+          polls,
+        })
+      }
     }
   }
 
@@ -200,18 +224,22 @@ export default class App extends React.Component<AppProps, AppState> {
             }
             {
               this.state.polls.map(poll => (
-                <p key={poll.key} className="message" id={POLL_START_ID}>
-                  <p>Presenter stars a poll!</p>
-                  <p>{poll.title}</p>
+                /* TODO make component */
+                <div key={poll.key} className="message">
+                  <div>Presenter starts a poll! Click the number you choose.</div>
+                  <div style={{ fontWeight: 'bold', padding: '8px' }}>{poll.title}</div>
                   {
                     poll.entries.map((e: Pick<PollEntry, 'key' | 'description'>, i: number) => (
-                      <p key={`poll-${poll.key}-${e.key}`}>
-                        <Button variant="outlined" onClick={ev => this.onPoll(ev, e.key)}>{i}.</Button>
+                      <div key={`poll-${poll.key}-${e.key}`} style={{ fontWeight: 'bolder' }}>
+                        <Button variant="outlined" onClick={ev => this.onPoll(ev, e.key)}>{i}</Button>
                         <span style={{ marginLeft: '8px' }}>{e.description}</span>
-                      </p>
+                      </div>
                     ))
                   }
-                </p>
+                  <div>
+                    <Button variant="outlined" onClick={() => this.closePoll(poll.id, true)}>Close</Button>
+                  </div>
+                </div>
               ))
             }
             <div ref={this.ref}></div>

@@ -14,7 +14,7 @@
   "scripts": {
     "clean": "node -e \"require('fs').rmdirSync('dist', {recursive: true})\"",
     "lint": "eslint --ext ts,tsx --max-warnings 0 src",
-    "build": "tsc -b && NODE_ENV=production rollup -c",
+    "build": "tsc -b && rollup -c",
     "build:watch": "concurrently \"tsc -b -w\" \"rollup -c -w\"",
     "build:dir": "electron-builder -c electron-builder-config.json --dir",
     "start": "electron . --enable-logging"

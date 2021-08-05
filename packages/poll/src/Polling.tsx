@@ -49,13 +49,17 @@ export function Polling({ mode, url, room, hash, title, entries, onChange, onFin
     if (!isPollMessage(message)) {
       return
     }
+    // choice = key of the chosen entry
     const p = progress.current
-    const oldEntryKey = p.get(message.cid)
+    const oldChoice = p.get(message.cid)
+    if (message.choice === oldChoice) {
+      return
+    }
     p.set(message.cid, message.choice)
     const change = new Map<PollEntry['key'], number>()
     change.set(message.choice, 1)
-    if (oldEntryKey) {
-      change.set(oldEntryKey, -1)
+    if (oldChoice) {
+      change.set(oldChoice, -1)
     }
     onChange(change)
   }, [onChange])
@@ -80,24 +84,34 @@ export function Polling({ mode, url, room, hash, title, entries, onChange, onFin
 
   }, [wscRef, entries])
 
-  const onClose = React.useCallback((): void => {
-    const finish: PollFinishMessage = {
-      type: 'app',
-      cmd: 'poll/finish',
-      id:  'poll-' + pollId,
-    }
+  const onClick = React.useCallback((): void => {
+    progress.current?.clear()
     if (wscRef.current) {
+      const finish: PollFinishMessage = {
+        type: 'app',
+        cmd: 'poll/finish',
+        id:  'poll-' + pollId,
+      }
       wscRef.current.send(finish)
       wscRef.current.close()
     }
-    progress.current?.clear()
     onFinished()
   }, [onFinished])
 
-  const onFinishClicked = React.useCallback((): void => {
-    wscRef.current?.close()
-    onFinished()
-  }, [onFinished])
+  React.useEffect((): (() => void) => {
+    return (): void => {
+      progress.current?.clear()
+      if (wscRef.current) {
+        const finish: PollFinishMessage = {
+          type: 'app',
+          cmd: 'poll/finish',
+          id:  'poll-' + pollId,
+        }
+        wscRef.current.send(finish)
+        wscRef.current.close()
+      }
+    }
+  }, [])
 
   if (mode !== 'poll') {
     return null
@@ -106,13 +120,14 @@ export function Polling({ mode, url, room, hash, title, entries, onChange, onFin
     <>
       <Grid item xs={10} />
       <Grid item xs={2}>
-        <Button variant="outlined" onClick={onFinishClicked}>Finish</Button>
+        <Button variant="outlined" onClick={onClick}>Finish</Button>
       </Grid>
       <WebSocketClient
         url={url}
         onOpen={onOpen}
-        onClose={onClose}
         onMessage={onMessage}
+        onClose={(ev) => log.debug('[Polling] websocket onClose', ev)}
+        onError={(ev) => log.debug('[Polling] websocket onError', ev)}
       />
     </>
   )

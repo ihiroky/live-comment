@@ -27,8 +27,10 @@ export type PollResultProps = {
   onTypeChanged: (type: string) => void
 }
 
+type ResultType = 'result-list' | 'result-graph'
+
 function TypeSelect({ type, onChange }: {
-  type: string
+  type: ResultType
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
 }): JSX.Element {
   return (
@@ -52,24 +54,27 @@ function CloseButton({ onClosed }: { onClosed: PollResultProps['onClosed']}): JS
   )
 }
 
-export function PollResult({ mode, data, onClosed, onTypeChanged, children }: React.PropsWithChildren<PollResultProps>): JSX.Element | null {
-  const options = {
-    indexAxis: 'y',
-    responsive: true,
-    plugins: {
-      legend: {
-        display: false
-      },
-      title: {
-        display: false,
-      },
+const graphOptions = {
+  indexAxis: 'y',
+  responsive: true,
+  plugins: {
+    legend: {
+      display: false
     },
-  }
-  const [type, setType] = React.useState<string>('list')
+    title: {
+      display: false,
+    },
+  },
+}
+
+export function PollResult({ mode, data, onClosed, onTypeChanged, children }: React.PropsWithChildren<PollResultProps>): JSX.Element | null {
+  const [type, setType] = React.useState<ResultType>('result-list')
   function onChange(event: React.ChangeEvent<HTMLInputElement>): void {
     const value = event.target.value
-    setType(value)
-    onTypeChanged(value)
+    if (value === 'result-list' || value === 'result-graph') {
+      setType(value)
+      onTypeChanged(value)
+    }
   }
 
   if ((mode !== 'result-graph' && mode !== 'result-list') || data === null) {
@@ -88,7 +93,7 @@ export function PollResult({ mode, data, onClosed, onTypeChanged, children }: Re
     <>
       <TypeSelect type={type} onChange={onChange} />
       <Grid item xs={12}>
-        <Bar type="horizontalBar" data={data} options={options} />
+        <Bar type="horizontalBar" data={data} options={graphOptions} />
       </Grid>
       <CloseButton onClosed={onClosed} />
     </>

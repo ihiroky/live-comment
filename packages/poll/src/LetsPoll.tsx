@@ -3,6 +3,7 @@ import {
   Grid,
   Paper,
   InputBase,
+  makeStyles,
 } from '@material-ui/core'
 import { getLogger } from 'common'
 import { Mode, Update, PollEntry } from './types'
@@ -10,7 +11,6 @@ import { Choice } from './Choice'
 import { PollEdit } from './PollEdit'
 import { Polling } from './Polling'
 import { PollResult, PollResultProps } from './PollResult'
-import { usePollStyles } from './usePollStyle'
 import { getRandomInteger } from './utils'
 
 const log = getLogger('Poll')
@@ -25,6 +25,33 @@ type Props = {
   onPollClosed?: () => void
   onResultClosed?: () => void
 }
+
+const usePollStyles = makeStyles(() => ({
+  root: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ui: {
+    width: '800px',
+    padding: '8px'
+  },
+  title: {
+    width: '100%',
+    paddingBottom: '8px',
+    fontSize: '32px',
+    fontWeight: 'bolder',
+  },
+  description: {
+    width: '100%',
+    fontSize: '24px',
+  },
+}))
 
 export const LetsPoll: React.FC<Props> = (props: Props): JSX.Element => {
   const [title, setTitle] = React.useState<string>(props.title)

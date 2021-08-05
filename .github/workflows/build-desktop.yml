@@ -27,6 +27,8 @@ jobs:
           release: ${{ startsWith(github.ref, 'refs/tags/v') }}
           package_root: packages/desktop/
           args: -c electron-builder-config.json
+        env:
+          NODE_ENV: production
 
       - name: Archive artifacts
         uses: actions/upload-artifact@v2
