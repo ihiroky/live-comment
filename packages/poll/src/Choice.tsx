@@ -73,14 +73,24 @@ function useBlinksCountedUpEntries(entries: PollEntry[], blinkClass: string): vo
   }, [entries])
 }
 
-export function Choice({ entries, mode, descClass, onRemoveEntry }: {
+
+export function Choice({ entries, mode, descClass, topClass, onRemoveEntry }: {
   entries: PollEntry[]
   mode: Mode
   descClass: string
+  topClass: string
   onRemoveEntry: (index: number) => void
 }): JSX.Element | null {
   const classes = useStyles()
   useBlinksCountedUpEntries(entries, classes.blink)
+  const highestCount = React.useMemo((): number => {
+    if (entries.length === 0) {
+      return 0
+    }
+    const highestCount = entries.sort((a, b) => b.count - a.count)[0].count
+    // Count zero is not top.
+    return Math.max(highestCount, 1)
+  }, [entries])
 
   if (mode === 'result-graph') {
     return null
@@ -91,7 +101,7 @@ export function Choice({ entries, mode, descClass, onRemoveEntry }: {
     <>
       {entries.map((entry: PollEntry, index: number): JSX.Element => (
         <Grid item xs={12} key={entry.key} id={String(entry.key)}>
-          <Grid container>
+          <Grid container className={entry.count === highestCount ? topClass : ''}>
             <Grid item xs={1} />
             <Grid item xs={1}>{index + 1}</Grid>
             <Grid item xs={8} className={descClass}>{entry.description}</Grid>

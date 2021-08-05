@@ -39,7 +39,7 @@ const usePollStyles = makeStyles(() => ({
   },
   ui: {
     width: '800px',
-    padding: '8px'
+    padding: '16px'
   },
   title: {
     width: '100%',
@@ -51,6 +51,9 @@ const usePollStyles = makeStyles(() => ({
     width: '100%',
     fontSize: '24px',
   },
+  top: {
+    fontWeight: 'bold'
+  }
 }))
 
 export const Poll: React.FC<Props> = (props: Props): JSX.Element => {
@@ -112,15 +115,20 @@ export const Poll: React.FC<Props> = (props: Props): JSX.Element => {
   }
 
   React.useEffect((): void => {
+    function shorten(s: string): string {
+      return (s.length <= 23)
+        ? s
+        : s.substring(0, 10) + '...' + s.substring(s.length - 10)
+    }
     const newData: PollResultProps['data'] = {
-      labels: entries.map((_, i) => String(i + 1)),
+      labels: entries.map(e => shorten(e.description)),
       datasets: [{
-        label: '# of votes',
+        label: shorten(title),
         data: entries.map(e => e.count),
       }]
     }
     setData(newData)
-  }, [entries])
+  }, [entries, title])
 
   return (
     <div className={classes.root}>
@@ -140,6 +148,7 @@ export const Poll: React.FC<Props> = (props: Props): JSX.Element => {
             <Choice
               mode={mode}
               descClass={classes.description}
+              topClass={classes.top}
               entries={entries}
               onRemoveEntry={onRemoveEntry}
             />
