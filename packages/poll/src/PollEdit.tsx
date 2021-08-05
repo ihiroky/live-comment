@@ -6,9 +6,10 @@ import {
 } from '@material-ui/core'
 import { Mode } from './types'
 
-export function PollEdit({ mode, descClass, onEntryAdded, onOk, onCanceled }: {
+export function PollEdit({ mode, descClass, entryCount, onEntryAdded, onOk, onCanceled }: {
   mode: Mode
   descClass: string
+  entryCount: number
   onEntryAdded: (description: string) => void
   onOk: () => void
   onCanceled: () => void
@@ -36,6 +37,7 @@ export function PollEdit({ mode, descClass, onEntryAdded, onOk, onCanceled }: {
             }
           }}
           style={{width: '100%'}}
+          multiline
           placeholder="Write a new entry description."
           value={description}
           onChange={e => setDescription(e.target.value)}
@@ -47,7 +49,7 @@ export function PollEdit({ mode, descClass, onEntryAdded, onOk, onCanceled }: {
       <Grid item xs={1} />
       <Grid item xs={8}></Grid>
       <Grid item xs={2}>
-        <Button variant="outlined" onClick={onOk}>OK</Button>
+        <Button variant="outlined" onClick={onOk} disabled={entryCount === 0}>OK</Button>
       </Grid>
       <Grid item xs={2}>
         <Button variant="outlined" onClick={onCanceled}>Cancel</Button>

@@ -39,7 +39,8 @@ const usePollStyles = makeStyles(() => ({
   },
   ui: {
     width: '800px',
-    padding: '16px'
+    padding: '16px',
+    overflowWrap: 'normal',
   },
   title: {
     width: '100%',
@@ -50,6 +51,7 @@ const usePollStyles = makeStyles(() => ({
   description: {
     width: '100%',
     fontSize: '24px',
+    overflowWrap: 'break-word',
   },
   top: {
     fontWeight: 'bold'
@@ -115,15 +117,9 @@ export const Poll: React.FC<Props> = (props: Props): JSX.Element => {
   }
 
   React.useEffect((): void => {
-    function shorten(s: string): string {
-      return (s.length <= 23)
-        ? s
-        : s.substring(0, 10) + '...' + s.substring(s.length - 10)
-    }
     const newData: PollResultProps['data'] = {
-      labels: entries.map(e => shorten(e.description)),
+      labels: entries.map((e, i) => String(i + 1)),
       datasets: [{
-        label: shorten(title),
         data: entries.map(e => e.count),
       }]
     }
@@ -138,9 +134,10 @@ export const Poll: React.FC<Props> = (props: Props): JSX.Element => {
             <InputBase
               className={classes.title}
               autoFocus
+              multiline
               readOnly={mode !== 'edit'}
               value={title}
-              placeholder="Poll title"
+              placeholder="Input title"
               onChange={e => setTitle(e.target.value)}
             />
           </Grid>
@@ -156,6 +153,7 @@ export const Poll: React.FC<Props> = (props: Props): JSX.Element => {
           <PollEdit
             mode={mode}
             descClass={classes.description}
+            entryCount={entries.length}
             onEntryAdded={onEntryAdded}
             onOk={onOk}
             onCanceled={onCanceled}

@@ -97,11 +97,12 @@ export function Choice({ entries, mode, descClass, topClass, onRemoveEntry }: {
   }
 
   // TODO Emphasize top result
+  const isResultList = mode === 'result-list'
   return (
     <>
       {entries.map((entry: PollEntry, index: number): JSX.Element => (
         <Grid item xs={12} key={entry.key} id={String(entry.key)}>
-          <Grid container className={entry.count === highestCount ? topClass : ''}>
+          <Grid container className={isResultList && (entry.count === highestCount) ? topClass : ''}>
             <Grid item xs={1} />
             <Grid item xs={1}>{index + 1}</Grid>
             <Grid item xs={8} className={descClass}>{entry.description}</Grid>
@@ -112,8 +113,8 @@ export function Choice({ entries, mode, descClass, topClass, onRemoveEntry }: {
                   : null
               }
               {
-                mode === 'result-list'
-                  ? <div>{entry.count}</div>
+                isResultList
+                  ? <div className={descClass}>{entry.count}</div>
                   : null
               }
             </Grid>

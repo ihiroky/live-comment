@@ -13,7 +13,7 @@ export type PollResultProps = {
   data: {
     labels: string[]
     datasets: [{
-      label: string
+      label?: string
       data: number[]
       backgroundColor?: string[]
       borderColor?: string[]

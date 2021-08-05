@@ -20,6 +20,7 @@ window.poll.request().then((settings: SettingsV1): void => {
       room={settings.general.room}
       hash={createHash(settings.general.password)}
       onResultClosed={() => window.close()}
+      onCanceled={() => window.close()}
     />,
     document.getElementById('root')
   )

@@ -62,11 +62,11 @@ type PollControlProps = {
 const PollControl: React.FC<PollControlProps> = ({ poll, onPoll, onClosePoll }: PollControlProps): JSX.Element => {
   return (
     <div key={poll.key} className="message">
-    <div>Presenter starts a poll! Click the number you choose.</div>
+    <div>Presenter starts a poll!!! [id:{poll.id}] Click the number you choose.</div>
     <div style={{ fontWeight: 'bold', padding: '8px' }}>{poll.title}</div>
     {
       poll.entries.map((e: Pick<PollEntry, 'key' | 'description'>, i: number) => (
-        <div key={`poll-${poll.key}-${e.key}`} style={{ fontWeight: 'bolder' }}>
+        <div key={`poll-${poll.key}-${e.key}`}>
           <Button variant="outlined" onClick={ev => onPoll(ev, e.key)}>{i}</Button>
           <span style={{ marginLeft: '8px' }}>{e.description}</span>
         </div>
