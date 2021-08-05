@@ -15,11 +15,9 @@ export type PollResultProps = {
     datasets: [{
       label: string
       data: number[]
-      /*
-      backgroundColor: string[]
-      borderColor: string[]
-      borderWidth: number
-      */
+      backgroundColor?: string[]
+      borderColor?: string[]
+      borderWidth?: number[]
     }]
   } | null
   mode: Mode
@@ -28,6 +26,51 @@ export type PollResultProps = {
 }
 
 type ResultType = 'result-list' | 'result-graph'
+
+const barColorsBase: { r: number, g: number, b: number }[] = [
+  { r: 255, g:  99, b: 132 },
+  { r: 255, g: 159, b:  64 },
+  { r: 255, g: 205, b:  86 },
+  { r:  75, g: 192, b: 192 },
+  { r:  54, g: 162, b: 235 },
+  { r: 153, g: 102, b: 255 },
+  { r: 201, g: 203, b: 207 },
+]
+
+type BarAttributes = {
+  backgrounds: string[]
+  borders: string[]
+  borderWidths: number[]
+}
+
+type IndexValue = [number, number]
+
+function calcBarAttributes(data: number[]): BarAttributes {
+  const initialValue = {
+    backgrounds: [],
+    borders: [],
+    borderWidths: [],
+  }
+  if (data.length === 0) {
+    return initialValue
+  }
+
+  // argsort, then calculate attributes
+  const argSorted: IndexValue[] = data
+    .map((value, index): IndexValue => [index, value])
+    .sort((a, b) => b[1] - a[1])
+  const highestValue = argSorted[0][1]
+  return argSorted
+    .reduce((p: BarAttributes, c: IndexValue, index: number) => {
+      const isHighestValue = c[1] === highestValue
+      const color = barColorsBase[index % barColorsBase.length]
+      const alpha = isHighestValue ? '0.4' : '0.2'
+      p.backgrounds[c[0]] = `rgb(${color.r}, ${color.g}, ${color.b}, ${alpha})`
+      p.borders[c[0]] = `rgb(${color.r}, ${color.g}, ${color.b})`
+      p.borderWidths[c[0]] = isHighestValue ? 4 : 2
+      return p
+    }, initialValue)
+}
 
 function TypeSelect({ type, onChange }: {
   type: ResultType
@@ -69,15 +112,26 @@ const graphOptions = {
 
 export function PollResult({ mode, data, onClosed, onTypeChanged, children }: React.PropsWithChildren<PollResultProps>): JSX.Element | null {
   const [type, setType] = React.useState<ResultType>('result-list')
-  function onChange(event: React.ChangeEvent<HTMLInputElement>): void {
+  const enchantedData = React.useMemo((): PollResultProps['data'] => {
+    if (data === null) {
+      return null
+    }
+    const datasets = data.datasets[0]
+    const barAttrs = calcBarAttributes(datasets.data)
+    datasets.backgroundColor = barAttrs.backgrounds
+    datasets.borderColor = barAttrs.borders
+    datasets.borderWidth = barAttrs.borderWidths
+    return data
+  }, [data])
+  const onChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>): void => {
     const value = event.target.value
     if (value === 'result-list' || value === 'result-graph') {
       setType(value)
       onTypeChanged(value)
     }
-  }
+  }, [])
 
-  if ((mode !== 'result-graph' && mode !== 'result-list') || data === null) {
+  if ((mode !== 'result-graph' && mode !== 'result-list') || enchantedData === null) {
     return <>{children}</>
   }
   if (mode === 'result-list') {
@@ -93,7 +147,7 @@ export function PollResult({ mode, data, onClosed, onTypeChanged, children }: Re
     <>
       <TypeSelect type={type} onChange={onChange} />
       <Grid item xs={12}>
-        <Bar type="horizontalBar" data={data} options={graphOptions} />
+        <Bar type="horizontalBar" data={enchantedData} options={graphOptions} />
       </Grid>
       <CloseButton onClosed={onClosed} />
     </>

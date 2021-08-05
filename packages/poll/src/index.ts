@@ -1,4 +1,3 @@
-export { LetsPoll } from './LetsPoll'
 export { Poll } from './Poll'
 export type {
   PollEntry,
