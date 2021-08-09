@@ -1,6 +1,7 @@
 import React from 'react'
 import './App.css'
 import {
+  assertNotNullable,
   CloseCode,
   WebSocketClient,
   WebSocketControl,
@@ -36,6 +37,7 @@ type AppState = {
   }[]
   polls: {
     key: number
+    owner: string
     id: PollStartMessage['id']
     title: PollStartMessage['title']
     entries: PollStartMessage['entries']
@@ -55,33 +57,33 @@ log.setLevel(LogLevels.DEBUG)
 
 type PollControlProps = {
   poll: AppState['polls'][number],
-  onPoll: (e: React.MouseEvent<HTMLButtonElement>, choice: PollEntry['key']) => void,
+  onPoll: (e: React.MouseEvent<HTMLButtonElement>, choice: PollEntry['key'], owner: string) => void,
   onClosePoll: (pollId: string) => void
 }
 
 const PollControl: React.FC<PollControlProps> = ({ poll, onPoll, onClosePoll }: PollControlProps): JSX.Element => {
   return (
-    <div key={poll.key} className="message">
-    <div>Presenter starts a poll!!! [id:{poll.id}] Click the number you choose.</div>
-    <div style={{ fontWeight: 'bold', padding: '8px' }}>{poll.title}</div>
-    {
-      poll.entries.map((e: Pick<PollEntry, 'key' | 'description'>, i: number) => (
-        <div key={`poll-${poll.key}-${e.key}`}>
-          <Button variant="outlined" onClick={ev => onPoll(ev, e.key)}>{i}</Button>
-          <span style={{ marginLeft: '8px' }}>{e.description}</span>
-        </div>
-      ))
-    }
-    <div>
-      <Button
-        variant="outlined"
-        style={{ marginTop: '4px' }}
-        onClick={() => onClosePoll(poll.id)}
-      >
-        Close
-      </Button>
+    <div className="message">
+      <div>Presenter starts a poll!!! [id:{poll.id}] Click the number you choose.</div>
+      <div style={{ fontWeight: 'bold', padding: '8px' }}>{poll.title}</div>
+      {
+        poll.entries.map((e: Pick<PollEntry, 'key' | 'description'>, i: number) => (
+          <div key={`poll-${poll.key}-${e.key}`}>
+            <Button variant="outlined" onClick={ev => onPoll(ev, e.key, poll.owner)}>{i}</Button>
+            <span style={{ marginLeft: '8px' }}>{e.description}</span>
+          </div>
+        ))
+      }
+      <div>
+        <Button
+          variant="outlined"
+          style={{ marginTop: '4px' }}
+          onClick={() => onClosePoll(poll.id)}
+        >
+          Close
+        </Button>
+      </div>
     </div>
-  </div>
   )
 }
 
@@ -143,11 +145,12 @@ export default class App extends React.Component<AppProps, AppState> {
     }
   }
 
-  private readonly onPoll = (e: React.MouseEvent<HTMLButtonElement>, choice: PollEntry['key']): void => {
+  private readonly onPoll = (e: React.MouseEvent<HTMLButtonElement>, choice: PollEntry['key'], to: string): void => {
     e.preventDefault()
     const message: PollMessage = {
       type: 'app',
       cmd: 'poll/poll',
+      to,
       choice,
     }
     log.debug('[onPoll] ', message)
@@ -175,8 +178,10 @@ export default class App extends React.Component<AppProps, AppState> {
       }
       comments.push({ key, comment, pinned })
     } else if (isPollStartMessage(message)) {
+      assertNotNullable(message.from, 'PollStartMessage.from')
       polls.push({
         key,
+        owner: message.from,
         id: message.id,
         title: message.title,
         entries: message.entries,
@@ -210,7 +215,7 @@ export default class App extends React.Component<AppProps, AppState> {
     }
   }
 
-  onSubmit(message: Message): void {
+  private onSubmit = (message: Message): void => {
     this.webSocketControl?.send(message)
   }
 
@@ -252,7 +257,12 @@ export default class App extends React.Component<AppProps, AppState> {
             }
             {
               this.state.polls.map(poll =>
-                <PollControl poll={poll} onPoll={this.onPoll} onClosePoll={pollId => this.closePoll(pollId, true)} />
+                <PollControl
+                  key={poll.key}
+                  poll={poll}
+                  onPoll={this.onPoll}
+                  onClosePoll={pollId => this.closePoll(pollId, true)}
+                />
               )
             }
             <div ref={this.ref}></div>

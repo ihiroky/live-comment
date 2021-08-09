@@ -24,6 +24,11 @@ export interface ClientSession extends WebSocket {
   room?: string
 }
 
+// TODO optimize send message loop
+export interface ServerSession extends WebSocket.Server {
+  rooms: Map<string, ClientSession[]>
+}
+
 const PING_INTERVAL_MILLIS = 7 * 1000
 const MAX_PENDING_MESSAGE_COUNT = 500
 const MAX_PENDING_CHAR_COUNT = 5000
@@ -82,16 +87,17 @@ function onMessage(
     sender.close()
   }
   log.debug('[onMessage]', message, 'from', sender.id, 'to', sender.room)
-  message.cid = sender.id
+  message.from = sender.id
   const serialized = JSON.stringify(message)
+  const room = sender.room
+  const to = message.to
   server.clients.forEach((c: WebSocket): void => {
     const receiver = c as ClientSession
-    if (receiver.room === sender.room) {
+    if (receiver.room === room && (!to || receiver.id === to)) {
       sendMessage(receiver, serialized)
     }
   })
 }
-
 
 function onConnected(
   server: WebSocket.Server,

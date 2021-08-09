@@ -51,11 +51,11 @@ export function Polling({ mode, url, room, hash, title, entries, onChange, onFin
     }
     // choice = key of the chosen entry
     const p = progress.current
-    const oldChoice = p.get(message.cid)
+    const oldChoice = p.get(message.from)
     if (message.choice === oldChoice) {
       return
     }
-    p.set(message.cid, message.choice)
+    p.set(message.from, message.choice)
     const change = new Map<PollEntry['key'], number>()
     change.set(message.choice, 1)
     if (oldChoice) {

@@ -14,7 +14,8 @@ export const CloseCode = {
 
 export interface Message {
   type: 'comment' | 'acn' | 'error' | 'app'
-  cid?: string
+  from?: string
+  to?: string
 }
 
 export interface CommentMessage extends Message {

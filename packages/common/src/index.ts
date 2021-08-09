@@ -24,6 +24,7 @@ export function createHash(s: string): string {
 }
 
 export { isObject } from './isObject'
+export { assertNotNullable } from './assert'
 
 export {
   getLogger,

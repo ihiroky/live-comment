@@ -17,7 +17,7 @@ export interface PollStartMessage extends ApplicationMessage {
 export interface PollMessage extends ApplicationMessage {
   type: 'app'
   cmd: 'poll/poll'
-  cid?: string
+  to: string
   choice: PollEntry['key']
 }
 
@@ -45,5 +45,5 @@ export type Mode =
   | 'result-list'
   | 'result-graph'
 
-export type Progress = Map<PollMessage['cid'], PollEntry['key']>
+export type Progress = Map<PollMessage['from'], PollEntry['key']>
 export type Update = Map<PollEntry['key'], number>
