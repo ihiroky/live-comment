@@ -24,7 +24,7 @@
     "declaration": true,
     "declarationMap": true,
     "paths": {
-      "common": ["../common/dist/index"]
+      "common": ["../common/src/index"]
     },
   },
   "references": [

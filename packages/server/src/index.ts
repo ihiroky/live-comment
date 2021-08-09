@@ -18,7 +18,7 @@ const server = createServer().on('request', (_, res): void => {
   res.end('Hello.')
 })
 const wss = createWebSocketServer(server, configuration)
-wss.on('helthcheck', function(): void {
+wss.on('healthcheck', function(): void {
   configuration.reloadIfUpdatedAsync()
 })
 server.listen(configuration.port)

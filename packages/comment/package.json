@@ -15,6 +15,7 @@
     "@types/react-dom": "^17.0.3",
     "@types/react-router-dom": "^5.1.7",
     "common": "0.1.1",
+    "poll": "1.0.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-router-dom": "^5.2.0",
@@ -22,8 +23,8 @@
     "typescript": "^4.2.3"
   },
   "scripts": {
-    "start": "yarn --cwd ../common tsc -b && react-scripts start",
-    "build": "yarn --cwd ../common tsc -b && react-scripts build",
+    "start": "yarn --cwd ../common tsc -b && yarn --cwd ../poll tsc -b && react-scripts start",
+    "build": "yarn --cwd ../common tsc -b && yarn --cwd ../poll tsc -b && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "lint": "eslint --ext ts,tsx --max-warnings 0 src"

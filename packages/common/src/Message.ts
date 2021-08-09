@@ -13,29 +13,39 @@ export const CloseCode = {
 }
 
 export interface Message {
-  type: string
+  type: 'comment' | 'acn' | 'error' | 'app'
+  from?: string
+  to?: string
 }
 
 export interface CommentMessage extends Message {
   type: 'comment'
   comment: string
+  pinned?: boolean
 }
+
 export interface AcnMessage extends Message {
   type: 'acn'
   room: string
   hash: string
 }
 
-export interface ErrorMessage  extends Message {
+export interface ErrorMessage extends Message {
   type: 'error'
   error: Error
   message: string
+}
+
+export interface ApplicationMessage extends Message {
+  type: 'app'
+  cmd: string
 }
 
 export function isCommentMessage(m: unknown): m is CommentMessage {
   if (!isObject(m)) {
     return false
   }
+
   return m.type === 'comment'
 }
 
@@ -51,4 +61,18 @@ export function isErrorMessage(m: unknown): m is ErrorMessage {
     return false
   }
   return m.type === 'error'
+}
+
+export function isApplicationMessage(m: unknown): m is ApplicationMessage {
+  if (!isObject(m)) {
+    return false
+  }
+  return m.type === 'app'
+}
+
+export function isClientMessage(m: unknown): m is CommentMessage | ApplicationMessage {
+  if (!isObject(m)) {
+    return false
+  }
+  return m.type === 'comment' || m.type === 'app'
 }

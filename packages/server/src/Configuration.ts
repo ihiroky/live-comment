@@ -29,7 +29,7 @@ const ENV_CONFIG = 'LIVE_COMMENT_SERVER_CONFIG'
 const DEFAULT_PORT = 8080
 
 function getHomeConfigPath(): string {
-  const home = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME']
+  const home = process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME']
   if (!home) {
     throw new Error('Home directory does not exist.')
   }

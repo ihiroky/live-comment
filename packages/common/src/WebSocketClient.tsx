@@ -52,7 +52,7 @@ export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
   }
 
   render(): React.ReactNode {
-    return <div></div>;
+    return <div></div>
   }
 
   send(message: Message): void {
