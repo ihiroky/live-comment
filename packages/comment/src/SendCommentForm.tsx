@@ -12,20 +12,20 @@ type StateType = {
 
 export class SendCommentForm extends React.Component<PropsType, StateType> {
 
-  private ctrlKeyPressed: boolean
+  private canSendMessage: boolean
 
   constructor(props: Readonly<PropsType>) {
     super(props)
     this.state = {
       comment: '',
     }
-    this.ctrlKeyPressed = false
+    this.canSendMessage = false
   }
 
   private onSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
 
-    if (this.props.sendWithCtrlEnter && !this.ctrlKeyPressed) {
+    if (this.props.sendWithCtrlEnter && !this.canSendMessage) {
       return
     }
 
@@ -37,6 +37,9 @@ export class SendCommentForm extends React.Component<PropsType, StateType> {
         comment: ''
       })
     }
+
+    // For mouse and touch
+    this.canSendMessage = false
   }
 
   private onChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -47,14 +50,22 @@ export class SendCommentForm extends React.Component<PropsType, StateType> {
 
   private onKeyUp = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Control') {
-      this.ctrlKeyPressed = false
+      this.canSendMessage = false
     }
   }
 
   private onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Control') {
-      this.ctrlKeyPressed = true
+      this.canSendMessage = true
     }
+  }
+
+  private onMouseDown = (e: React.MouseEvent<HTMLInputElement>): void => {
+    this.canSendMessage = true
+  }
+
+  private onTouchStart = (e: React.TouchEvent<HTMLInputElement>): void => {
+    this.canSendMessage = true
   }
 
   render(): React.ReactNode {
@@ -67,7 +78,12 @@ export class SendCommentForm extends React.Component<PropsType, StateType> {
           onKeyUp={this.onKeyUp}
           onKeyDown={this.onKeyDown}
         />
-        <input type="submit" value="💬" />
+        <input
+          type="submit"
+          value="💬"
+          onMouseDown={this.onMouseDown}
+          onTouchStart={this.onTouchStart}
+        />
       </form>
     )
   }
