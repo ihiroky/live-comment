@@ -72,17 +72,20 @@ async function asyncGetUserConfigPromise(checkIfExists: boolean): Promise<fs.Pat
   return userConfigPath
 }
 
-function getWorkArea(index: number | undefined): electron.Rectangle {
-  const display = index
-    ? electron.screen.getAllDisplays()[index]
-    : electron.screen.getPrimaryDisplay()
-  log.debug('[getWorkArea]', index, display.size)
-  return display.workArea
+function getWorkArea(index: number | undefined): [electron.Rectangle, number] {
+  const displays = electron.screen.getAllDisplays()
+  const actualIndex = index !== undefined && index < displays.length ? index : 0
+  const display = displays[actualIndex]
+  log.debug('[getWorkArea]', index, actualIndex, display.size)
+  return [display.workArea, actualIndex]
 }
 
 
 function applySettings(mainWindow: BrowserWindow, settings: Settings.SettingsV1): void {
-  const workArea = getWorkArea(settings.general.screen)
+  const [workArea, actualScreen] = getWorkArea(settings.general.screen)
+  if (actualScreen !== settings.general.screen) {
+    settings.general.screen = actualScreen
+  }
   mainWindow.setBounds(workArea)
   mainWindow.loadURL(`file://${path.resolve('resources/main/index.html')}`)
   mainWindow.webContents.setZoomFactor(Number(settings.general.zoom) / 100)
