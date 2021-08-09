@@ -17,8 +17,7 @@ ReactDOM.render(
       <Route path="/comment" render={(): React.ReactNode => {
         return <App
           url={url}
-          maxMessageCount={256}
-          autoScroll={true}
+          maxMessageCount={512}
         />
       }}/>
     </BrowserRouter>

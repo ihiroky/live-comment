@@ -33,19 +33,28 @@
   margin: 10px 20px;
 }
 
-input[type="text"] {
+form {
+  width: 100%;
+}
+
+form input[type="text"] {
   border: none;
   padding: 6px;
   margin: 10px 0px;
   border-radius: 6px;
-  width: 85%;
+  width: 90%;
 }
 
-input[type="submit"] {
+form input[type="submit"] {
   border: none;
   padding: 6px;
   margin-top: 10px;
   margin-bottom: 10px;
   margin-left: 10px;
   border-radius: 6px;
+}
+
+.auto-scroll {
+  display: flex;
+  width: 95%;
 }

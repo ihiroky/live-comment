@@ -17,31 +17,14 @@ import {
   isPollFinishMessage,
   PollMessage,
   PollEntry,
-  PollStartMessage,
 } from 'poll'
-import {
-  Button,
-} from '@material-ui/core'
+import { AppState } from './types'
+import { PollControl } from './PollControl'
+import { StopAutoScroll } from './AutoScroll'
 
 type AppProps = {
   url: string
   maxMessageCount: number
-  autoScroll: boolean
-}
-
-type AppState = {
-  comments: {
-    key: number,
-    comment: string
-    pinned: boolean
-  }[]
-  polls: {
-    key: number
-    owner: string
-    id: PollStartMessage['id']
-    title: PollStartMessage['title']
-    entries: PollStartMessage['entries']
-  }[]
 }
 
 type AcnState = {
@@ -55,38 +38,6 @@ log.setLevel(LogLevels.DEBUG)
 
 // TODO User should be able to restart poll if the poll entry is closed by mistake.
 
-type PollControlProps = {
-  poll: AppState['polls'][number],
-  onPoll: (e: React.MouseEvent<HTMLButtonElement>, choice: PollEntry['key'], owner: string) => void,
-  onClosePoll: (pollId: string) => void
-}
-
-const PollControl: React.FC<PollControlProps> = ({ poll, onPoll, onClosePoll }: PollControlProps): JSX.Element => {
-  return (
-    <div className="message">
-      <div>Presenter starts a poll!!! [id:{poll.id}] Click the number you choose.</div>
-      <div style={{ fontWeight: 'bold', padding: '8px' }}>{poll.title}</div>
-      {
-        poll.entries.map((e: Pick<PollEntry, 'key' | 'description'>, i: number) => (
-          <div key={`poll-${poll.key}-${e.key}`}>
-            <Button variant="outlined" onClick={ev => onPoll(ev, e.key, poll.owner)}>{i}</Button>
-            <span style={{ marginLeft: '8px' }}>{e.description}</span>
-          </div>
-        ))
-      }
-      <div>
-        <Button
-          variant="outlined"
-          style={{ marginTop: '4px' }}
-          onClick={() => onClosePoll(poll.id)}
-        >
-          Close
-        </Button>
-      </div>
-    </div>
-  )
-}
-
 export default class App extends React.Component<AppProps, AppState> {
 
   private ref: React.RefObject<HTMLDivElement>
@@ -99,6 +50,7 @@ export default class App extends React.Component<AppProps, AppState> {
     this.state = {
       comments: [],
       polls: [],
+      autoScroll: true,
     }
 
     this.ref = React.createRef()
@@ -195,8 +147,7 @@ export default class App extends React.Component<AppProps, AppState> {
     }
 
     this.setState({ comments, polls })
-    // TODO Add option to autoscroll
-    if (this.props.autoScroll && this.ref.current && this.messageListDiv) {
+    if (this.state.autoScroll && this.ref.current && this.messageListDiv) {
       this.messageListDiv.scrollTo(0, this.ref.current.offsetTop)
     }
   }
@@ -217,6 +168,14 @@ export default class App extends React.Component<AppProps, AppState> {
 
   private onSubmit = (message: Message): void => {
     this.webSocketControl?.send(message)
+  }
+
+  private onChangeAutoScroll = (autoScroll: boolean): void => {
+    this.setState({
+      ...this.state,
+      autoScroll
+    })
+    console.log(autoScroll)
   }
 
   componentDidMount(): void {
@@ -268,6 +227,9 @@ export default class App extends React.Component<AppProps, AppState> {
             <div ref={this.ref}></div>
           </div>
           <SendCommentForm onSubmit={this.onSubmit} />
+          <form>
+            <StopAutoScroll checked={this.state.autoScroll} onChange={this.onChangeAutoScroll} />
+          </form>
         </div>
         <WebSocketClient url={this.props.url} onOpen={this.onOpen} onClose={this.onClose} onMessage={this.onMessage} />
       </div>
