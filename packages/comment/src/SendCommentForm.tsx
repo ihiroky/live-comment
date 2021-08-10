@@ -3,6 +3,7 @@ import { CommentMessage } from 'common'
 
 type PropsType = {
   onSubmit: (message: CommentMessage) => void
+  sendWithCtrlEnter: boolean
 }
 
 type StateType = {
@@ -11,17 +12,23 @@ type StateType = {
 
 export class SendCommentForm extends React.Component<PropsType, StateType> {
 
+  private canSendMessage: boolean
+
   constructor(props: Readonly<PropsType>) {
     super(props)
     this.state = {
-      comment: ''
+      comment: '',
     }
-    this.onSubmit = this.onSubmit.bind(this)
-    this.onChange = this.onChange.bind(this)
+    this.canSendMessage = false
   }
 
-  onSubmit(e: React.FormEvent<HTMLFormElement>): void {
-    // TODO send with Shift + Enter
+  private onSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+    e.preventDefault()
+
+    if (this.props.sendWithCtrlEnter && !this.canSendMessage) {
+      return
+    }
+
     const comment = this.state.comment
     if (comment) {
       const type = 'comment'
@@ -30,20 +37,53 @@ export class SendCommentForm extends React.Component<PropsType, StateType> {
         comment: ''
       })
     }
-    e.preventDefault()
+
+    // For mouse and touch
+    this.canSendMessage = false
   }
 
-  onChange(e: React.ChangeEvent<HTMLInputElement>): void {
+  private onChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     this.setState({
       comment: e.target.value
     })
   }
 
+  private onKeyUp = (e: React.KeyboardEvent<HTMLInputElement>): void => {
+    if (e.key === 'Control') {
+      this.canSendMessage = false
+    }
+  }
+
+  private onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
+    if (e.key === 'Control') {
+      this.canSendMessage = true
+    }
+  }
+
+  private onMouseDown = (e: React.MouseEvent<HTMLInputElement>): void => {
+    this.canSendMessage = true
+  }
+
+  private onTouchStart = (e: React.TouchEvent<HTMLInputElement>): void => {
+    this.canSendMessage = true
+  }
+
   render(): React.ReactNode {
     return (
       <form onSubmit={this.onSubmit}>
-        <input type="text" value={this.state.comment} onChange={this.onChange}></input>
-        <input type="submit" value="💬"></input>
+        <input
+          type="text"
+          value={this.state.comment}
+          onChange={this.onChange}
+          onKeyUp={this.onKeyUp}
+          onKeyDown={this.onKeyDown}
+        />
+        <input
+          type="submit"
+          value="💬"
+          onMouseDown={this.onMouseDown}
+          onTouchStart={this.onTouchStart}
+        />
       </form>
     )
   }

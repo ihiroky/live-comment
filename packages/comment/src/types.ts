@@ -14,4 +14,5 @@ export type AppState = {
     entries: PollStartMessage['entries']
   }[]
   autoScroll: boolean
+  sendWithCtrlEnter: boolean
 }

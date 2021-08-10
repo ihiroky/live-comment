@@ -20,7 +20,8 @@ import {
 } from 'poll'
 import { AppState } from './types'
 import { PollControl } from './PollControl'
-import { StopAutoScroll } from './AutoScroll'
+import { LabeledCheckbox } from './LabeledCheckbox'
+import { FormGroup } from '@material-ui/core'
 
 type AppProps = {
   url: string
@@ -51,6 +52,7 @@ export default class App extends React.Component<AppProps, AppState> {
       comments: [],
       polls: [],
       autoScroll: true,
+      sendWithCtrlEnter: true, // TODO Store to cookie
     }
 
     this.ref = React.createRef()
@@ -175,7 +177,13 @@ export default class App extends React.Component<AppProps, AppState> {
       ...this.state,
       autoScroll
     })
-    console.log(autoScroll)
+  }
+
+  private onChangeSendWithCtrlEnter = (sendWithShiftEnter: boolean): void => {
+    this.setState({
+      ...this.state,
+      sendWithCtrlEnter: sendWithShiftEnter
+    })
   }
 
   componentDidMount(): void {
@@ -226,9 +234,22 @@ export default class App extends React.Component<AppProps, AppState> {
             }
             <div ref={this.ref}></div>
           </div>
-          <SendCommentForm onSubmit={this.onSubmit} />
+          <SendCommentForm onSubmit={this.onSubmit} sendWithCtrlEnter={this.state.sendWithCtrlEnter} />
           <form>
-            <StopAutoScroll checked={this.state.autoScroll} onChange={this.onChangeAutoScroll} />
+            <div className="options">
+            <FormGroup row>
+              <LabeledCheckbox
+                label="Auto scroll"
+                checked={this.state.autoScroll}
+                onChange={this.onChangeAutoScroll}
+              />
+              <LabeledCheckbox
+                label="Send with Ctrl+Enter"
+                checked={this.state.sendWithCtrlEnter}
+                onChange={this.onChangeSendWithCtrlEnter}
+              />
+            </FormGroup>
+            </div>
           </form>
         </div>
         <WebSocketClient url={this.props.url} onOpen={this.onOpen} onClose={this.onClose} onMessage={this.onMessage} />

@@ -54,7 +54,7 @@ form input[type="submit"] {
   border-radius: 6px;
 }
 
-.auto-scroll {
-  display: flex;
+.options {
   width: 95%;
+  padding: 0px 3%;
 }

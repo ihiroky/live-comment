@@ -5,11 +5,12 @@ import {
 } from '@material-ui/core'
 
 type Props = {
+  label: string
   checked: boolean
   onChange: (checked: boolean) => void
 }
 
-export const StopAutoScroll: React.FC<Props> = ({ checked, onChange }: Props): JSX.Element => {
+export const LabeledCheckbox: React.FC<Props> = ({ label, checked, onChange }: Props): JSX.Element => {
   const changeCallback = React.useCallback((e: React.ChangeEvent<HTMLInputElement>): void => {
     onChange(e.target.checked)
   }, [onChange])
@@ -17,8 +18,7 @@ export const StopAutoScroll: React.FC<Props> = ({ checked, onChange }: Props): J
   return (
     <div>
       <FormControlLabel
-        className="auto-scroll"
-        label="Auto scroll"
+        label={label}
         control={
           <Checkbox
             checked={checked}
