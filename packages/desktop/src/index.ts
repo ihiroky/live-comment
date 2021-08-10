@@ -1,6 +1,6 @@
 import path from 'path'
 import fs from 'fs'
-import electron, { BrowserWindow } from 'electron'
+import electron from 'electron'
 import * as Settings from './Settings'
 import { getLogger } from 'common'
 import {
@@ -81,7 +81,7 @@ function getWorkArea(index: number | undefined): [electron.Rectangle, number] {
 }
 
 
-function applySettings(mainWindow: BrowserWindow, settings: Settings.SettingsV1): void {
+function applySettings(mainWindow: electron.BrowserWindow, settings: Settings.SettingsV1): void {
   const [workArea, actualScreen] = getWorkArea(settings.general.screen)
   if (actualScreen !== settings.general.screen) {
     settings.general.screen = actualScreen
@@ -176,6 +176,19 @@ function onReady(): void {
   asyncShowMainWindow()  // No need to wait
 }
 
+if (!electron.app.requestSingleInstanceLock()) {
+  electron.app.quit()
+  process.exit(1)
+}
+
+electron.app.on('second-instance', (): void => {
+  if (mainWindow_) {
+    if (mainWindow_.isMinimized()) {
+      mainWindow_.restore()
+    }
+    mainWindow_.focus()
+  }
+})
 const settings = loadSettings()
 if (!settings.general.gpu) {
   electron.app.disableHardwareAcceleration()
