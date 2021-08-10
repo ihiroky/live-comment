@@ -237,18 +237,18 @@ export default class App extends React.Component<AppProps, AppState> {
           <SendCommentForm onSubmit={this.onSubmit} sendWithCtrlEnter={this.state.sendWithCtrlEnter} />
           <form>
             <div className="options">
-            <FormGroup row>
-              <LabeledCheckbox
-                label="Auto scroll"
-                checked={this.state.autoScroll}
-                onChange={this.onChangeAutoScroll}
-              />
-              <LabeledCheckbox
-                label="Send with Ctrl+Enter"
-                checked={this.state.sendWithCtrlEnter}
-                onChange={this.onChangeSendWithCtrlEnter}
-              />
-            </FormGroup>
+              <FormGroup row>
+                <LabeledCheckbox
+                  label="Auto scroll"
+                  checked={this.state.autoScroll}
+                  onChange={this.onChangeAutoScroll}
+                />
+                <LabeledCheckbox
+                  label="Send with Ctrl+Enter"
+                  checked={this.state.sendWithCtrlEnter}
+                  onChange={this.onChangeSendWithCtrlEnter}
+                />
+              </FormGroup>
             </div>
           </form>
         </div>
