@@ -19,7 +19,7 @@ export type MarqueeProps = {
 export type MarqueePropsList = Readonly<Readonly<MarqueeProps>[]>
 
 const MAX_MESSAGES = 500
-const SPACE_BETWEEN_COMMENTS = 128
+const SPACE_BETWEEN_COMMENTS = 256
 const log = getLogger('MarqueePropsGenerator')
 
 function calcMinimumEmptyLevel(messages: MarqueeProps[]): number {
