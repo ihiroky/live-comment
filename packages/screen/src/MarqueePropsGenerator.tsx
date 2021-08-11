@@ -75,7 +75,6 @@ export class MarqueePropsGenerator {
   private readonly marqueePropsListUpdated: (marqueePropsList: MarqueePropsList) => void
   private marquees: MarqueeProps[]
   private webSocketControl: WebSocketControl | null
-  private reconnectTimer: number
 
   constructor(room: string, hash: string, duration: number, listener: (marqueePropsList: MarqueePropsList) => void) {
     this.room = room
@@ -83,7 +82,6 @@ export class MarqueePropsGenerator {
     this.duration = duration
     this.marquees = []
     this.webSocketControl = null
-    this.reconnectTimer = 0
     this.marqueePropsListUpdated = listener
 
     this.onOpen = this.onOpen.bind(this)
@@ -92,9 +90,6 @@ export class MarqueePropsGenerator {
   }
 
   close(): void {
-    if (this.reconnectTimer) {
-      window.clearTimeout(this.reconnectTimer)
-    }
     if (this.webSocketControl) {
       this.webSocketControl.close()
     }
@@ -112,13 +107,10 @@ export class MarqueePropsGenerator {
   }
 
   onClose(ev: CloseEvent): void {
-    if (this.webSocketControl) {
-      this.webSocketControl.close()
-    }
     if (ev.code === CloseCode.ACN_FAILED) {
       const comment: CommentMessage = {
         type: 'comment',
-        comment: 'Room authentication failed. Please check your setting 🙏'
+        comment: 'Room authentication failed. Please check your setting (._.)'
       }
       this.onMessage(comment)
       return
@@ -126,17 +118,11 @@ export class MarqueePropsGenerator {
 
     const comment: CommentMessage = {
       type: 'comment',
-      comment: `Connection closed: ${ev.code}`
+      comment: `Failed to connect to the server (${ev.code}) (T-T)`
     }
+    console.log(comment)
     this.onMessage(comment)
-
-    const waitMillis = 3000 + 7000 * Math.random()
-    this.reconnectTimer = window.setTimeout((): void => {
-      this.reconnectTimer = 0
-      log.info('[onClose] Try to reconnect.')
-      this.webSocketControl?.reconnect()
-    }, waitMillis)
-    log.info(`[onClose] Reconnect after ${waitMillis}ms.`)
+    this.webSocketControl?.reconnectWithBackoff()
   }
 
   onMessage(message: Message): void {

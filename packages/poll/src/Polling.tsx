@@ -84,6 +84,14 @@ export function Polling({ mode, url, room, hash, title, entries, onChange, onFin
 
   }, [wscRef, entries])
 
+  const onClose = React.useCallback((ev: CloseEvent): void => {
+    log.info('[onClose]', ev.code, ev.reason)
+    const wsc = wscRef.current
+    if (wsc) {
+      wsc.reconnectWithBackoff()
+    }
+  }, [wscRef])
+
   const onClick = React.useCallback((): void => {
     progress.current?.clear()
     if (wscRef.current) {
@@ -126,7 +134,7 @@ export function Polling({ mode, url, room, hash, title, entries, onChange, onFin
         url={url}
         onOpen={onOpen}
         onMessage={onMessage}
-        onClose={(ev) => log.debug('[Polling] websocket onClose', ev)}
+        onClose={onClose}
         onError={(ev) => log.debug('[Polling] websocket onError', ev)}
       />
     </>

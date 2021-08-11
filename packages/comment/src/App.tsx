@@ -31,7 +31,6 @@ type AppProps = {
 type AcnState = {
   room: string
   hash: string
-  reconnectTimer: number
 }
 
 const log = getLogger('App')
@@ -58,7 +57,7 @@ export default class App extends React.Component<AppProps, AppState> {
     this.ref = React.createRef()
     this.messageListDiv = null
     this.webSocketControl = null
-    this.acnState = { room: '', hash: '', reconnectTimer: 0 }
+    this.acnState = { room: '', hash: '' }
   }
 
   private onOpen = (control: WebSocketControl): void => {
@@ -79,22 +78,13 @@ export default class App extends React.Component<AppProps, AppState> {
   }
 
   private onClose = (ev: CloseEvent): void => {
-    if (this.webSocketControl) {
-      this.webSocketControl.close()
-    }
     switch (ev.code) {
       case CloseCode.ACN_FAILED:
         window.localStorage.setItem('App.notification', JSON.stringify({ message: 'Authentication failed.' }))
         window.location.href = './login'
         break
       default:
-        const waitMillis = 3000 + 7000 * Math.random()
-        this.acnState.reconnectTimer = window.setTimeout((): void => {
-          this.acnState.reconnectTimer = 0
-          log.info('[onClose] Try to reconnect.')
-          this.webSocketControl?.reconnect()
-        }, waitMillis)
-        log.debug(`[onClose] Reconnect after ${waitMillis}ms.`)
+        this.webSocketControl?.reconnectWithBackoff()
         break
     }
   }
@@ -206,10 +196,6 @@ export default class App extends React.Component<AppProps, AppState> {
     log.debug('[componentWillUnmount]')
     this.webSocketControl?.close()
     this.webSocketControl = null
-    if (this.acnState.reconnectTimer) {
-      window.clearTimeout(this.acnState.reconnectTimer)
-      this.acnState.reconnectTimer = 0
-    }
   }
 
   render(): React.ReactNode {
