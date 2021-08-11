@@ -4,8 +4,10 @@ import { getLogger } from './Logger'
 import { CommentMessage, Message } from './Message'
 
 export interface WebSocketControl {
+  _reconnectTimer: number
   send(message: Message): void
   reconnect(): void
+  reconnectWithBackoff(): void
   close(): void
 }
 
@@ -76,7 +78,8 @@ export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
     webSocket.addEventListener('open', (ev: Event): void => {
       log.debug('[onopen]', ev)
       if (this.props.onOpen) {
-        this.props.onOpen({
+        const control: WebSocketControl = {
+          _reconnectTimer: 0,
           send: (message: Message): void => {
             this.send(message)
           },
@@ -86,19 +89,36 @@ export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
             this.webSocket = this.createWebSocket()
             log.debug('[WebSocketControl.reconnect] End.')
           },
+          reconnectWithBackoff: (): void => {
+            const waitMillis = 7000 + 13000 * Math.random()
+            control._reconnectTimer = window.setTimeout((): void => {
+              control._reconnectTimer = 0
+              log.info('[reconnectWithBackoff] Try to reconnect.')
+              control.reconnect()
+            }, waitMillis)
+            log.info(`[reconnectWithBackoff] Reconnect after ${waitMillis}ms.`)
+          },
           close: (): void => {
             log.debug('[WebSocketControl.close]')
+            if (control._reconnectTimer) {
+              window.clearTimeout(control._reconnectTimer)
+              control._reconnectTimer = 0
+            }
             this.close()
           }
-        })
+        }
+        this.props.onOpen(control)
       }
     })
     webSocket.addEventListener('close', (ev: CloseEvent): void => {
       log.debug('[onclose]', ev)
+      if (this.webSocket) {
+        this.webSocket.close()
+        this.webSocket = null
+      }
       if (this.props.onClose) {
         this.props.onClose(ev)
       }
-      this.webSocket = null
     })
     webSocket.addEventListener('error', (ev: Event): void => {
       log.debug('[onerror]', ev)
