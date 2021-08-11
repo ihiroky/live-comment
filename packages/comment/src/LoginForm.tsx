@@ -21,19 +21,20 @@ const useStyles = makeStyles((theme: Theme) => (
     root: {
       minWidth: '300px',
       maxWidth: '600px',
+      minHeight: '300px',
       height: '600px',
       margin: 'auto',
-      padding: theme.spacing(3)
+      padding: theme.spacing(1)
     },
     notification: {
       color: theme.palette.warning.main
     },
     texts: {
-      margin: theme.spacing(3)
+      padding: theme.spacing(1)
     },
     buttons: {
-      margin: theme.spacing(3)
-    }
+      padding: theme.spacing(1)
+    },
   }
 ))
 
