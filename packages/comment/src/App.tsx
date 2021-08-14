@@ -21,7 +21,7 @@ import {
 import { AppState } from './types'
 import { PollControl } from './PollControl'
 import { LabeledCheckbox } from './LabeledCheckbox'
-import { FormGroup } from '@material-ui/core'
+import { FormGroup, Link } from '@material-ui/core'
 import { useAppCookies, FAR_ENOUGH } from './useAppCookies'
 
 type AppProps = {
@@ -32,6 +32,10 @@ type AppProps = {
 const log = getLogger('App')
 
 // TODO User should be able to restart poll if the poll entry is closed by mistake.
+
+function goToLoginPage(): void {
+  window.location.href = './login'
+}
 
 export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
   const [cookies, modCookies] = useAppCookies()
@@ -70,7 +74,7 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
         modCookies.remove('room')
         modCookies.remove('password')
         window.localStorage.setItem('App.notification', JSON.stringify({ message: 'Authentication failed.' }))
-        window.location.href = './login'
+        goToLoginPage()
         break
       default:
         wscRef.current?.reconnectWithBackoff()
@@ -171,12 +175,16 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
   }, [])
   React.useEffect((): void => {
     if (!cookies.str('room') || !cookies.str('password')) {
-      window.location.href = './login'
+      goToLoginPage()
     }
   }, [cookies])
 
   return (
     <div className="App">
+      <div className="nav">
+        <div style={{ padding: '0px 12px' }}>Room: {cookies.str('room')}</div>
+        <Link href="#" onClick={goToLoginPage}>Back to login</Link>
+      </div>
       <div className="box">
         <div className="message-list">
           {
@@ -219,7 +227,6 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
           ? <WebSocketClient url={props.url} onOpen={onOpen} onClose={onClose} onMessage={onMessage} />
           : null
       }
-
     </div>
   )
 }
