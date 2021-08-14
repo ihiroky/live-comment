@@ -40,7 +40,7 @@ export function PollEdit({ mode, descClass, entryCount, onEntryAdded, onOk, onCa
           multiline
           placeholder="Write a new entry description."
           value={description}
-          onChange={e => setDescription(e.target.value)}
+          onChange={(e): void => setDescription(e.target.value)}
         />
       </Grid>
       <Grid item xs={1}>

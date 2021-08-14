@@ -12,7 +12,7 @@ import {
 } from 'common'
 
 interface TextFieldState {
-  value: string,
+  value: string
   helperText: string
 }
 
@@ -47,11 +47,11 @@ export const LoginForm: React.FC = (): JSX.Element => {
   })
   const [room, setRoom] = React.useState<TextFieldState>({
     value: cookies.room || '',
-    helperText: !!cookies.room ? '' : 'Input room name'
+    helperText: cookies.room ? '' : 'Input room name',
   })
   const [password, setPassword] = React.useState<TextFieldState>({
     value: cookies.password || '',
-    helperText: !!cookies.password ? '' :'Input password of the room'
+    helperText: cookies.password ? '' :'Input password of the room',
   })
 
   React.useEffect((): void => {

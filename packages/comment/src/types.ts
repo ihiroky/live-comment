@@ -2,7 +2,7 @@ import { PollStartMessage } from 'poll'
 
 export type AppState = {
   comments: {
-    key: number,
+    key: number
     comment: string
     pinned: boolean
   }[]

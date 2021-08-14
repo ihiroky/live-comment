@@ -109,7 +109,7 @@ export function Choice({ entries, mode, descClass, topClass, onRemoveEntry }: {
             <Grid item xs={1}>
               {
                 mode === 'edit'
-                  ? <Button variant="outlined" onClick={() => onRemoveEntry(index)}>Del</Button>
+                  ? <Button variant="outlined" onClick={(): void => onRemoveEntry(index)}>Del</Button>
                   : null
               }
               {

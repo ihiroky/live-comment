@@ -103,14 +103,12 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
     const key = Date.now()
     const polls = state.polls
     const comments = state.comments
-    console.log(message)
     if (isCommentMessage(message)) {
       const comment = message.comment
       const pinned = !!message.pinned
       if (comments.length === props.maxMessageCount) {
         comments.unshift()
       }
-      console.log('BEFORE PUSH', key, comment, pinned)
       comments.push({ key, comment, pinned })
     } else if (isPollStartMessage(message)) {
       assertNotNullable(message.from, 'PollStartMessage.from')
@@ -129,7 +127,6 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
       }
     }
     setState({...state, comments, polls})
-    console.log(key, polls, comments)
     const messageListDiv = messageListDivRef.current
     if (state.autoScroll && ref.current && messageListDiv) {
       messageListDiv.scrollTo(0, ref.current.offsetTop)
@@ -183,7 +180,7 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
                 key={poll.key}
                 poll={poll}
                 onPoll={onPoll}
-                onClosePoll={pollId => closePoll(pollId, true)}
+                onClosePoll={(pollId): void => closePoll(pollId, true)}
               />
             )
           }

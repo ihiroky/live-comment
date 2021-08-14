@@ -120,7 +120,6 @@ export class MarqueePropsGenerator {
       type: 'comment',
       comment: `Failed to connect to the server (${ev.code}) (T-T)`
     }
-    console.log(comment)
     this.onMessage(comment)
     this.webSocketControl?.reconnectWithBackoff()
   }

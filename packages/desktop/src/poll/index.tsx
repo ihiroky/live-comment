@@ -19,8 +19,8 @@ window.poll.request().then((settings: SettingsV1): void => {
       wsUrl={settings.general.url}
       room={settings.general.room}
       hash={createHash(settings.general.password)}
-      onResultClosed={() => window.close()}
-      onCanceled={() => window.close()}
+      onResultClosed={(): void => window.close()}
+      onCanceled={(): void => window.close()}
     />,
     document.getElementById('root')
   )
