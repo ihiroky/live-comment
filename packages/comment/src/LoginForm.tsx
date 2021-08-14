@@ -6,8 +6,8 @@ import {
   Button,
   Grid
 } from '@material-ui/core'
+import { useAuthCookies } from './useAuthCookies'
 import {
-  createHash,
   getLogger
 } from 'common'
 
@@ -41,16 +41,17 @@ const useStyles = makeStyles((theme: Theme) => (
 const log = getLogger('LoginForm')
 
 export const LoginForm: React.FC = (): JSX.Element => {
+  const [cookies, setCookie] = useAuthCookies()
   const [notification, setNotification] = React.useState<{ message: string }>({
     message: ''
   })
   const [room, setRoom] = React.useState<TextFieldState>({
-    value: '',
-    helperText: 'Input room name'
+    value: cookies.room || '',
+    helperText: !!cookies.room ? '' : 'Input room name'
   })
   const [password, setPassword] = React.useState<TextFieldState>({
-    value: '',
-    helperText: 'Input password of the room'
+    value: cookies.password || '',
+    helperText: !!cookies.password ? '' :'Input password of the room'
   })
 
   React.useEffect((): void => {
@@ -66,11 +67,14 @@ export const LoginForm: React.FC = (): JSX.Element => {
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>): void {
     e.preventDefault()
-    const json = JSON.stringify({
-      room: room.value,
-      hash: createHash(password.value)
+    setCookie('room', room.value, {
+      secure: true,
+      sameSite: 'strict',
     })
-    window.localStorage.setItem('LoginForm.credential', json)
+    setCookie('password', password.value, {
+      secure: true,
+      sameSite: 'strict',
+    })
     window.location.href = './comment'
   }
 

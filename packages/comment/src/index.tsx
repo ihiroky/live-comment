@@ -4,6 +4,7 @@ import { BrowserRouter, Route } from 'react-router-dom'
 import './index.css';
 import { App } from './App';
 import { LoginForm } from './LoginForm'
+import { CookiesProvider } from 'react-cookie'
 import * as serviceWorker from './serviceWorker';
 
 const url = process.env.NODE_ENV === 'production'
@@ -15,10 +16,11 @@ ReactDOM.render(
     <BrowserRouter>
       <Route path="/login" component={LoginForm} />
       <Route path="/comment" render={(): React.ReactNode => {
-        return <App
-          url={url}
-          maxMessageCount={512}
-        />
+        return (
+          <CookiesProvider>
+            <App url={url} maxMessageCount={512} />
+          </CookiesProvider>
+        )
       }}/>
     </BrowserRouter>
 

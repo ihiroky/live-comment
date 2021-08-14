@@ -9,6 +9,7 @@ import {
   AcnMessage,
   isCommentMessage,
   getLogger,
+  createHash,
 } from 'common'
 import { SendCommentForm } from './SendCommentForm'
 import {
@@ -21,15 +22,11 @@ import { AppState } from './types'
 import { PollControl } from './PollControl'
 import { LabeledCheckbox } from './LabeledCheckbox'
 import { FormGroup } from '@material-ui/core'
+import { useAuthCookies } from './useAuthCookies'
 
 type AppProps = {
   url: string
   maxMessageCount: number
-}
-
-type AcnState = {
-  room: string
-  hash: string
 }
 
 const log = getLogger('App')
@@ -46,27 +43,24 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
   const ref = React.useRef<HTMLDivElement>(null)
   const messageListDivRef = React.useRef<Element | null>(null)
   const wscRef = React.useRef<WebSocketControl | null>(null)
-  const acnStateRef = React.useRef<AcnState>({ room: '', hash: '' })
+  const [cookies, , removeCookie] = useAuthCookies()
 
-  const onOpen = (wsc: WebSocketControl): void => {
+  const onOpen = React.useCallback((wsc: WebSocketControl): void => {
     log.debug('[onOpen]', wsc)
-    const acnState = acnStateRef.current
-    if (acnState.room.length === 0 || acnState.hash.length === 0) {
-      window.location.href = './login'
-      return
-
-    }
 
     wscRef.current = wsc
     const acn: AcnMessage = {
       type: 'acn',
-      ...acnState
+      room: cookies.room,
+      hash: createHash(cookies.password),
     }
     wsc.send(acn)
-  }
-  const onClose = (ev: CloseEvent): void => {
+  }, [cookies])
+  const onClose = React.useCallback((ev: CloseEvent): void => {
     switch (ev.code) {
       case CloseCode.ACN_FAILED:
+        removeCookie('room')
+        removeCookie('password')
         window.localStorage.setItem('App.notification', JSON.stringify({ message: 'Authentication failed.' }))
         window.location.href = './login'
         break
@@ -74,8 +68,8 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
         wscRef.current?.reconnectWithBackoff()
         break
     }
-  }
-  const onPoll = (e: React.MouseEvent<HTMLButtonElement>, choice: PollEntry['key'], to: string): void => {
+  }, [removeCookie])
+  const onPoll = React.useCallback((e: React.MouseEvent<HTMLButtonElement>, choice: PollEntry['key'], to: string): void => {
     e.preventDefault()
     const message: PollMessage = {
       type: 'app',
@@ -85,8 +79,18 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
     }
     log.debug('[onPoll] ', message)
     wscRef.current?.send(message)
-  }
-  const onMessage = (message: Message): void => {
+  }, [])
+  const closePoll = React.useCallback((pollId: string, refresh: boolean): void => {
+    const polls = state.polls
+    const dropIndex = polls.findIndex(poll => poll.id === pollId)
+    if (dropIndex > -1) {
+      polls.splice(dropIndex, 1)
+      if (refresh) {
+        setState({...state, polls})
+      }
+    }
+  }, [state])
+  const onMessage = React.useCallback((message: Message): void => {
     log.debug('[onMessage]', message)
     if (!isCommentMessage(message)
       && !isPollStartMessage(message)
@@ -130,56 +134,40 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
     if (state.autoScroll && ref.current && messageListDiv) {
       messageListDiv.scrollTo(0, ref.current.offsetTop)
     }
-  }
-  const closePoll = (pollId: string, refresh: boolean): void => {
-    const polls = state.polls
-    const dropIndex = polls.findIndex(poll => poll.id === pollId)
-    if (dropIndex > -1) {
-      polls.splice(dropIndex, 1)
-      if (refresh) {
-        setState({...state, polls})
-      }
-    }
-  }
-  const onSubmit = (message: Message): void => {
+  }, [state, props.maxMessageCount, closePoll])
+  const onSubmit = React.useCallback((message: Message): void => {
     wscRef.current?.send(message)
-  }
+  }, [])
 
-  const onChangeAutoScroll = (autoScroll: boolean): void => {
+  const onChangeAutoScroll = React.useCallback((autoScroll: boolean): void => {
     setState({
       ...state,
       autoScroll
     })
-  }
-  const onChangeSendWithCtrlEnter = (sendWithShiftEnter: boolean): void => {
+  }, [state])
+  const onChangeSendWithCtrlEnter = React.useCallback((sendWithShiftEnter: boolean): void => {
     setState({
       ...state,
       sendWithCtrlEnter: sendWithShiftEnter
     })
-  }
+  }, [state])
 
   React.useEffect((): (() => void) => {
-    log.debug('[componentDidMount]')
     messageListDivRef.current = document.getElementsByClassName('message-list')[0]
-    const json = window.localStorage.getItem('LoginForm.credential')
-    if (!json) {
-      window.location.href = './login'
-      return () => undefined
-    }
-    const loginConfig = JSON.parse(json)
-    log.debug('[componentDidMount]', loginConfig)
-    acnStateRef.current.room = loginConfig.room
-    acnStateRef.current.hash = loginConfig.hash
-    window.localStorage.removeItem('LoginForm.credential')
 
     return (): void => {
-      log.debug('[componentWillUnmount]')
       if (wscRef.current) {
         wscRef.current.close()
         wscRef.current = null
       }
     }
   }, [])
+  React.useEffect((): void => {
+    if (!cookies.room || !cookies.password) {
+      window.location.href = './login'
+    }
+  }, [cookies])
+
   return (
     <div className="App">
       <div className="box">
@@ -219,7 +207,12 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
           </div>
         </form>
       </div>
-      <WebSocketClient url={props.url} onOpen={onOpen} onClose={onClose} onMessage={onMessage} />
+      {
+        cookies.room && cookies.password
+          ? <WebSocketClient url={props.url} onOpen={onOpen} onClose={onClose} onMessage={onMessage} />
+          : null
+      }
+
     </div>
   )
 }
