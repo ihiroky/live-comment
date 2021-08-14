@@ -4,9 +4,18 @@
   background-color: #ccffcc;
   padding: 0px;
   margin: 0px;
+}
+
+.nav {
+  min-width: 300px;
+  width: 90%;
+  min-height: 16px;
+  height: 3vh;
+  margin: auto;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
+  padding: 6px;
 }
 
 .box {
@@ -14,15 +23,28 @@
   background: rgba(32, 32, 32, 0.1);
   border-radius: 6px;
   padding: 10px;
-  min-width: 330px;
+  min-width: 300px;
   width: 90%;
+  height: 92vh;
+  margin: auto;
 }
 
-.message-list {
-  height: 80vh;
-  word-wrap: break-word;
-  overflow-y: auto;
-  margin: auto;
+@media screen and ( max-width: 400px) {
+  .message-list {
+    height: 73vh;
+    word-wrap: break-word;
+    overflow-y: auto;
+    margin: auto;
+  }
+}
+
+@media screen and ( min-width: 400px) {
+  .message-list {
+    height: 81vh;
+    word-wrap: break-word;
+    overflow-y: auto;
+    margin: auto;
+  }
 }
 
 .message {
