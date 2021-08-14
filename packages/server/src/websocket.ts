@@ -12,6 +12,7 @@ import {
   CommentMessage
 } from 'common'
 import { ApplicationMessage, isClientMessage } from 'common'
+import { AcnOkMessage } from 'common/src/Message'
 
 export interface ClientSession extends WebSocket {
   alive: boolean
@@ -63,6 +64,11 @@ function onAuthenticate(client: ClientSession, m: AcnMessage, configuration: Con
       if (r.room === m.room && r.hash === m.hash) {
         log.debug('[onAuthentication] Room:', m.room)
         client.room = m.room
+        const ok: AcnOkMessage = {
+          type: 'acn',
+          attrs: {},
+        }
+        sendMessage(client, JSON.stringify(ok))
         return
       }
     }
