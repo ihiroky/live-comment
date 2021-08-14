@@ -14,7 +14,6 @@ import {
   Deffered,
 } from 'common'
 import {
-  Mode,
   Progress,
   Update,
   PollEntry,
@@ -31,8 +30,7 @@ function isPollMessage(m: Message): m is PollMessage {
 
 const log = getLogger('poll/Polling')
 
-export function Polling({ mode, url, room, hash, title, entries, onChange, onFinished }: {
-  mode: Mode
+export function Polling({ url, room, hash, title, entries, onChange, onFinished }: {
   url: string
   room: string
   hash: string
@@ -132,9 +130,6 @@ export function Polling({ mode, url, room, hash, title, entries, onChange, onFin
     }
   }, [])
 
-  if (mode !== 'poll') {
-    return null
-  }
   return (
     <>
       <Grid item xs={10} />
