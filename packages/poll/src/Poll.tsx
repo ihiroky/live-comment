@@ -158,16 +158,21 @@ export const Poll: React.FC<Props> = (props: Props): JSX.Element => {
             onOk={onOk}
             onCanceled={onCanceled}
           />
-          <Polling
-            mode={mode}
-            url={props.wsUrl}
-            room={props.room}
-            hash={props.hash}
-            title={title}
-            entries={entries}
-            onChange={onEntryUpdated}
-            onFinished={onFinished}
-          />
+          {
+            mode === 'poll'
+              ? (
+                <Polling
+                  url={props.wsUrl}
+                  room={props.room}
+                  hash={props.hash}
+                  title={title}
+                  entries={entries}
+                  onChange={onEntryUpdated}
+                  onFinished={onFinished}
+                />
+              )
+              : null
+          }
         </Grid>
       </Paper>
     </div>
