@@ -60,11 +60,11 @@ export class SendCommentForm extends React.Component<PropsType, StateType> {
     }
   }
 
-  private onMouseDown = (e: React.MouseEvent<HTMLInputElement>): void => {
+  private onMouseDown = (): void => {
     this.canSendMessage = true
   }
 
-  private onTouchStart = (e: React.TouchEvent<HTMLInputElement>): void => {
+  private onTouchStart = (): void => {
     this.canSendMessage = true
   }
 

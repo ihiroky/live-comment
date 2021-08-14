@@ -20,8 +20,5 @@
   "scripts": {
     "clean": "node -e \"require('fs').rmdirSync('dist/', { recursive: true })\"",
     "lint": "eslint --ext ts,tsx --max-warnings 0 src"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
   }
 }

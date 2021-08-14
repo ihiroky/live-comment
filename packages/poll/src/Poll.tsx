@@ -138,7 +138,7 @@ export const Poll: React.FC<Props> = (props: Props): JSX.Element => {
               readOnly={mode !== 'edit'}
               value={title}
               placeholder="Input title"
-              onChange={e => setTitle(e.target.value)}
+              onChange={(e): void => setTitle(e.target.value)}
             />
           </Grid>
           <PollResult mode={mode} data={data} onClosed={onClosed} onTypeChanged={onResultTypeChanged}>

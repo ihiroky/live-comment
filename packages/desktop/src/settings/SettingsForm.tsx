@@ -217,7 +217,7 @@ export const SettingsForm: React.FC = (): JSX.Element => {
             <Button variant="outlined" type="submit" disabled={hasError()}>OK</Button>
           </Grid>
           <Grid item>
-            <Button variant="outlined" onClick={() => window.close()}>Cancel</Button>
+            <Button variant="outlined" onClick={(): void => window.close()}>Cancel</Button>
           </Grid>
         </Grid>
       </div>

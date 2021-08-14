@@ -5,8 +5,8 @@ import { Button } from '@material-ui/core'
 import { AppState } from './types'
 
 type PollControlProps = {
-  poll: AppState['polls'][number],
-  onPoll: (e: React.MouseEvent<HTMLButtonElement>, choice: PollEntry['key'], owner: string) => void,
+  poll: AppState['polls'][number]
+  onPoll: (e: React.MouseEvent<HTMLButtonElement>, choice: PollEntry['key'], owner: string) => void
   onClosePoll: (pollId: string) => void
 }
 
@@ -18,7 +18,7 @@ export const PollControl: React.FC<PollControlProps> = ({ poll, onPoll, onCloseP
       {
         poll.entries.map((e: Pick<PollEntry, 'key' | 'description'>, i: number) => (
           <div key={`poll-${poll.key}-${e.key}`}>
-            <Button variant="outlined" onClick={ev => onPoll(ev, e.key, poll.owner)}>{i}</Button>
+            <Button variant="outlined" onClick={(ev): void => onPoll(ev, e.key, poll.owner)}>{i}</Button>
             <span style={{ marginLeft: '8px' }}>{e.description}</span>
           </div>
         ))
@@ -27,7 +27,7 @@ export const PollControl: React.FC<PollControlProps> = ({ poll, onPoll, onCloseP
         <Button
           variant="outlined"
           style={{ marginTop: '4px' }}
-          onClick={() => onClosePoll(poll.id)}
+          onClick={(): void => onClosePoll(poll.id)}
         >
           Close
         </Button>

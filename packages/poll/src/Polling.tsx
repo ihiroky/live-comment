@@ -141,7 +141,7 @@ export function Polling({ url, room, hash, title, entries, onChange, onFinished 
         onOpen={onOpen}
         onMessage={onMessage}
         onClose={onClose}
-        onError={(ev) => log.debug('[Polling] websocket onError', ev)}
+        onError={(ev): void => log.debug('[Polling] websocket onError', ev)}
       />
     </>
   )
