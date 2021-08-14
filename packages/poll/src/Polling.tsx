@@ -10,6 +10,8 @@ import {
   isApplicationMessage,
   getLogger,
   AcnMessage,
+  isAcnMessage,
+  Deffered,
 } from 'common'
 import {
   Mode,
@@ -41,11 +43,17 @@ export function Polling({ mode, url, room, hash, title, entries, onChange, onFin
 }): JSX.Element | null {
   log.info('Polling', entries)
   const wscRef = React.useRef<WebSocketControl | null>(null)
+  const acnOkRef = React.useRef<Deffered<boolean>>(new Deffered())
   const progress = React.useRef<Progress>(new Map())
   const pollId = React.useMemo(() => getRandomInteger(), [])
 
+
   const onMessage = React.useCallback((message: Message): void => {
     log.debug('[onMessage]', message)
+    if (isAcnMessage(message)) {
+      acnOkRef.current.resolve(true)
+      return
+    }
     if (!isPollMessage(message)) {
       return
     }
@@ -66,22 +74,25 @@ export function Polling({ mode, url, room, hash, title, entries, onChange, onFin
 
   const onOpen = React.useCallback((wsc: WebSocketControl): void => {
     wscRef.current = wsc
+
+    acnOkRef.current.promise.then((): void => {
+      const start: PollStartMessage = {
+        type: 'app',
+        cmd: 'poll/start',
+        id: 'poll-' + pollId,
+        title,
+        entries: entries.map(e => ({ key: e.key, description: e.description })),
+      }
+      log.info('Send', start)
+      wsc.send(start)
+    })
+
     const acn: AcnMessage = {
       type: 'acn',
       room,
       hash,
     }
     wsc.send(acn)
-    const start: PollStartMessage = {
-      type: 'app',
-      cmd: 'poll/start',
-      id: 'poll-' + pollId,
-      title,
-      entries: entries.map(e => ({ key: e.key, description: e.description })),
-    }
-    log.info('Send', start)
-    wsc.send(start)
-
   }, [wscRef, entries])
 
   const onClose = React.useCallback((ev: CloseEvent): void => {

@@ -5,7 +5,7 @@ import {
   isCommentMessage,
   CloseCode,
   WebSocketControl,
-  getLogger
+  getLogger,
 } from 'common'
 import React from 'react'
 

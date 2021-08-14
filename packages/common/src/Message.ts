@@ -30,6 +30,11 @@ export interface AcnMessage extends Message {
   hash: string
 }
 
+export interface AcnOkMessage extends Message {
+  type: 'acn'
+  attrs: Record<string, unknown>
+}
+
 export interface ErrorMessage extends Message {
   type: 'error'
   error: Error
