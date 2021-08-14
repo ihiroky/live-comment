@@ -9,7 +9,6 @@ import {
   AcnMessage,
   isCommentMessage,
   getLogger,
-  LogLevels,
 } from 'common'
 import { SendCommentForm } from './SendCommentForm'
 import {
@@ -34,62 +33,49 @@ type AcnState = {
 }
 
 const log = getLogger('App')
-log.setLevel(LogLevels.DEBUG)
 
 // TODO User should be able to restart poll if the poll entry is closed by mistake.
 
-export default class App extends React.Component<AppProps, AppState> {
+export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
+  const [state, setState] = React.useState<AppState>({
+    comments: [],
+    polls: [],
+    autoScroll: true,
+    sendWithCtrlEnter: true, // TODO Store to cookie
+  })
+  const ref = React.useRef<HTMLDivElement>(null)
+  const messageListDivRef = React.useRef<Element | null>(null)
+  const wscRef = React.useRef<WebSocketControl | null>(null)
+  const acnStateRef = React.useRef<AcnState>({ room: '', hash: '' })
 
-  private ref: React.RefObject<HTMLDivElement>
-  private messageListDiv: Element | null
-  private webSocketControl: WebSocketControl | null
-  private acnState: AcnState
-
-  constructor(props: Readonly<AppProps>) {
-    super(props)
-    this.state = {
-      comments: [],
-      polls: [],
-      autoScroll: true,
-      sendWithCtrlEnter: true, // TODO Store to cookie
-    }
-
-    this.ref = React.createRef()
-    this.messageListDiv = null
-    this.webSocketControl = null
-    this.acnState = { room: '', hash: '' }
-  }
-
-  private onOpen = (control: WebSocketControl): void => {
-    log.debug('[onOpen]', control)
-    if (this.acnState.room.length === 0 || this.acnState.hash.length === 0) {
+  const onOpen = (wsc: WebSocketControl): void => {
+    log.debug('[onOpen]', wsc)
+    const acnState = acnStateRef.current
+    if (acnState.room.length === 0 || acnState.hash.length === 0) {
       window.location.href = './login'
       return
 
     }
 
-    this.webSocketControl = control
+    wscRef.current = wsc
     const acn: AcnMessage = {
       type: 'acn',
-      room: this.acnState.room,
-      hash: this.acnState.hash
+      ...acnState
     }
-    this.webSocketControl.send(acn)
+    wsc.send(acn)
   }
-
-  private onClose = (ev: CloseEvent): void => {
+  const onClose = (ev: CloseEvent): void => {
     switch (ev.code) {
       case CloseCode.ACN_FAILED:
         window.localStorage.setItem('App.notification', JSON.stringify({ message: 'Authentication failed.' }))
         window.location.href = './login'
         break
       default:
-        this.webSocketControl?.reconnectWithBackoff()
+        wscRef.current?.reconnectWithBackoff()
         break
     }
   }
-
-  private readonly onPoll = (e: React.MouseEvent<HTMLButtonElement>, choice: PollEntry['key'], to: string): void => {
+  const onPoll = (e: React.MouseEvent<HTMLButtonElement>, choice: PollEntry['key'], to: string): void => {
     e.preventDefault()
     const message: PollMessage = {
       type: 'app',
@@ -98,10 +84,9 @@ export default class App extends React.Component<AppProps, AppState> {
       choice,
     }
     log.debug('[onPoll] ', message)
-    this.webSocketControl?.send(message)
+    wscRef.current?.send(message)
   }
-
-  private onMessage = (message: Message): void => {
+  const onMessage = (message: Message): void => {
     log.debug('[onMessage]', message)
     if (!isCommentMessage(message)
       && !isPollStartMessage(message)
@@ -112,14 +97,16 @@ export default class App extends React.Component<AppProps, AppState> {
     }
 
     const key = Date.now()
-    const polls = this.state.polls
-    const comments = this.state.comments
+    const polls = state.polls
+    const comments = state.comments
+    console.log(message)
     if (isCommentMessage(message)) {
       const comment = message.comment
       const pinned = !!message.pinned
-      if (comments.length === this.props.maxMessageCount) {
+      if (comments.length === props.maxMessageCount) {
         comments.unshift()
       }
+      console.log('BEFORE PUSH', key, comment, pinned)
       comments.push({ key, comment, pinned })
     } else if (isPollStartMessage(message)) {
       assertNotNullable(message.from, 'PollStartMessage.from')
@@ -131,115 +118,108 @@ export default class App extends React.Component<AppProps, AppState> {
         entries: message.entries,
       })
     } else if (isPollFinishMessage(message)) {
-      this.closePoll(message.id, false)
+      closePoll(message.id, false)
       const dropIndex = polls.findIndex(poll => poll.id === message.id)
       if (dropIndex > -1) {
         polls.splice(dropIndex, 1)
       }
     }
-
-    this.setState({ comments, polls })
-    if (this.state.autoScroll && this.ref.current && this.messageListDiv) {
-      this.messageListDiv.scrollTo(0, this.ref.current.offsetTop)
+    setState({...state, comments, polls})
+    console.log(key, polls, comments)
+    const messageListDiv = messageListDivRef.current
+    if (state.autoScroll && ref.current && messageListDiv) {
+      messageListDiv.scrollTo(0, ref.current.offsetTop)
     }
   }
-
-  private closePoll = (pollId: string, refresh: boolean): void => {
-    const polls = this.state.polls
+  const closePoll = (pollId: string, refresh: boolean): void => {
+    const polls = state.polls
     const dropIndex = polls.findIndex(poll => poll.id === pollId)
     if (dropIndex > -1) {
       polls.splice(dropIndex, 1)
       if (refresh) {
-        this.setState({
-          comments: this.state.comments,
-          polls,
-        })
+        setState({...state, polls})
       }
     }
   }
-
-  private onSubmit = (message: Message): void => {
-    this.webSocketControl?.send(message)
+  const onSubmit = (message: Message): void => {
+    wscRef.current?.send(message)
   }
 
-  private onChangeAutoScroll = (autoScroll: boolean): void => {
-    this.setState({
-      ...this.state,
+  const onChangeAutoScroll = (autoScroll: boolean): void => {
+    setState({
+      ...state,
       autoScroll
     })
   }
-
-  private onChangeSendWithCtrlEnter = (sendWithShiftEnter: boolean): void => {
-    this.setState({
-      ...this.state,
+  const onChangeSendWithCtrlEnter = (sendWithShiftEnter: boolean): void => {
+    setState({
+      ...state,
       sendWithCtrlEnter: sendWithShiftEnter
     })
   }
 
-  componentDidMount(): void {
+  React.useEffect((): (() => void) => {
     log.debug('[componentDidMount]')
-    this.messageListDiv = document.getElementsByClassName('message-list')[0]
-
+    messageListDivRef.current = document.getElementsByClassName('message-list')[0]
     const json = window.localStorage.getItem('LoginForm.credential')
     if (!json) {
       window.location.href = './login'
-      return
+      return () => undefined
     }
     const loginConfig = JSON.parse(json)
     log.debug('[componentDidMount]', loginConfig)
-    this.acnState.room = loginConfig.room
-    this.acnState.hash = loginConfig.hash
+    acnStateRef.current.room = loginConfig.room
+    acnStateRef.current.hash = loginConfig.hash
     window.localStorage.removeItem('LoginForm.credential')
-  }
 
-  componentWillUnmount(): void {
-    log.debug('[componentWillUnmount]')
-    this.webSocketControl?.close()
-    this.webSocketControl = null
-  }
-
-  render(): React.ReactNode {
-    return (
-      <div className="App">
-        <div className="box">
-          <div className="message-list">
-            {
-              this.state.comments.map(
-                (m: AppState['comments'][number]) => <p key={m.key} className="message">{m.comment}</p>
-              )
-            }
-            {
-              this.state.polls.map(poll =>
-                <PollControl
-                  key={poll.key}
-                  poll={poll}
-                  onPoll={this.onPoll}
-                  onClosePoll={pollId => this.closePoll(pollId, true)}
-                />
-              )
-            }
-            <div ref={this.ref}></div>
-          </div>
-          <SendCommentForm onSubmit={this.onSubmit} sendWithCtrlEnter={this.state.sendWithCtrlEnter} />
-          <form>
-            <div className="options">
-              <FormGroup row>
-                <LabeledCheckbox
-                  label="Auto scroll"
-                  checked={this.state.autoScroll}
-                  onChange={this.onChangeAutoScroll}
-                />
-                <LabeledCheckbox
-                  label="Send with Ctrl+Enter"
-                  checked={this.state.sendWithCtrlEnter}
-                  onChange={this.onChangeSendWithCtrlEnter}
-                />
-              </FormGroup>
-            </div>
-          </form>
+    return (): void => {
+      log.debug('[componentWillUnmount]')
+      if (wscRef.current) {
+        wscRef.current.close()
+        wscRef.current = null
+      }
+    }
+  }, [])
+  return (
+    <div className="App">
+      <div className="box">
+        <div className="message-list">
+          {
+            state.comments.map(
+              (m: AppState['comments'][number]) => <p key={m.key} className="message">{m.comment}</p>
+            )
+          }
+          {
+            state.polls.map(poll =>
+              <PollControl
+                key={poll.key}
+                poll={poll}
+                onPoll={onPoll}
+                onClosePoll={pollId => closePoll(pollId, true)}
+              />
+            )
+          }
+          <div ref={ref}></div>
         </div>
-        <WebSocketClient url={this.props.url} onOpen={this.onOpen} onClose={this.onClose} onMessage={this.onMessage} />
+        <SendCommentForm onSubmit={onSubmit} sendWithCtrlEnter={state.sendWithCtrlEnter} />
+        <form>
+          <div className="options">
+            <FormGroup row>
+              <LabeledCheckbox
+                label="Auto scroll"
+                checked={state.autoScroll}
+                onChange={onChangeAutoScroll}
+              />
+              <LabeledCheckbox
+                label="Send with Ctrl+Enter"
+                checked={state.sendWithCtrlEnter}
+                onChange={onChangeSendWithCtrlEnter}
+              />
+            </FormGroup>
+          </div>
+        </form>
       </div>
-    )
-  }
+      <WebSocketClient url={props.url} onOpen={onOpen} onClose={onClose} onMessage={onMessage} />
+    </div>
+  )
 }
