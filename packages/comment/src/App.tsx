@@ -22,7 +22,7 @@ import { AppState } from './types'
 import { PollControl } from './PollControl'
 import { LabeledCheckbox } from './LabeledCheckbox'
 import { FormGroup } from '@material-ui/core'
-import { useAuthCookies } from './useAuthCookies'
+import { useAppCookies, FAR_ENOUGH } from './useAppCookies'
 
 type AppProps = {
   url: string
@@ -34,33 +34,41 @@ const log = getLogger('App')
 // TODO User should be able to restart poll if the poll entry is closed by mistake.
 
 export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
+  const [cookies, modCookies] = useAppCookies()
+  // TODO Divide state
+  const autoScroll = cookies.bool('autoScroll')
+  const sendWithCtrlEnter = cookies.bool('sendWithCtrlEnter')
   const [state, setState] = React.useState<AppState>({
     comments: [],
     polls: [],
-    autoScroll: true,
-    sendWithCtrlEnter: true, // TODO Store to cookie
+    autoScroll: (autoScroll === undefined) || autoScroll,
+    sendWithCtrlEnter: (sendWithCtrlEnter === undefined) || sendWithCtrlEnter,
   })
   const ref = React.useRef<HTMLDivElement>(null)
   const messageListDivRef = React.useRef<Element | null>(null)
   const wscRef = React.useRef<WebSocketControl | null>(null)
-  const [cookies, , removeCookie] = useAuthCookies()
 
   const onOpen = React.useCallback((wsc: WebSocketControl): void => {
     log.debug('[onOpen]', wsc)
+    const room = cookies.str('room')
+    const password = cookies.str('password')
+    if (!room || !password) {
+      return
+    }
 
     wscRef.current = wsc
     const acn: AcnMessage = {
       type: 'acn',
-      room: cookies.room,
-      hash: createHash(cookies.password),
+      room: room,
+      hash: createHash(password),
     }
     wsc.send(acn)
   }, [cookies])
   const onClose = React.useCallback((ev: CloseEvent): void => {
     switch (ev.code) {
       case CloseCode.ACN_FAILED:
-        removeCookie('room')
-        removeCookie('password')
+        modCookies.remove('room')
+        modCookies.remove('password')
         window.localStorage.setItem('App.notification', JSON.stringify({ message: 'Authentication failed.' }))
         window.location.href = './login'
         break
@@ -68,7 +76,7 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
         wscRef.current?.reconnectWithBackoff()
         break
     }
-  }, [removeCookie])
+  }, [modCookies])
   const onPoll = React.useCallback((e: React.MouseEvent<HTMLButtonElement>, choice: PollEntry['key'], to: string): void => {
     e.preventDefault()
     const message: PollMessage = {
@@ -137,17 +145,19 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
   }, [])
 
   const onChangeAutoScroll = React.useCallback((autoScroll: boolean): void => {
+    modCookies.bool('autoScroll', autoScroll, FAR_ENOUGH)
     setState({
       ...state,
       autoScroll
     })
-  }, [state])
+  }, [state, modCookies])
   const onChangeSendWithCtrlEnter = React.useCallback((sendWithShiftEnter: boolean): void => {
+    modCookies.bool('sendWithCtrlEnter', sendWithShiftEnter, FAR_ENOUGH)
     setState({
       ...state,
       sendWithCtrlEnter: sendWithShiftEnter
     })
-  }, [state])
+  }, [state, modCookies])
 
   React.useEffect((): (() => void) => {
     messageListDivRef.current = document.getElementsByClassName('message-list')[0]
@@ -160,7 +170,7 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
     }
   }, [])
   React.useEffect((): void => {
-    if (!cookies.room || !cookies.password) {
+    if (!cookies.str('room') || !cookies.str('password')) {
       window.location.href = './login'
     }
   }, [cookies])
@@ -205,7 +215,7 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
         </form>
       </div>
       {
-        cookies.room && cookies.password
+        cookies.str('room') && cookies.str('password')
           ? <WebSocketClient url={props.url} onOpen={onOpen} onClose={onClose} onMessage={onMessage} />
           : null
       }
