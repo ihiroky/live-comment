@@ -5,8 +5,8 @@ import * as Settings from './Settings'
 import { getLogger } from 'common'
 import {
   registerAppRootProtocol,
-  showSettingsWindow,
-  showPollWindow
+  createSettingsWindow,
+  createPollWindow
 } from './Subwindows'
 
 const CHANNEL_REQUEST_SETTINGS = '#request-settings'
@@ -126,8 +126,8 @@ function showTrayIcon(): void {
     tray_.destroy()
   }
   const menu: electron.Menu = electron.Menu.buildFromTemplate([
-    { label: 'Poll', click: showPollWindow },
-    { label: 'Settings', click: showSettingsWindow },
+    { label: 'Poll', click: createPollWindow },
+    { label: 'Settings', click: createSettingsWindow },
     { label: 'Quit', role: 'quit' }
   ])
   tray_ = new electron.Tray(path.resolve('resources/icon.png'))
