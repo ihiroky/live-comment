@@ -22,9 +22,7 @@ export class SendCommentForm extends React.Component<PropsType, StateType> {
     this.canSendMessage = false
   }
 
-  private onSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
-    e.preventDefault()
-
+  private send = (): void => {
     if (this.props.sendWithCtrlEnter && !this.canSendMessage) {
       return
     }
@@ -37,9 +35,6 @@ export class SendCommentForm extends React.Component<PropsType, StateType> {
         comment: ''
       })
     }
-
-    // For mouse and touch
-    this.canSendMessage = false
   }
 
   private onChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -55,22 +50,31 @@ export class SendCommentForm extends React.Component<PropsType, StateType> {
   }
 
   private onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === 'Control') {
-      this.canSendMessage = true
+    switch (e.key) {
+      case 'Control':
+        this.canSendMessage = true
+        break
+      case 'Enter':
+        this.send()
+        break
     }
   }
 
   private onMouseDown = (): void => {
     this.canSendMessage = true
+    this.send()
+    this.canSendMessage = false
   }
 
   private onTouchStart = (): void => {
     this.canSendMessage = true
+    this.send()
+    this.canSendMessage = false
   }
 
   render(): React.ReactNode {
     return (
-      <form onSubmit={this.onSubmit}>
+      <form onSubmit={(e) => { e.preventDefault() }}>
         <input
           type="text"
           value={this.state.comment}
