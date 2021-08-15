@@ -19,15 +19,17 @@ function getHtmlDataUrl(title: string, src: string): string {
 </html>`
 }
 
-function showSubWindow(
+function createSubWindow(
   id: string,
   width: number,
   height: number,
   js: string
-): electron.BrowserWindow {
+): electron.BrowserWindow | null {
   const openWindow = openWindows_[id]
   if (openWindow) {
-    openWindow.close()
+    openWindow.focus()
+    log.debug('Window', id, 'is already created.')
+    return null
   }
 
   const window = new electron.BrowserWindow({
@@ -66,8 +68,8 @@ export function registerAppRootProtocol(): void {
   )
 }
 
-export function showSettingsWindow(): void {
-  showSubWindow(
+export function createSettingsWindow(): void {
+  createSubWindow(
     'SettingsForm',
     600,
     650,
@@ -75,8 +77,8 @@ export function showSettingsWindow(): void {
   )
 }
 
-export function showPollWindow(): void {
-  showSubWindow(
+export function createPollWindow(): void {
+  createSubWindow(
     'Poll',
     900,
     700,
