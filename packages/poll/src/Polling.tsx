@@ -41,15 +41,28 @@ export function Polling({ url, room, hash, title, entries, onChange, onFinished 
 }): JSX.Element | null {
   log.info('Polling', entries)
   const wscRef = React.useRef<WebSocketControl | null>(null)
-  const acnOkRef = React.useRef<Deffered<boolean>>(new Deffered())
   const progress = React.useRef<Progress>(new Map())
-  const pollId = React.useMemo(() => getRandomInteger(), [])
-
+  const pollIdRef = React.useRef<number>(getRandomInteger())
+  const acnOk = React.useMemo<Deffered<PollEntry[]>>(() => {
+    const deffered = new Deffered<PollEntry[]>()
+    deffered.promise.then((entries: PollEntry[]): void => {
+      const start: PollStartMessage = {
+        type: 'app',
+        cmd: 'poll/start',
+        id: 'poll-' + pollIdRef.current,
+        title,
+        entries: entries.map(e => ({ key: e.key, description: e.description })),
+      }
+      log.info('Send', start)
+      wscRef.current?.send(start)
+    })
+    return deffered
+  }, [])
 
   const onMessage = React.useCallback((message: Message): void => {
     log.debug('[onMessage]', message)
     if (isAcnMessage(message)) {
-      acnOkRef.current.resolve(true)
+      acnOk.resolve(entries)
       return
     }
     if (!isPollMessage(message)) {
@@ -68,22 +81,10 @@ export function Polling({ url, room, hash, title, entries, onChange, onFinished 
       change.set(oldChoice, -1)
     }
     onChange(change)
-  }, [onChange])
+  }, [onChange, entries])
 
   const onOpen = React.useCallback((wsc: WebSocketControl): void => {
     wscRef.current = wsc
-
-    acnOkRef.current.promise.then((): void => {
-      const start: PollStartMessage = {
-        type: 'app',
-        cmd: 'poll/start',
-        id: 'poll-' + pollId,
-        title,
-        entries: entries.map(e => ({ key: e.key, description: e.description })),
-      }
-      log.info('Send', start)
-      wsc.send(start)
-    })
 
     const acn: AcnMessage = {
       type: 'acn',
@@ -107,7 +108,7 @@ export function Polling({ url, room, hash, title, entries, onChange, onFinished 
       const finish: PollFinishMessage = {
         type: 'app',
         cmd: 'poll/finish',
-        id:  'poll-' + pollId,
+        id:  'poll-' + pollIdRef.current,
       }
       wscRef.current.send(finish)
       wscRef.current.close()
@@ -122,7 +123,7 @@ export function Polling({ url, room, hash, title, entries, onChange, onFinished 
         const finish: PollFinishMessage = {
           type: 'app',
           cmd: 'poll/finish',
-          id:  'poll-' + pollId,
+          id:  'poll-' + pollIdRef.current,
         }
         wscRef.current.send(finish)
         wscRef.current.close()

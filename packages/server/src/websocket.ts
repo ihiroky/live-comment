@@ -1,7 +1,7 @@
 import WebSocket from 'ws'
 import http from 'http'
 import crypto from 'crypto'
-import { Configuration, Room } from './Configuration'
+import { Configuration } from './Configuration'
 
 import {
   CloseCode,
@@ -57,33 +57,30 @@ function sendMessage(c: ClientSession, message: WebSocket.Data): void {
   })
 }
 
-function onAuthenticate(client: ClientSession, m: AcnMessage, configuration: Configuration): void {
-  log.debug('[onAuthenticate] From', client.id)
-  configuration.rooms.then((rooms: Room[]): void => {
-    for (const r of rooms) {
-      if (r.room === m.room && r.hash === m.hash) {
-        log.debug('[onAuthentication] Room:', m.room)
-        client.room = m.room
-        const ok: AcnOkMessage = {
-          type: 'acn',
-          attrs: {},
-        }
-        sendMessage(client, JSON.stringify(ok))
-        return
+function authenticate(client: ClientSession, m: AcnMessage, configuration: Configuration): void {
+  log.debug('[authenticate] From', client.id)
+  for (const r of configuration.rooms) {
+    if (r.room === m.room && r.hash === m.hash) {
+      log.debug('[authenticate] Room:', m.room)
+      client.room = m.room
+      const ok: AcnOkMessage = {
+        type: 'acn',
+        attrs: {},
       }
+      sendMessage(client, JSON.stringify(ok))
+      return
     }
-    log.debug('No room or invalid hash:', m)
-
-    const message: ErrorMessage = {
-      type: 'error',
-      error: 'ACN_FAILED',
-      message: 'Invalid room or hash.'
-    }
-    client.close(CloseCode.ACN_FAILED, JSON.stringify(message))
-  })
+  }
+  log.debug('No room or invalid hash:', m)
+  const message: ErrorMessage = {
+    type: 'error',
+    error: 'ACN_FAILED',
+    message: 'Invalid room or hash.'
+  }
+  client.close(CloseCode.ACN_FAILED, JSON.stringify(message))
 }
 
-function onMessage(
+function broadcast(
   server: WebSocket.Server,
   sender: ClientSession,
   message: CommentMessage | ApplicationMessage
@@ -126,11 +123,11 @@ function onConnected(
     const data = message.toString()
     const m = JSON.parse(data)
     if (isClientMessage(m)) {
-      onMessage(server, client, m)
+      broadcast(server, client, m)
     } else if (isAcnMessage(m)) {
-      onAuthenticate(client, m, configuration)
+      authenticate(client, m, configuration)
     } else {
-      log.debug('[onMessage]Unexpected message:', m)
+      log.debug('[onMessage] Unexpected message:', m)
     }
   })
   client.on('error', function (e: Error): void {
