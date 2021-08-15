@@ -51,7 +51,7 @@ export const LoginForm: React.FC = (): JSX.Element => {
   })
   const [password, setPassword] = React.useState<TextFieldState>({
     value: cookies.str('password') || '',
-    helperText: cookies.str('password') ? '' :'Input password of the room',
+    helperText: cookies.str('password') ? '' : 'Input password of the room',
   })
 
   React.useEffect((): void => {

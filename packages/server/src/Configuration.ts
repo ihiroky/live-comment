@@ -103,17 +103,11 @@ log.setLevel(argv.loglevel)
 function parseConfigJson(json: string): ServerConfig {
   const c = JSON.parse(json)
   if (!Array.isArray(c.rooms) || c.rooms.length === 0) {
-    log.error('Room definition does not exist.')
-    return {
-      rooms: []
-    }
+    throw new Error('Room definition does not exist.')
   }
   for (const r of c.rooms) {
     if (!isRoom(r)) {
-      log.error(`Unexpected room definition: ${JSON.stringify(r)}`)
-      return {
-        rooms: []
-      }
+      throw new Error(`Unexpected room definition: ${JSON.stringify(r)}`)
     }
   }
   return c
@@ -122,15 +116,13 @@ function parseConfigJson(json: string): ServerConfig {
 export class Configuration {
 
   private path: string
-  private cache: Promise<ServerConfig>
+  private cache: ServerConfig
   private lastUpdated: number
 
   constructor() {
     this.path = argv.configPath
     this.lastUpdated = fs.statSync(this.path).mtimeMs
-    const serverConfig = parseConfigJson(fs.readFileSync(this.path, { encoding: 'utf8' }))
-    this.cache = Promise.resolve(serverConfig)
-
+    this.cache = parseConfigJson(fs.readFileSync(this.path, { encoding: 'utf8' }))
   }
 
   reloadIfUpdatedAsync(): Promise<void> {
@@ -141,13 +133,16 @@ export class Configuration {
       }
       log.info('[reloadIfUpdatedAsync] Update detected.')
       this.lastUpdated = stat.mtimeMs
-      return new Promise<void>((resolve: () => void): void => {
-        this.cache = fs.promises.readFile(this.path, { encoding: 'utf8' })
-          .then((json: string): ServerConfig => parseConfigJson(json))
-        this.cache.then((): void => {
-          log.info('[reloadIfUpdatedAsync] Update completed.')
-          resolve()
-        })
+      return new Promise<void>((resolve: () => void, reject: (e: unknown) => void): void => {
+        fs.promises.readFile(this.path, { encoding: 'utf8' })
+          .then((json: string): void => {
+            this.cache = parseConfigJson(json)
+            log.info('[reloadIfUpdatedAsync] Update completed.')
+            resolve()
+          }).catch((e: unknown): void => {
+            log.error('[reloadIfUpdatedAsync] Failed to load config.', e)
+            reject(e)
+          })
       })
     })
   }
@@ -156,8 +151,8 @@ export class Configuration {
     return argv.port
   }
 
-  get rooms(): Promise<Room[]> {
-    return this.cache.then((c: ServerConfig): Room[] => c.rooms)
+  get rooms(): Room[] {
+    return this.cache.rooms
   }
 
   get logLevel(): LogLevel {

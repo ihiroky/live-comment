@@ -57,22 +57,6 @@ export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
     return <div></div>
   }
 
-  send(message: Message): void {
-    if (this.webSocket) {
-      const json = JSON.stringify(message)
-      this.webSocket.send(json)
-      log.trace('[send]', message)
-    }
-  }
-
-  close(): void {
-    if (this.webSocket) {
-      this.webSocket.close()
-      this.webSocket = null
-      log.debug('[close]')
-    }
-  }
-
   private createWebSocket(): WebSocket {
     const webSocket = new WebSocket(this.props.url)
     webSocket.addEventListener('open', (ev: Event): void => {
@@ -81,7 +65,11 @@ export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
         const control: WebSocketControl = {
           _reconnectTimer: 0,
           send: (message: Message): void => {
-            this.send(message)
+            if (this.webSocket) {
+              const json = JSON.stringify(message)
+              this.webSocket.send(json)
+              log.trace('[send]', message)
+            }
           },
           reconnect: (): void => {
             log.debug('[WebSocketControl.reconnect] Start.')
@@ -90,6 +78,10 @@ export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
             log.debug('[WebSocketControl.reconnect] End.')
           },
           reconnectWithBackoff: (): void => {
+            if (control._reconnectTimer !== 0) {
+              log.warn('[reconnectWithBackoff] Already timered:', control._reconnectTimer)
+              return
+            }
             const waitMillis = 7000 + 13000 * Math.random()
             control._reconnectTimer = window.setTimeout((): void => {
               control._reconnectTimer = 0
@@ -104,7 +96,10 @@ export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
               window.clearTimeout(control._reconnectTimer)
               control._reconnectTimer = 0
             }
-            this.close()
+            if (this.webSocket) {
+              this.webSocket.close()
+              this.webSocket = null
+            }
           }
         }
         this.props.onOpen(control)
