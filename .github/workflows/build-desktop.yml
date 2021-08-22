@@ -18,7 +18,9 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: 14
-      - run: yarn install --frozen-lockfile --network-timeout 180000
+
+      - name: Install dependent modules
+        run: yarn install --frozen-lockfile --network-timeout 180000
 
       - name: Run tests
         run: |
