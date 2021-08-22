@@ -15,9 +15,17 @@ jobs:
         with:
           node-version: 14
 
+      - name: Install dependent modules
+        run: yarn install --frozen-lockfile --network-timeout 180000
+
+      - name: Run tests
+        run: |
+          yarn jest packages/common/
+          yarn jest --passWithNoTests packages/comment/
+          yarn jest --passWithNoTests packages/server/
+
       - name: Build apps
         run: |
-          yarn install
           yarn --cwd packages/comment build
           yarn --cwd packages/server  build
 
