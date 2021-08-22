@@ -17,9 +17,9 @@ jobs:
 
       - name: Run tests
       - run: |
-        yarn jest packages/common/
-        yarn jest --passWithNoTests packages/comment/
-        yarn jest --passWithNoTests packages/server/
+          yarn jest packages/common/
+          yarn jest --passWithNoTests packages/comment/
+          yarn jest --passWithNoTests packages/server/
 
       - name: Build apps
         run: |
