@@ -16,7 +16,7 @@ jobs:
           node-version: 14
 
       - name: Run tests
-      - run: |
+        run: |
           yarn jest packages/common/
           yarn jest --passWithNoTests packages/comment/
           yarn jest --passWithNoTests packages/server/
