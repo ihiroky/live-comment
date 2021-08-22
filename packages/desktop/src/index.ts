@@ -146,7 +146,8 @@ async function asyncShowMainWindow(): Promise<void> {
   mainWindow_ = new electron.BrowserWindow({
     frame: false,
     transparent: true,
-    alwaysOnTop: true,
+    resizable: false,
+    hasShadow: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,

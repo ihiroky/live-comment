@@ -50,7 +50,6 @@ export function isCommentMessage(m: unknown): m is CommentMessage {
   if (!isObject(m)) {
     return false
   }
-
   return m.type === 'comment'
 }
 
