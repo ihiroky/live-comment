@@ -6,7 +6,7 @@ import { getLogger } from 'common'
 import {
   registerAppRootProtocol,
   createSettingsWindow,
-  createPollWindow
+  createPollWindow,
 } from './Subwindows'
 
 const CHANNEL_REQUEST_SETTINGS = '#request-settings'
