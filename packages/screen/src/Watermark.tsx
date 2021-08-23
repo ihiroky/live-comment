@@ -48,7 +48,7 @@ export function Watermark(props: React.PropsWithChildren<WatermarkProps>): JSX.E
     (): React.CSSProperties => calcCssProperties(props),
     [props]
   )
-  const __html =React.useMemo<string>((): string => dompurify.sanitize(props.html), [props.html])
+  const __html = React.useMemo<string>((): string => dompurify.sanitize(props.html), [props.html])
   return (
     <div style={style} dangerouslySetInnerHTML={{ __html }} />
   )

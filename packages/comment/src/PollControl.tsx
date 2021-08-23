@@ -18,7 +18,7 @@ export const PollControl: React.FC<PollControlProps> = ({ poll, onPoll, onCloseP
       {
         poll.entries.map((e: Pick<PollEntry, 'key' | 'description'>, i: number) => (
           <div key={`poll-${poll.key}-${e.key}`}>
-            <Button variant="outlined" onClick={(ev): void => onPoll(ev, e.key, poll.owner)}>{i}</Button>
+            <Button variant="outlined" onClick={(ev): void => onPoll(ev, e.key, poll.owner)}>{i + 1}</Button>
             <span style={{ marginLeft: '8px' }}>{e.description}</span>
           </div>
         ))

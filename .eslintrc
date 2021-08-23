@@ -41,6 +41,7 @@
     "no-else-return": 1,
     "no-console": 1,
     "semi": [1, "never"],
+    "space-infix-ops": 1,
     "space-unary-ops": 1,
     "yoda": 1,
     "@typescript-eslint/member-delimiter-style": [

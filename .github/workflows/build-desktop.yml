@@ -18,7 +18,16 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: 14
-      - run: yarn install --frozen-lockfile --network-timeout 180000
+
+      - name: Install dependent modules
+        run: yarn install --frozen-lockfile --network-timeout 180000
+
+      - name: Run tests
+        run: |
+          yarn jest packages/common/
+          yarn jest --passWithNoTests packages/screen/
+          yarn jest --passWithNoTests packages/poll/
+          yarn jest --passWithNoTests packages/desktop/
 
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1

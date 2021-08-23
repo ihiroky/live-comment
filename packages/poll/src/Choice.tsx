@@ -84,13 +84,13 @@ export function Choice({ entries, mode, descClass, topClass, onRemoveEntry }: {
   const classes = useStyles()
   useBlinksCountedUpEntries(entries, classes.blink)
   const highestCount = React.useMemo((): number => {
-    if (entries.length === 0) {
-      return 0
+    if (entries.length === 0 || (mode !== 'result-list' && mode !== 'result-graph')) {
+      return -1
     }
-    const highestCount = entries.sort((a, b) => b.count - a.count)[0].count
+    const highestCount = Math.max(...entries.map(e => e.count))
     // Count zero is not top.
     return Math.max(highestCount, 1)
-  }, [entries])
+  }, [entries, mode])
 
   if (mode === 'result-graph') {
     return null

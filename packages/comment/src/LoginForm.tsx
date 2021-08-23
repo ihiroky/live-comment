@@ -6,7 +6,7 @@ import {
   Button,
   Grid
 } from '@material-ui/core'
-import { useAuthCookies } from './useAuthCookies'
+import { useAppCookies } from './useAppCookies'
 import {
   getLogger
 } from 'common'
@@ -41,17 +41,17 @@ const useStyles = makeStyles((theme: Theme) => (
 const log = getLogger('LoginForm')
 
 export const LoginForm: React.FC = (): JSX.Element => {
-  const [cookies, setCookie] = useAuthCookies()
+  const [cookies, modCookies] = useAppCookies()
   const [notification, setNotification] = React.useState<{ message: string }>({
     message: ''
   })
   const [room, setRoom] = React.useState<TextFieldState>({
-    value: cookies.room || '',
-    helperText: cookies.room ? '' : 'Input room name',
+    value: cookies.str('room') || '',
+    helperText: cookies.str('room') ? '' : 'Input room name',
   })
   const [password, setPassword] = React.useState<TextFieldState>({
-    value: cookies.password || '',
-    helperText: cookies.password ? '' :'Input password of the room',
+    value: cookies.str('password') || '',
+    helperText: cookies.str('password') ? '' : 'Input password of the room',
   })
 
   React.useEffect((): void => {
@@ -67,14 +67,8 @@ export const LoginForm: React.FC = (): JSX.Element => {
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>): void {
     e.preventDefault()
-    setCookie('room', room.value, {
-      secure: true,
-      sameSite: 'strict',
-    })
-    setCookie('password', password.value, {
-      secure: true,
-      sameSite: 'strict',
-    })
+    modCookies.str('room', room.value)
+    modCookies.str('password', password.value)
     window.location.href = './comment'
   }
 
