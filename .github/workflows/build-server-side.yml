@@ -18,16 +18,16 @@ jobs:
       - name: Install dependent modules
         run: yarn install --frozen-lockfile --network-timeout 180000
 
+      - name: Build apps
+        run: |
+          yarn --cwd packages/comment build
+          yarn --cwd packages/server  build
+
       - name: Run tests
         run: |
           yarn jest packages/common/
           yarn jest packages/comment/
           yarn jest --passWithNoTests packages/server/
-
-      - name: Build apps
-        run: |
-          yarn --cwd packages/comment build
-          yarn --cwd packages/server  build
 
       - name: Create release directory tree
         run: |
