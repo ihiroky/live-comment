@@ -65,14 +65,14 @@ export const LoginForm: React.FC = (): JSX.Element => {
     setNotification(notification)
   }, [])
 
-  function onSubmit(e: React.FormEvent<HTMLFormElement>): void {
+  const onSubmit = React.useCallback((e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
     modCookies.str('room', room.value)
     modCookies.str('password', password.value)
     window.location.href = './comment'
-  }
+  }, [])
 
-  function onTextFieldChange(e: React.ChangeEvent<HTMLInputElement>): void {
+  const onTextFieldChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>): void => {
     log.trace('[onTextFieldChanged]', e.target.name, e.target.value)
     if (notification.message.length > 0) {
       setNotification({ message: '' })
@@ -95,16 +95,16 @@ export const LoginForm: React.FC = (): JSX.Element => {
         break
       }
     }
-  }
+  }, [])
 
-  function hasError(): boolean {
+  const hasError = React.useCallback((): boolean => {
     return room.helperText.length > 0 || password.helperText.length > 0
-  }
+  }, [room.helperText, password.helperText])
 
   const classes = useStyles()
   return <form className={classes.root} onSubmit={onSubmit}>
     <div className={classes.texts}>
-      <div className={classes.notification}>{notification.message}</div>
+      <div role="status" className={classes.notification}>{notification.message}</div>
       <TextField
         fullWidth
         label="Room"

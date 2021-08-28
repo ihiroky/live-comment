@@ -6,11 +6,12 @@ import {
 
 type Props = {
   label: string
+  name: string
   checked: boolean
   onChange: (checked: boolean) => void
 }
 
-export const LabeledCheckbox: React.FC<Props> = ({ label, checked, onChange }: Props): JSX.Element => {
+export const LabeledCheckbox: React.FC<Props> = ({ label, name, checked, onChange }: Props): JSX.Element => {
   const changeCallback = React.useCallback((e: React.ChangeEvent<HTMLInputElement>): void => {
     onChange(e.target.checked)
   }, [onChange])
@@ -23,7 +24,7 @@ export const LabeledCheckbox: React.FC<Props> = ({ label, checked, onChange }: P
           <Checkbox
             checked={checked}
             onChange={changeCallback}
-            name="scroll_stop"
+            name={name}
             color="primary"
           />
         }

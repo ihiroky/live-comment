@@ -13,16 +13,18 @@ type PollControlProps = {
 export const PollControl: React.FC<PollControlProps> = ({ poll, onPoll, onClosePoll }: PollControlProps): JSX.Element => {
   return (
     <div className="message">
-      <div>Presenter starts a poll!!! [id:{poll.id}] Click the number you choose.</div>
-      <div style={{ fontWeight: 'bold', padding: '8px' }}>{poll.title}</div>
-      {
-        poll.entries.map((e: Pick<PollEntry, 'key' | 'description'>, i: number) => (
-          <div key={`poll-${poll.key}-${e.key}`}>
-            <Button variant="outlined" onClick={(ev): void => onPoll(ev, e.key, poll.owner)}>{i + 1}</Button>
-            <span style={{ marginLeft: '8px' }}>{e.description}</span>
-          </div>
-        ))
-      }
+      <div role="status">Presenter starts a poll!!! [id:{poll.id}] Click the number you choose.</div>
+      <h3 style={{ padding: '8px' }}>{poll.title}</h3>
+      <div role="list">
+        {
+          poll.entries.map((e: Pick<PollEntry, 'key' | 'description'>, i: number) => (
+            <div key={`poll-${poll.key}-${e.key}`} role="listitem">
+              <Button variant="outlined" onClick={(ev): void => onPoll(ev, e.key, poll.owner)}>{i + 1}</Button>
+              <span style={{ marginLeft: '8px' }}>{e.description}</span>
+            </div>
+          ))
+        }
+      </div>
       <div>
         <Button
           variant="outlined"
