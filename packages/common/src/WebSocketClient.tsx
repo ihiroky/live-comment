@@ -54,10 +54,13 @@ export class WebSocketClient extends React.Component<WebSocketClientPropsType> {
   }
 
   render(): React.ReactNode {
-    return <div></div>
+    return <div />
   }
 
-  private createWebSocket(): WebSocket {
+  private createWebSocket(): WebSocket | null {
+    if (!/^wss?:\/\/./.test(this.props.url)) {
+      return null
+    }
     const webSocket = new WebSocket(this.props.url)
     webSocket.addEventListener('open', (ev: Event): void => {
       log.debug('[onopen]', ev)

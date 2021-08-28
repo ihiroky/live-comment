@@ -18,7 +18,7 @@ ReactDOM.render(
       <Route path="/comment" render={(): React.ReactNode => {
         return (
           <CookiesProvider>
-            <App url={url} maxMessageCount={512} />
+            <App url={url} maxMessageCount={1024} />
           </CookiesProvider>
         )
       }}/>

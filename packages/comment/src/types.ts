@@ -1,4 +1,5 @@
 import { PollStartMessage } from 'poll'
+import { WebSocketClient } from 'common'
 
 export type AppState = {
   comments: {
@@ -16,3 +17,5 @@ export type AppState = {
   autoScroll: boolean
   sendWithCtrlEnter: boolean
 }
+
+export type StreamingClient = typeof WebSocketClient

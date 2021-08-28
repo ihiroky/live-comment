@@ -86,6 +86,7 @@ export class SendCommentForm extends React.Component<PropsType, StateType> {
           type="submit"
           autoComplete="off"
           value="💬"
+          disabled={this.state.comment.length === 0}
           onMouseDown={this.onMouseDown}
           onTouchStart={this.onTouchStart}
         />

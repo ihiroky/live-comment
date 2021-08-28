@@ -19,6 +19,21 @@ function getHtmlDataUrl(title: string, src: string): string {
 </html>`
 }
 
+function contexteMenuEventHandler(_: electron.Event, params: electron.ContextMenuParams): void {
+  const editFrags = params.editFlags
+  const menu = electron.Menu.buildFromTemplate([
+    { role: 'undo', enabled: editFrags.canUndo },
+    { role: 'redo', enabled: editFrags.canRedo },
+    { type: 'separator' },
+    { role: 'cut', enabled: editFrags.canCut },
+    { role: 'copy', enabled: editFrags.canCopy },
+    { role: 'paste', enabled: editFrags.canPaste },
+    { role: 'delete', enabled: editFrags.canDelete },
+    { role: 'selectAll', enabled: editFrags.canSelectAll },
+  ])
+  menu.popup()
+}
+
 function createSubWindow(
   id: string,
   width: number,
@@ -42,6 +57,7 @@ function createSubWindow(
     },
   })
   const dataUrl = getHtmlDataUrl(id, js)
+  window.webContents.on('context-menu', contexteMenuEventHandler)
   window.loadURL(dataUrl, {
     // https://github.com/electron/electron/issues/20700
     baseURLForDataURL: `${APP_ROOT_PROTOCOL}://resources/`,
