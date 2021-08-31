@@ -3,7 +3,7 @@ import electron from 'electron'
 // Only type definition can be imported.
 import {
   SettingsV1
-} from '../Settings'
+} from '../settings'
 
 const CHANNEL_REQUEST_SETTINGS = '#request-settings'
 const CHANNEL_POST_SETTINGS = '#post-settings'

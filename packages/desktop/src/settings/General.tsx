@@ -2,12 +2,14 @@ import React from 'react'
 import {
   makeStyles,
   Theme,
-  TextField,
   InputLabel,
   Select,
   FormControlLabel,
   Checkbox,
-  Grid
+  Grid,
+  Input,
+  FormHelperText,
+  MenuItem,
 } from '@material-ui/core'
 import { GeneralSettings } from './types'
 import {
@@ -50,7 +52,7 @@ type GeneralProps = GeneralSettings & {
   onUpdate(name: keyof GeneralSettings, value: string, error: boolean): void
 }
 
-const validateUrl = (v: string): boolean => /^wss?:\/\/.*/.test(v)
+const validateUrl = (v: string): boolean => /^wss?:\/\/./.test(v)
 const validateRoom = (v: string): boolean => v.length > 0
 const validatePassword = (v: string): boolean => v.length > 0
 const validateDuration = (v: string): boolean => !isNaN(Number(v)) && Number(v) >= 3
@@ -61,18 +63,26 @@ function TF({ data, onChange }: {
   data: TextFieldMetadata<GeneralSettings, string | number>
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
 }): JSX.Element {
+  const id = `gn-input-${data.name}`
+  const helperTextId = `gn-input-helper-${data.name}`
   return (
-    <TextField
-      fullWidth
-      key={data.name}
-      name={data.name}
-      type={data.name === 'password' ? 'password' : 'text'}
-      label={data.label}
-      value={data.value.data}
-      error={data.value.error}
-      helperText={data.value.error ? data.errorMessage : ''}
-      onChange={onChange}
-    />
+    <>
+      <InputLabel htmlFor={id}>{data.label}</InputLabel>
+      <Input
+        fullWidth
+        id={id}
+        key={data.name}
+        name={data.name}
+        type={data.name === 'password' ? 'password' : 'text'}
+        value={data.value.data}
+        error={data.value.error}
+        onChange={onChange}
+        aria-describedby={helperTextId}
+      />
+      <FormHelperText id={helperTextId}>
+        {data.value.error ? data.errorMessage : ''}
+      </FormHelperText>
+    </>
   )
 }
 
@@ -81,7 +91,7 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
   const roomField = createTextFieldMetadata('room', props.room, 'Room', 1, validateRoom, 'Input room name.')
   const passwordField = createTextFieldMetadata('password', props.password, 'Password', 1, validatePassword, 'Input password.')
   const durationField = createTextFieldMetadata('duration', props.duration, 'Message duration (seconds)', 1, validateDuration, 'Must be >= 3.')
-  const zoomField = createTextFieldMetadata('zoom', props.zoom, 'Zoom (%)', 1, validateZoom, 'Must be >= 50 and <= 500.')
+  const zoomField = createTextFieldMetadata('zoom', props.zoom, 'Zoom (%)', 1, validateZoom, 'Must be >= 30 and <= 500.')
   const fontColorField = createTextFieldMetadata('fontColor', props.fontColor, 'Font color (color name or #hex)', 1, validateColor, 'Input color.')
   const fontBorderColorField = createTextFieldMetadata('fontBorderColor', props.fontBorderColor, 'Font border color (color name or #hex, empty if no border)', 1, () => true, 'Input color.')
   const textFields = [urlField, roomField, passwordField, durationField, zoomField, fontColorField, fontBorderColorField]
@@ -94,6 +104,7 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
       const options = screenPropsList.map((p: ScreenProps): ScreenProps => ({ ...p }))
       log.debug('[getScreenPropsList] screen options', options)
       setScreenOptions(options)
+      //setScreenOptions(screenPropsList)
     })
   }, [])
 
@@ -160,9 +171,8 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
         <div className={classes.screen}>
           { screenOptions.length > 0 &&
             <div>
-              <InputLabel shrink id="screen-select-label">Screen</InputLabel>
+              <InputLabel shrink htmlFor="screen-select">Screen</InputLabel>
               <Select
-                labelId="screen-select-label"
                 id="screen-select"
                 name="screen-name"
                 value={props.screen.data}
@@ -170,7 +180,7 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
               >
                 {
                   screenOptions.map((p: ScreenProps, i: number): React.ReactNode => (
-                    <option key={p.name} value={i}>{p.name}</option>
+                    <MenuItem key={p.name} value={i}>{p.name}</MenuItem>
                   ))
                 }
               </Select>

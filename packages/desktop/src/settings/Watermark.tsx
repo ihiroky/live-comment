@@ -2,13 +2,15 @@ import React from 'react'
 import {
   makeStyles,
   Theme,
-  TextField,
   Select,
   InputLabel,
   Checkbox,
-  FormControlLabel
+  FormControlLabel,
+  Input,
+  FormHelperText,
+  MenuItem
 } from '@material-ui/core'
-import { WatermarkSettings } from './types'
+import { WatermarkSettings, WatermarkPositions } from './types'
 import {
   TextFieldMetadata,
   createTextFieldMetadata
@@ -33,9 +35,8 @@ type WatermarkProps = WatermarkSettings & {
   onUpdate(key: keyof WatermarkSettings, value: string, error: boolean): void
 }
 
-
 export const Watermark: React.FC<React.PropsWithChildren<WatermarkProps>> = (props: WatermarkProps): JSX.Element => {
-  const validateOpacity = (v: string): boolean => Number(v) >= 0 && Number(v) <= 1
+  const validateOpacity = (v: string): boolean => v.length > 0 && Number(v) >= 0 && Number(v) <= 1
   const validateColor = (v: string): boolean => v.length > 0
   const validateFontSize = (v: string): boolean => /^[1-9][0-9]*(px|pt|em|rem|%)$/.test(v)
   const validateOffset = validateFontSize
@@ -73,20 +74,27 @@ export const Watermark: React.FC<React.PropsWithChildren<WatermarkProps>> = (pro
   return (
     <div className={classes.root}>
       {
-        textFields.map((f: TextFieldMetadata<WatermarkSettings, unknown>): React.ReactNode => (
-          <TextField
-            fullWidth
-            multiline={f.rowsMax > 1}
-            rowsMax={f.rowsMax}
-            key={f.name}
-            name={f.name}
-            label={f.label}
-            value={f.value.data}
-            error={f.value.error}
-            helperText={f.value.error ? f.errorMessage : ''}
-            onChange={onTextFieldChange}
-          />
-        ))
+        textFields.map((f: TextFieldMetadata<WatermarkSettings, unknown>): React.ReactNode => {
+          const id = `wm-input-${f.name}`
+          const helperTextId = `wm-input-helper-${f.name}`
+          return (
+            <React.Fragment key={id}>
+              <InputLabel htmlFor={id}>{f.label}</InputLabel>
+              <Input
+                fullWidth
+                id={id}
+                multiline={f.rowsMax > 1}
+                rowsMax={f.rowsMax}
+                key={f.name}
+                name={f.name}
+                value={f.value.data}
+                error={f.value.error}
+                onChange={onTextFieldChange}
+              />
+              <FormHelperText id={helperTextId}>{f.value.error ? f.errorMessage : ''}</FormHelperText>
+            </React.Fragment>
+          )
+        })
       }
       <div>
         <InputLabel shrink id="watermark-position-label">Position</InputLabel>
@@ -98,8 +106,8 @@ export const Watermark: React.FC<React.PropsWithChildren<WatermarkProps>> = (pro
           onChange={onSelectChange}
         >
           {
-            ['top-left', 'top-right', 'bottom-left', 'bottom-right'].map((v: string): React.ReactNode => (
-              <option key={v} value={v}>{v}</option>
+            WatermarkPositions.map((v: string): React.ReactNode => (
+              <MenuItem key={v} value={v}>{v}</MenuItem>
             ))
           }
         </Select>

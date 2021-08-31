@@ -1,9 +1,9 @@
 import React from 'react'
-import { SettingsV1 } from '../Settings'
+import { SettingsV1 } from '../settings'
 
 export type Settings = SettingsV1
 
-type ScreenProps = Readonly<{
+export type ScreenProps = Readonly<{
   name: string
   thumbnailDataUrl: string
 }>
@@ -27,8 +27,8 @@ export type GeneralSettings = Readonly<{
   url: Value<string>
   room: Value<string>
   password: Value<string>
-  duration: Value<string>
-  zoom: Value<string>
+  duration: Value<string>  // Must be string for users to modify value
+  zoom: Value<string>      // Must be string for users to modify value
   screen: Value<number>
   fontColor: Value<string>
   fontBorderColor: Value<string>
@@ -39,7 +39,7 @@ export const WatermarkPositions = [
   'top-left',
   'top-right',
   'bottom-left',
-  'bottom-right'
+  'bottom-right',
 ] as const
 
 export type WatermarkPosition = typeof WatermarkPositions[number]
@@ -69,8 +69,8 @@ export type GeneralSettingsState = Readonly<{
   url: ValueState<string>
   room: ValueState<string>
   password: ValueState<string>
-  duration: ValueState<string>
-  zoom: ValueState<string>
+  duration: ValueState<string>  // Must be string for users to modify value
+  zoom: ValueState<string>      // Must be string for users to modify value
   screen: ValueState<number>
   fontColor: ValueState<string>
   fontBorderColor: ValueState<string>
