@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import { Poll } from 'poll'
 import { createHash } from 'common'
-import { SettingsV1 } from '../Settings'
+import { SettingsV1 } from '../settings'
 
 declare global {
   interface Window {

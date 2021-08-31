@@ -9,6 +9,6 @@ module.exports = {
   "transform": {
     "^.+\\.(ts|tsx)$": "ts-jest"
   },
-  "displayName": "comment",
-  "coverageDirectory": "/tmp/live-comment/coverage/comment",
+  "displayName": "desktop",
+  "coverageDirectory": "/tmp/live-comment/coverage/desktop",
 }

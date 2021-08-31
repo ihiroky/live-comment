@@ -1,13 +1,13 @@
 import path from 'path'
 import fs from 'fs'
 import electron from 'electron'
-import * as Settings from './Settings'
+import * as Settings from './settings'
 import { getLogger } from 'common'
 import {
   registerAppRootProtocol,
   createSettingsWindow,
   createPollWindow,
-} from './Subwindows'
+} from './subwindows'
 
 const CHANNEL_REQUEST_SETTINGS = '#request-settings'
 const CHANNEL_POST_SETTINGS = '#post-settings'

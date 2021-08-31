@@ -1,5 +1,5 @@
 import electron from 'electron'
-import { SettingsV1 } from '../Settings'
+import { SettingsV1 } from '../settings'
 
 // Only type definition can be imported.
 

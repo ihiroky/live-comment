@@ -11,15 +11,13 @@ import {
 } from '@material-ui/core'
 import { General } from './General'
 import { Watermark } from './Watermark'
-import { useSettingsState } from './hooks'
+import { useHasError, useOnGeneralSettingsUpdate, useOnSubmit, useOnWatermarkSettingsUpdate, useSettingsState } from './hooks'
 import {
-  Settings,
   GeneralSettings,
   WatermarkSettings,
   GeneralSettingsState,
   WatermarkSettingsState,
   SettingsState,
-  isWatermarkPosition
 } from './types'
 import { getLogger } from 'common'
 
@@ -101,98 +99,10 @@ export const SettingsForm: React.FC = (): JSX.Element => {
     setValue(newValue)
   }
 
-  function onGeneralSettingsUpdate(key: keyof GeneralSettings, value: string, error: boolean): void {
-    const g = settingsState.general
-    switch (key) {
-      case 'url':
-      case 'room':
-      case 'password':
-      case 'duration':
-      case 'zoom':
-      case 'fontColor':
-      case 'fontBorderColor':
-        g[key].setValue({ data: value, error })
-        break
-      case 'gpu':
-        g[key].setValue({ data: value.toLowerCase() === 'true', error })
-        break
-      case 'screen':
-        g[key].setValue({ data: Number(value), error })
-        break
-      default:
-        throw new Error(`Unexpected key: ${key}`)
-    }
-  }
-
-  function onWatermarkSettingsUpdate(key: keyof WatermarkSettings, value: string, error: boolean): void {
-    const w = settingsState.watermark
-    switch (key) {
-      case 'html':
-      case 'opacity':
-      case 'color':
-      case 'fontSize':
-      case 'offset':
-        w[key].setValue({ data: value, error })
-        break
-      case 'position':
-        if (!isWatermarkPosition(value)) {
-          throw new Error(`Unexpeced value of position: ${value}`)
-        }
-        w[key].setValue({ data: value, error })
-        break
-      case 'noComments':
-        w[key].setValue({ data: value.toLowerCase() === 'true', error })
-        throw new Error(`Unexpected key: ${key}`)
-    }
-  }
-
-  function onSubmit(e: React.FormEvent<HTMLFormElement>): void {
-    e.preventDefault()
-    const g = settingsState.general
-    const w = settingsState.watermark
-    const settings: Settings = {
-      version: '1',
-      general: {
-        url: g.url.value.data,
-        room: g.room.value.data,
-        password: g.password.value.data,
-        duration: Number(g.duration.value.data),
-        zoom: Number(g.zoom.value.data),
-        screen: g.screen.value.data,
-        fontColor: g.fontColor.value.data,
-        fontBorderColor: g.fontBorderColor.value.data,
-        gpu: g.gpu.value.data,
-      },
-      watermark: {
-        html: w.html.value.data,
-        opacity: Number(w.opacity.value.data),
-        color: w.color.value.data,
-        fontSize: w.fontSize.value.data,
-        position: w.position.value.data,
-        offset: w.offset.value.data,
-        noComments: w.noComments.value.data,
-      }
-    }
-    log.debug('[onSubmit]', settings)
-    window.settings.postSettings(settings)
-    window.close()
-  }
-
-  function hasError(): boolean {
-    let gkey: keyof GeneralSettings
-    for (gkey in settingsState.general) {
-      if (settingsState.general[gkey].value.error) {
-        return true
-      }
-    }
-    let wkey: keyof WatermarkSettings
-    for (wkey in settingsState.watermark) {
-      if (settingsState.watermark[wkey].value.error) {
-        return true
-      }
-    }
-    return false
-  }
+  const onGeneralSettingsUpdate = useOnGeneralSettingsUpdate(settingsState.general)
+  const onWatermarkSettingsUpdate = useOnWatermarkSettingsUpdate(settingsState.watermark)
+  const onSubmit = useOnSubmit(settingsState)
+  const hasError = useHasError(settingsState)
 
   const classes = useStyles()
 

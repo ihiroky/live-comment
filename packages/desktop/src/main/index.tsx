@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { Screen } from 'screen'
-import { SettingsV1 } from '../Settings'
+import { SettingsV1 } from '../settings'
 import { createHash } from 'common'
 
 declare global {
