@@ -66,8 +66,8 @@ test('Edit, poll and display result', async () => {
   expect(onCreated).toBeCalled()
 
   // Poll
-  const desc0Element = screen.getByText('A description one')
-  const desc1Element = screen.getByText('A description two')
+  screen.getByText('A description one')
+  screen.getByText('A description two')
   const finishButton = screen.getByRole('button', { name: 'Finish' })
   await waitFor(() => expect(onMessage).not.toBeNull())
   assertNotNullable(onMessage, 'onMessage')
@@ -102,8 +102,6 @@ test('Edit, poll and display result', async () => {
 
   // Show result list
   const closeButton = screen.getByRole('button', { name: 'Close' })
-  expect(desc0Element.nextSibling?.childNodes[0].textContent).toBe('2')
-  expect(desc1Element.nextSibling?.childNodes[0].textContent).toBe('0')
   userEvent.click(closeButton)
   expect(onResultClosed).toBeCalled()
 })
