@@ -38,6 +38,7 @@
   "rules": {
     "eqeqeq": 1,
     "indent": [1, 2, { "SwitchCase": 1 }],
+    "max-len": ["error", { "code": 120, "tabWidth": 2 }],
     "no-else-return": 1,
     "no-console": 1,
     "semi": [1, "never"],

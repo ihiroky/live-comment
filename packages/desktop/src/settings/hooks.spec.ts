@@ -103,7 +103,9 @@ test('useOnGeneralSettingsUpdate string', () => {
   const { result } = renderHook(() => useOnGeneralSettingsUpdate(g))
   const onGeneralSettingsUpdate = result.current
 
-  const keys: Array<keyof GeneralSettingsState> = ['url', 'room', 'password', 'duration', 'zoom', 'fontColor', 'fontBorderColor']
+  const keys: Array<keyof GeneralSettingsState> = [
+    'url', 'room', 'password', 'duration', 'zoom', 'fontColor', 'fontBorderColor'
+  ]
   keys.forEach(key => {
     const data = key + '0'
     onGeneralSettingsUpdate(key, data, true)

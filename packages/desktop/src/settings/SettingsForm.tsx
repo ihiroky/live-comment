@@ -11,7 +11,13 @@ import {
 } from '@material-ui/core'
 import { General } from './General'
 import { Watermark } from './Watermark'
-import { useHasError, useOnGeneralSettingsUpdate, useOnSubmit, useOnWatermarkSettingsUpdate, useSettingsState } from './hooks'
+import {
+  useHasError,
+  useOnGeneralSettingsUpdate,
+  useOnSubmit,
+  useOnWatermarkSettingsUpdate,
+  useSettingsState
+} from './hooks'
 import {
   GeneralSettings,
   WatermarkSettings,

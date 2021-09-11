@@ -5,7 +5,7 @@ import {
 } from '@material-ui/core'
 import {
   Message,
-  WebSocketClient,
+  //  WebSocketClient,
   WebSocketControl,
   isApplicationMessage,
   getLogger,
@@ -13,6 +13,8 @@ import {
   isAcnMessage,
   Deffered,
 } from 'common'
+// Separate from common to mock on testing.
+import { WebSocketClient } from 'common/src/WebSocketClient'
 import {
   Progress,
   Update,

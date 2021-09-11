@@ -41,16 +41,28 @@ export const Watermark: React.FC<React.PropsWithChildren<WatermarkProps>> = (pro
   const validateFontSize = (v: string): boolean => /^[1-9][0-9]*(px|pt|em|rem|%)$/.test(v)
   const validateOffset = validateFontSize
   const textFields: TextFieldMetadata<WatermarkSettings, unknown>[] = [
-    createTextFieldMetadata('html', props.html, 'Text or HTML', 4, (): boolean => true, ''),
-    createTextFieldMetadata('opacity', props.opacity, 'Opacity', 1, validateOpacity, 'Between 0 and 1.'),
-    createTextFieldMetadata('color', props.color, 'Color (name or #hex)', 1, validateColor, 'Input color.'),
-    createTextFieldMetadata('fontSize', props.fontSize, 'Font size (default 64px)', 1, validateFontSize, 'px, pt, em, rem or %.'),
-    createTextFieldMetadata('offset', props.offset, 'Offset from screen edge', 1, validateOffset, 'px, pt, em, rem or %.'),
+    createTextFieldMetadata(
+      'html', props.html, 'Text or HTML', 4, (): boolean => true, ''
+    ),
+    createTextFieldMetadata(
+      'opacity', props.opacity, 'Opacity', 1, validateOpacity, 'Between 0 and 1.'
+    ),
+    createTextFieldMetadata(
+      'color', props.color, 'Color (name or #hex)', 1, validateColor, 'Input color.'
+    ),
+    createTextFieldMetadata(
+      'fontSize', props.fontSize, 'Font size (default 64px)', 1, validateFontSize, 'px, pt, em, rem or %.'
+    ),
+    createTextFieldMetadata(
+      'offset', props.offset, 'Offset from screen edge', 1, validateOffset, 'px, pt, em, rem or %.'
+    ),
   ]
 
   function onTextFieldChange(e: React.ChangeEvent<HTMLInputElement>): void {
     log.debug('[onTextFeildChange]', e.target.name, e.target.value)
-    const field = textFields.find((f: TextFieldMetadata<WatermarkSettings, unknown>): boolean => f.name === e.target.name)
+    const field = textFields.find(
+      (f: TextFieldMetadata<WatermarkSettings, unknown>): boolean => f.name === e.target.name
+    )
     if (!field) {
       throw new Error(`Unexpected field: ${e.target.name}`)
     }

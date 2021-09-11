@@ -137,7 +137,7 @@ export const Poll: React.FC<Props> = (props: Props): JSX.Element => {
               multiline
               readOnly={mode !== 'edit'}
               value={title}
-              placeholder="Input title"
+              placeholder="Input title."
               onChange={(e): void => setTitle(e.target.value)}
             />
           </Grid>

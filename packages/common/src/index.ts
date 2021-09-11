@@ -10,6 +10,7 @@ export {
   Message,
   CommentMessage,
   AcnMessage,
+  AcnOkMessage,
   ApplicationMessage,
   ErrorMessage,
   isCommentMessage,
