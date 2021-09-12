@@ -1,10 +1,7 @@
 import React from 'react'
 import './App.css'
-import {
-  WebSocketClient,
-  WebSocketControl,
-  Message,
-} from 'common'
+import { Message } from 'common'
+import { WebSocketClient, WebSocketControl } from 'wscomp'
 import { SendCommentForm } from './SendCommentForm'
 import { AppState } from './types'
 import { PollControl } from './PollControl'

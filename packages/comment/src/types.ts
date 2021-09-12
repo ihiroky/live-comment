@@ -1,5 +1,5 @@
 import { PollStartMessage } from 'poll'
-import { WebSocketClient } from 'common'
+import { WebSocketClient } from 'wscomp'
 
 export type AppState = {
   comments: {

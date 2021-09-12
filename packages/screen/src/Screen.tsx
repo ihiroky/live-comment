@@ -1,7 +1,5 @@
 import React from 'react'
-import {
-  WebSocketClient
-} from 'common'
+import { WebSocketClient } from 'wscomp'
 import {
   MarqueePropsGenerator,
   MarqueePropsList

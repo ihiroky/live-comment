@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react-hooks'
 import React from 'react'
-import { WebSocketControl } from 'common'
+import { WebSocketControl } from 'wscomp'
 import { AppState } from './types'
 import { useOnPoll, useOnClosePoll } from './pollHooks'
 

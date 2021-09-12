@@ -2,10 +2,10 @@ import React from 'react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Polling } from './Polling'
-import { WebSocketClient } from 'common'
+import { WebSocketClient } from 'wscomp'
 import { PollEntry } from '.'
 
-jest.mock('common')
+jest.mock('wscomp')
 
 beforeEach(() => {
   (WebSocketClient as jest.Mock).mockImplementation(

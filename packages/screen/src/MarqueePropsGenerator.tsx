@@ -4,9 +4,9 @@ import {
   CommentMessage,
   isCommentMessage,
   CloseCode,
-  WebSocketControl,
   getLogger,
 } from 'common'
+import { WebSocketControl } from 'wscomp'
 import React from 'react'
 
 export type MarqueeProps = {

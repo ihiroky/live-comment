@@ -1,11 +1,6 @@
 import { sha512 } from 'js-sha512'
 
 export {
-  WebSocketClient,
-  WebSocketControl,
-} from './WebSocketClient'
-
-export {
   CloseCode,
   Message,
   CommentMessage,

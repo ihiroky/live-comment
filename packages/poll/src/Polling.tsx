@@ -5,15 +5,13 @@ import {
 } from '@material-ui/core'
 import {
   Message,
-  //  WebSocketClient,
-  WebSocketControl,
   isApplicationMessage,
   getLogger,
   AcnMessage,
   isAcnMessage,
   Deffered,
-  WebSocketClient
 } from 'common'
+import { WebSocketClient, WebSocketControl } from 'wscomp'
 /*
 // Separate from common to mock on testing.
 import { WebSocketClient } from 'common/WebSocketClient'

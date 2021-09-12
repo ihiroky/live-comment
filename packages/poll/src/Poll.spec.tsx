@@ -2,12 +2,12 @@ import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Poll } from './Poll'
-import { WebSocketClient } from 'common'
+import { WebSocketClient } from 'wscomp'
 import { PollMessage } from './types'
 import { mocked } from 'ts-jest/utils'
 import { assertNotNullable } from 'common'
 
-jest.mock('common')
+jest.mock('wscomp')
 
 let onMessage: React.ComponentProps<typeof WebSocketClient>['onMessage'] | null
 

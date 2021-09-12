@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react-hooks'
 import { useAcnOk, useOnClick, useOnClose, useOnMessage, useOnOpen, useOnUnmount } from './pollingHooks'
-import { AcnMessage, AcnOkMessage, CommentMessage, WebSocketControl } from 'common'
+import { AcnMessage, AcnOkMessage, CommentMessage } from 'common'
+import { WebSocketControl } from 'wscomp'
 import { PollEntry, PollMessage, PollStartMessage, Progress, Update } from './types'
 
 function createPollEntries(): PollEntry[] {

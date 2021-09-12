@@ -1,4 +1,5 @@
-import { AcnMessage, Deffered, getLogger, isAcnMessage, Message, WebSocketControl } from 'common'
+import { AcnMessage, Deffered, getLogger, isAcnMessage, Message } from 'common'
+import { WebSocketControl } from 'wscomp'
 import React from 'react'
 import { isPollMessage, PollEntry, PollFinishMessage, PollStartMessage, Progress, Update } from './types'
 
