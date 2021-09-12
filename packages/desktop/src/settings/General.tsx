@@ -87,14 +87,31 @@ function TF({ data, onChange }: {
 }
 
 export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: GeneralProps): JSX.Element => {
-  const urlField = createTextFieldMetadata('url', props.url, 'Server URL', 1, validateUrl, 'Input URL like "wss://hoge/app".')
-  const roomField = createTextFieldMetadata('room', props.room, 'Room', 1, validateRoom, 'Input room name.')
-  const passwordField = createTextFieldMetadata('password', props.password, 'Password', 1, validatePassword, 'Input password.')
-  const durationField = createTextFieldMetadata('duration', props.duration, 'Message duration (seconds)', 1, validateDuration, 'Must be >= 3.')
-  const zoomField = createTextFieldMetadata('zoom', props.zoom, 'Zoom (%)', 1, validateZoom, 'Must be >= 30 and <= 500.')
-  const fontColorField = createTextFieldMetadata('fontColor', props.fontColor, 'Font color (color name or #hex)', 1, validateColor, 'Input color.')
-  const fontBorderColorField = createTextFieldMetadata('fontBorderColor', props.fontBorderColor, 'Font border color (color name or #hex, empty if no border)', 1, () => true, 'Input color.')
-  const textFields = [urlField, roomField, passwordField, durationField, zoomField, fontColorField, fontBorderColorField]
+  const urlField = createTextFieldMetadata(
+    'url', props.url, 'Server URL', 1, validateUrl, 'Input URL like "wss://hoge/app".'
+  )
+  const roomField = createTextFieldMetadata(
+    'room', props.room, 'Room', 1, validateRoom, 'Input room name.'
+  )
+  const passwordField = createTextFieldMetadata(
+    'password', props.password, 'Password', 1, validatePassword, 'Input password.'
+  )
+  const durationField = createTextFieldMetadata(
+    'duration', props.duration, 'Message duration (seconds)', 1, validateDuration, 'Must be >= 3.'
+  )
+  const zoomField = createTextFieldMetadata(
+    'zoom', props.zoom, 'Zoom (%)', 1, validateZoom, 'Must be >= 30 and <= 500.'
+  )
+  const fontColorField = createTextFieldMetadata(
+    'fontColor', props.fontColor, 'Font color (color name or #hex)', 1, validateColor, 'Input color.'
+  )
+  const errorMessage = 'Font border color (color name or #hex, empty if no border)'
+  const fontBorderColorField = createTextFieldMetadata(
+    'fontBorderColor', props.fontBorderColor, errorMessage, 1, () => true, 'Input color.'
+  )
+  const textFields = [
+    urlField, roomField, passwordField, durationField, zoomField, fontColorField, fontBorderColorField
+  ]
 
   const [screenOptions, setScreenOptions] = React.useState<ScreenProps[]>([])
 

@@ -44,7 +44,7 @@ export function PollEdit({ mode, descClass, entryCount, onEntryAdded, onOk, onCa
         />
       </Grid>
       <Grid item xs={1}>
-        <Button variant="outlined" onClick={onClick}>Add</Button>
+        <Button variant="outlined" onClick={onClick} disabled={description.length === 0}>Add</Button>
       </Grid>
       <Grid item xs={1} />
       <Grid item xs={8}></Grid>

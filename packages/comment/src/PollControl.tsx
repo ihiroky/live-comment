@@ -10,7 +10,9 @@ type PollControlProps = {
   onClosePoll: (pollId: string) => void
 }
 
-export const PollControl: React.FC<PollControlProps> = ({ poll, onPoll, onClosePoll }: PollControlProps): JSX.Element => {
+export const PollControl: React.FC<PollControlProps> = (
+  { poll, onPoll, onClosePoll }: PollControlProps
+): JSX.Element => {
   return (
     <div className="message">
       <div role="status">Presenter starts a poll!!! [id:{poll.id}] Click the number you choose.</div>

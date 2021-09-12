@@ -26,7 +26,11 @@ const useStyles = makeStyles({
   }
 })
 
-function useBlinksCountedUpEntries(entries: PollEntry[], blinkClass: string): void {
+function elementIdOf(e: PollEntry): string {
+  return 'choice-element-' + e.key
+}
+
+export function useBlinkCountedUpEntries(entries: PollEntry[], blinkClass: string): void {
   const [prevCounts, setPrevCounts] = React.useState<number[]>([])
   const blinkReadyIdSetRef = React.useRef<Set<string>>(new Set())
 
@@ -41,13 +45,13 @@ function useBlinksCountedUpEntries(entries: PollEntry[], blinkClass: string): vo
 
     const blinkIds = entries
       .filter((e, i) => prevCounts[i] < e.count)
-      .map(e => String(e.key))
+      .map(e => elementIdOf(e))
     for (const id of blinkIds) {
       const blinkReadyIdSet = blinkReadyIdSetRef.current
       if (blinkReadyIdSet.has(id)) {
         continue
       }
-      const element = document.getElementById(String(id))
+      const element = document.getElementById(id)
       if (!element) {
         continue
       }
@@ -67,9 +71,7 @@ function useBlinksCountedUpEntries(entries: PollEntry[], blinkClass: string): vo
       })
     }
 
-    entries.forEach((e: PollEntry, i: number): void => {
-      prevCounts[i] = e.count
-    })
+    setPrevCounts(entries.map(e => e.count))
   }, [entries])
 }
 
@@ -82,7 +84,7 @@ export function Choice({ entries, mode, descClass, topClass, onRemoveEntry }: {
   onRemoveEntry: (index: number) => void
 }): JSX.Element | null {
   const classes = useStyles()
-  useBlinksCountedUpEntries(entries, classes.blink)
+  useBlinkCountedUpEntries(entries, classes.blink)
   const highestCount = React.useMemo((): number => {
     if (entries.length === 0 || (mode !== 'result-list' && mode !== 'result-graph')) {
       return -1
@@ -96,12 +98,11 @@ export function Choice({ entries, mode, descClass, topClass, onRemoveEntry }: {
     return null
   }
 
-  // TODO Emphasize top result
   const isResultList = mode === 'result-list'
   return (
     <>
       {entries.map((entry: PollEntry, index: number): JSX.Element => (
-        <Grid item xs={12} key={entry.key} id={String(entry.key)}>
+        <Grid item xs={12} key={entry.key} id={elementIdOf(entry)}>
           <Grid container className={isResultList && (entry.count === highestCount) ? topClass : ''}>
             <Grid item xs={1} />
             <Grid item xs={1}>{index + 1}</Grid>

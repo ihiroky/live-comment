@@ -1,10 +1,7 @@
 import React from 'react'
 import './App.css'
-import {
-  WebSocketClient,
-  WebSocketControl,
-  Message,
-} from 'common'
+import { Message } from 'common'
+import { WebSocketClient, WebSocketControl } from 'wscomp'
 import { SendCommentForm } from './SendCommentForm'
 import { AppState } from './types'
 import { PollControl } from './PollControl'
@@ -41,7 +38,9 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
   const onClose = useWebSocketOnClose(wscRef, modCookies)
   const onPoll = useOnPoll(wscRef)
   const onClosePoll = useOnClosePoll(state, setState)
-  const onMessage = useWebSocketOnMessage(props.maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef)
+  const onMessage = useWebSocketOnMessage(
+    props.maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef
+  )
   const onSubmit = React.useCallback((message: Message): void => {
     wscRef.current?.send(message)
   }, [])

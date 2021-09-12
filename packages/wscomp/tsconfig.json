@@ -3,7 +3,6 @@
     "target": "ES2020",
     "lib": [
       "dom",
-      "dom.iterable",
       "esnext"
     ],
     "allowJs": false,
@@ -24,12 +23,10 @@
     "declaration": true,
     "declarationMap": true,
     "paths": {
-      "common": ["../common/src/index"],
-      "wscomp": ["../wscomp/src/index"]
+      "common": ["../common/src/index"]
     }
   },
   "references": [
-    { "path": "../common" },
-    { "path": "../wscomp" }
+    { "path": "../common" }
   ]
 }

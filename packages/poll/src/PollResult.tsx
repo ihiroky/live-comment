@@ -12,13 +12,13 @@ import { Mode } from './types'
 export type PollResultProps = {
   data: {
     labels: string[]
-    datasets: [{
+    datasets: {
       label?: string
       data: number[]
       backgroundColor?: string[]
       borderColor?: string[]
       borderWidth?: number[]
-    }]
+    }[]
   } | null
   mode: Mode
   onClosed: () => void
@@ -110,10 +110,12 @@ const graphOptions = {
   },
 }
 
-export function PollResult({ mode, data, onClosed, onTypeChanged, children }: React.PropsWithChildren<PollResultProps>): JSX.Element | null {
+export function PollResult(
+  { mode, data, onClosed, onTypeChanged, children }: React.PropsWithChildren<PollResultProps>
+): JSX.Element | null {
   const [type, setType] = React.useState<ResultType>('result-list')
   const enchantedData = React.useMemo((): PollResultProps['data'] => {
-    if (data === null) {
+    if (data === null || data.datasets.length === 0) {
       return null
     }
     const datasets = data.datasets[0]

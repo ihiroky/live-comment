@@ -1,5 +1,6 @@
 import React from 'react'
-import { getLogger, WebSocketControl } from 'common'
+import { getLogger } from 'common'
+import { WebSocketControl } from 'wscomp'
 import { PollEntry, PollMessage } from 'poll'
 import { AppState } from './types'
 import { PollControl } from './PollControl'

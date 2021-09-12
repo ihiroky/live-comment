@@ -1,7 +1,5 @@
 import React from 'react'
-import { getLogger } from './Logger'
-
-import { CommentMessage, Message } from './Message'
+import { getLogger, CommentMessage, Message } from 'common'
 
 export interface WebSocketControl {
   _reconnectTimer: number

@@ -24,10 +24,12 @@
     "declaration": true,
     "declarationMap": true,
     "paths": {
-      "common": ["../common/src/index"]
+      "common": ["../common/src/index"],
+      "wscomp": ["../wscomp/src/index"]
     },
   },
   "references": [
-    { "path": "../common" }
+    { "path": "../common" },
+    { "path": "../wscomp" }
   ]
 }

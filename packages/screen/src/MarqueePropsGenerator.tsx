@@ -4,9 +4,9 @@ import {
   CommentMessage,
   isCommentMessage,
   CloseCode,
-  WebSocketControl,
   getLogger,
 } from 'common'
+import { WebSocketControl } from 'wscomp'
 import React from 'react'
 
 export type MarqueeProps = {
@@ -157,7 +157,7 @@ export class MarqueePropsGenerator {
     }
 
     marquees.splice(insertPosition, 0, {
-      key: now,
+      key: now,  // TODO Do not use Date.now()
       comment: message.comment,
       level: level,
       ref: React.createRef<HTMLParagraphElement>()
