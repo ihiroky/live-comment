@@ -25,11 +25,13 @@
     "declarationMap": true,
     "paths": {
       "common": ["../common/src/index"],
-      "poll": ["../poll/src/index"]
+      "poll": ["../poll/src/index"],
+      "wscomp": ["../wscomp/src/index"]
     }
   },
   "references": [
     { "path": "../common" },
-    { "path": "../poll" }
+    { "path": "../poll" },
+    { "path": "../wscomp" }
   ]
 }
