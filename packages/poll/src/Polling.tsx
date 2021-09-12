@@ -12,9 +12,12 @@ import {
   AcnMessage,
   isAcnMessage,
   Deffered,
+  WebSocketClient
 } from 'common'
+/*
 // Separate from common to mock on testing.
-import { WebSocketClient } from 'common/src/WebSocketClient'
+import { WebSocketClient } from 'common/WebSocketClient'
+*/
 import {
   Progress,
   Update,

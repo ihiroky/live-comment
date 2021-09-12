@@ -14,8 +14,9 @@ const url = process.env.NODE_ENV === 'production'
 ReactDOM.render(
   <React.StrictMode>
     <BrowserRouter>
-      <Route path="/login" component={LoginForm} />
-      <Route path="/comment" render={(): React.ReactNode => {
+      <Route path="/" exact component={LoginForm} />
+      <Route path="/login" exact component={LoginForm} />
+      <Route path="/comment" exact render={(): React.ReactNode => {
         return (
           <CookiesProvider>
             <App url={url} maxMessageCount={1024} />
