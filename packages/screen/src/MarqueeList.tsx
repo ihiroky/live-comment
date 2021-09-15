@@ -19,7 +19,6 @@ export const MarqueeList: React.FC<Props> = (props: React.PropsWithChildren<Prop
   if (props.fontBorderColor) {
     style['WebkitTextStroke'] = `1px ${props.fontBorderColor}`
   }
-  // Too large ?
   const offsetTop = props.marqueeHeight / 2
 
   return (

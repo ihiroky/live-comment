@@ -19,7 +19,7 @@ export function createHash(s: string): string {
   return sha512(s)
 }
 
-export { isObject } from './isObject'
+export { isObject, getRandomInteger } from './utils'
 export { assertNotNullable } from './assert'
 export { Deffered } from './Deffered'
 

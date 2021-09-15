@@ -10,6 +10,7 @@ import {
   AcnMessage,
   isAcnMessage,
   Deffered,
+  getRandomInteger,
 } from 'common'
 import { WebSocketClient, WebSocketControl } from 'wscomp'
 /*
@@ -24,8 +25,6 @@ import {
   PollMessage,
   PollStartMessage,
 } from './types'
-import { getRandomInteger } from './utils'
-
 
 function isPollMessage(m: Message): m is PollMessage {
   return isApplicationMessage(m) && m.cmd === 'poll/poll'
