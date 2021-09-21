@@ -7,6 +7,12 @@ import { mocked } from 'ts-jest/utils'
 jest.mock('ws')
 jest.useFakeTimers()
 
+beforeAll(() => {
+  // Remove jest option which overlaps Configuration
+  const i = process.argv.findIndex(v => v === '-c')
+  process.argv.splice(i, 2)
+})
+
 test('countUpPending counts up messageCount and messageCharCount', () => {
   const ws = new WebSocket('') as ClientSession
   ws.pendingMessageCount = 1
