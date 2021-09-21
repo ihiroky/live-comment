@@ -72,33 +72,34 @@ function parsePort(v: unknown): number {
   return isNaN(n) ? DEFAULT_PORT : n
 }
 
-const argv = yargs(hideBin(process.argv))
-  .option('configPath', {
-    alias: 'c',
-    type: 'string',
-    description: 'Path to configuration file (JSON).',
-    default: undefined,
-    coerce: findConfigPath
-  })
-  .option('port', {
-    alias: 'p',
-    type: 'number',
-    description: `WebSocket server listen port (default: ${DEFAULT_PORT}).`,
-    default: undefined,
-    coerce: parsePort
-  })
-  .option('loglevel', {
-    alias: 'l',
-    type: 'string',
-    description: 'Log level (OFF, ERROR, WARN, INFO, DEBUG, TRACE, default: INFO).',
-    default: undefined,
-    coerce: parseLogLevel
-  })
-  .help()
-  .argv
+function parseArgv() {
+  const argv = yargs(hideBin(process.argv))
+    .option('configPath', {
+      alias: 'c',
+      type: 'string',
+      description: 'Path to configuration file (JSON).',
+      default: undefined,
+      coerce: findConfigPath
+    })
+    .option('port', {
+      alias: 'p',
+      type: 'number',
+      description: `WebSocket server listen port (default: ${DEFAULT_PORT}).`,
+      default: undefined,
+      coerce: parsePort
+    })
+    .option('loglevel', {
+      alias: 'l',
+      type: 'string',
+      description: 'Log level (OFF, ERROR, WARN, INFO, DEBUG, TRACE, default: INFO).',
+      default: undefined,
+      coerce: parseLogLevel
+    })
+    .help()
+  return argv.argv
+}
 
 const log = getLogger('Configuration')
-log.setLevel(argv.loglevel)
 
 function parseConfigJson(json: string): ServerConfig {
   const c = JSON.parse(json)
@@ -119,10 +120,17 @@ export class Configuration {
   private cache: ServerConfig
   private lastUpdated: number
 
+  readonly port: number
+  readonly logLevel: LogLevel
+
   constructor() {
+    const argv = parseArgv()
+    log.setLevel(argv.loglevel)
     this.path = argv.configPath
     this.lastUpdated = fs.statSync(this.path).mtimeMs
     this.cache = parseConfigJson(fs.readFileSync(this.path, { encoding: 'utf8' }))
+    this.port = argv.port
+    this.logLevel = argv.loglevel
   }
 
   reloadIfUpdatedAsync(): Promise<void> {
@@ -147,15 +155,7 @@ export class Configuration {
     })
   }
 
-  get port(): number {
-    return argv.port
-  }
-
   get rooms(): Room[] {
     return this.cache.rooms
-  }
-
-  get logLevel(): LogLevel {
-    return argv.loglevel
   }
 }

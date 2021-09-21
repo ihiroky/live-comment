@@ -9,10 +9,12 @@ import {
   ErrorMessage,
   isAcnMessage,
   getLogger,
-  CommentMessage
+  CommentMessage,
+  getRandomInteger,
 } from 'common'
 import { ApplicationMessage, isClientMessage } from 'common'
 import { AcnOkMessage } from 'common/src/Message'
+import { HealthCheck, countUpPending, countDownPending } from './HealthCheck'
 
 export interface ClientSession extends WebSocket {
   alive: boolean
@@ -23,6 +25,7 @@ export interface ClientSession extends WebSocket {
   pendingMessageCount: number
   pendingCharCount: number
   room?: string
+  healthCheckSlot?: number
 }
 
 // TODO optimize send message loop
@@ -30,30 +33,17 @@ export interface ServerSession extends WebSocket.Server {
   rooms: Map<string, ClientSession[]>
 }
 
-const PING_INTERVAL_MILLIS = 7 * 1000
-const MAX_PENDING_MESSAGE_COUNT = 500
-const MAX_PENDING_CHAR_COUNT = 5000
-
 const log = getLogger('websocket')
-
-function receiveHeartbeat(this: WebSocket, data: Buffer): void {
-  const self = this as ClientSession
-  log.debug('[receiveHeartbeat] From', self.id, data.toString())
-  self.alive = true
-  self.lastPongTime = Date.now()
-}
 
 function sendMessage(c: ClientSession, message: WebSocket.Data): void {
   const charCount = message.toString().length
-  c.pendingMessageCount++
-  c.pendingCharCount += charCount
+  countUpPending(c, charCount)
   c.send(message, (err: Error | undefined) => {
     if (err) {
       log.error('[sendMessage] Error on sending message:', c.id, err)
       return
     }
-    c.pendingMessageCount--
-    c.pendingCharCount -= charCount
+    countDownPending(c, charCount)
   })
 }
 
@@ -88,6 +78,7 @@ function broadcast(
   if (!sender.room) {
     log.error('[onMessage] Unauthenticated client:', sender.id)
     sender.close()
+    return
   }
   log.debug('[onMessage]', message, 'from', sender.id, 'to', sender.room)
   message.from = sender.id
@@ -106,19 +97,18 @@ function onConnected(
   server: WebSocket.Server,
   ws: WebSocket,
   req: http.IncomingMessage,
+  healthCheck: HealthCheck,
   configuration: Configuration
 ): void {
   // TODO desktopだけ細かい情報を取れる特権をもつ: client識別子、特殊なコマンドを送れる等
   //      AcnMessageにpreciseオプションついてたらおくる
   const client = ws as ClientSession
   client.id = crypto.createHash('sha224')
-    .update(req.socket.remoteAddress + ':' + req.socket.remotePort, 'ascii')
+    .update(req.socket.remoteAddress + ':' + req.socket.remotePort + ':' + getRandomInteger(), 'ascii')
     .digest('hex')
-  client.alive = true
   client.connectedTime = Date.now()
-  client.lastPongTime = 0
   client.blocked = false
-  client.on('pong', receiveHeartbeat)
+  healthCheck.add(client)
   client.on('message', (message: WebSocket.Data): void => {
     const data = message.toString()
     const m = JSON.parse(data)
@@ -133,58 +123,35 @@ function onConnected(
   client.on('error', function (e: Error): void {
     const client = this as ClientSession
     log.info('[onError] Socket error', client.id, e)
+    healthCheck.remove(client)
   })
   client.on('close', function (this: WebSocket, code: number, reason: string): void {
     const c = this as ClientSession
     log.info('[onClose]', c.id, code, reason)
+    healthCheck.remove(client)
   })
   log.info('[onConnected]', client.id)
 }
 
-function checkPingPong(client: ClientSession): void {
-  if (!client.alive) {
-    client.terminate()
-    log.info(`[checkPingPong] Terminate ${client.id} due to no pong.`)
-    return
-  }
-
-  client.alive = false
-  client.ping()
-}
-
-function checkPendingCount(client: ClientSession): void {
-  if (client.pendingMessageCount > MAX_PENDING_MESSAGE_COUNT || client.pendingCharCount > MAX_PENDING_CHAR_COUNT) {
-    log.error(
-      '[checkPendingCount]',
-      `Terminate ${client.id} due to too many pending messages.`,
-      `messages:${client.pendingMessageCount}, characters:${client.pendingCharCount}`
-    )
-    const message: ErrorMessage = {
-      type: 'error',
-      error: 'TOO_MANY_PENDING_MESSAGES',
-      message: 'I can not stand it any longer.'
-    }
-    client.close(CloseCode.TOO_MANY_PENDING_MESSAGES, JSON.stringify(message))
-  }
-}
-
-export function createWebSocketServer(server: http.Server, configuration: Configuration): WebSocket.Server {
-  log.setLevel(configuration.logLevel)
+export function createWebSocketServer(
+  server: http.Server,
+  healthCheck: HealthCheck,
+  configuration: Configuration
+): WebSocket.Server {
+  healthCheck.start()
   const wss = new WebSocket.Server({ server })
   wss.on('connection', function(ws: WebSocket, req: http.IncomingMessage): void {
     log.debug('onconnect', req.socket.remoteAddress)
-    onConnected(this, ws, req, configuration)
+    onConnected(this, ws, req, healthCheck, configuration)
   })
 
   const healthCheckIntervalId: NodeJS.Timeout = setInterval((): void => {
     wss.emit('healthcheck')
-    wss.clients.forEach((ws: WebSocket) => {
-      const client = ws as ClientSession
-      checkPingPong(client)
-      checkPendingCount(client)
-    })
-  }, PING_INTERVAL_MILLIS)
-  wss.on('close', () => clearInterval(healthCheckIntervalId))
+  }, 7 * 1000)
+  wss.on('close', (): void => {
+    healthCheck.stop()
+    clearInterval(healthCheckIntervalId)
+  })
 
   return wss
 }

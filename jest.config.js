@@ -5,5 +5,6 @@ module.exports = {
     "packages/desktop",
     "packages/poll",
     "packages/screen",
+    "packages/server",
   ]
 }

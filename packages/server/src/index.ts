@@ -6,6 +6,7 @@ import {
   LogLevels
 } from 'common'
 import 'tslib'
+import { HealthCheck } from './HealthCheck'
 
 const configuration = new Configuration()
 const log = getLogger('index')
@@ -17,7 +18,8 @@ if (log.enabledFor(LogLevels.DEBUG)) {
 const server = createServer().on('request', (_, res): void => {
   res.end('Hello.')
 })
-const wss = createWebSocketServer(server, configuration)
+const healthCheck = new HealthCheck()
+const wss = createWebSocketServer(server, healthCheck, configuration)
 wss.on('healthcheck', function(): void {
   configuration.reloadIfUpdatedAsync()
 })
