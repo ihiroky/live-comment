@@ -10,7 +10,9 @@ jest.useFakeTimers()
 beforeAll(() => {
   // Remove jest option which overlaps Configuration
   const i = process.argv.findIndex(v => v === '-c')
-  process.argv.splice(i, 2)
+  if (i > -1) {
+    process.argv.splice(i, 2)
+  }
 })
 
 test('countUpPending counts up messageCount and messageCharCount', () => {

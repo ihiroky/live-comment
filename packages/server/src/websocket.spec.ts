@@ -22,7 +22,10 @@ let configPath: string
 beforeEach(() => {
   // Remove jest option which overlaps Configuration
   const i = process.argv.findIndex(v => v === '-c')
-  process.argv.splice(i, 2)
+  if (i > -1) {
+    process.argv.splice(i, 2)
+  }
+
   configPath = path.join(os.tmpdir(), 'test.json')
   process.argv.push(...['--configPath', configPath])
   fs.writeFileSync(configPath, JSON.stringify({
