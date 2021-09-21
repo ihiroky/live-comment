@@ -7,9 +7,8 @@ import os from 'os'
 import http from 'http'
 import { mocked } from 'ts-jest/utils'
 import { Socket } from 'net'
-import { AcnMessage, AcnOkMessage, CloseCode, CommentMessage, ErrorMessage, getLogger } from 'common'
+import { AcnMessage, AcnOkMessage, CloseCode, CommentMessage, ErrorMessage, getLogger, LogLevels } from 'common'
 import { HealthCheck, countUpPending, countDownPending } from './HealthCheck'
-
 
 jest.mock('http')
 jest.mock('ws')
@@ -37,7 +36,12 @@ beforeEach(() => {
       hash: 'dbb50237ad3fa5b818b8eeca9ca25a047e0f29517db2b25f4a8db5f717ff90bf0b7e94ef4f5c4e313dfb06e48fbd9a2e40795906a75c470cdb619cf9c2d4f6d9',
     }],
   }))
-  configuration = new Configuration()
+  const argv = {
+    configPath,
+    port: 8080,
+    loglevel: LogLevels.INFO,
+  }
+  configuration = new Configuration(argv)
 
   mocked(WebSocket.Server).mockImplementation(() => {
     return {

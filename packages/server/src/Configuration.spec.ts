@@ -3,14 +3,17 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 import { LogLevels } from 'common'
+import { Argv } from './argv'
 
 let configPath: string
+let argv: Argv
 
 beforeAll(() => {
-  // Remove jest option which overlaps Configuration
-  const i = process.argv.findIndex(v => v === '-c')
-  if (i > -1) {
-    process.argv.splice(i, 2)
+  configPath = ''
+  argv = {
+    configPath: './server.config.json',
+    port: 8080,
+    loglevel: LogLevels.INFO,
   }
 })
 
@@ -37,98 +40,55 @@ function writeConfig(path: string, cfg?: Record<string, unknown>): void {
   fs.writeFileSync(path, JSON.stringify(config))
 }
 
-/*** Test order (current directory -> home -> env -> cmd args) is important ***/
-
-test('Load from file in current directory', () => {
-  // Use server.config.json in this repository.
-  const sut = new Configuration()
-
-  expect(sut.rooms.map(r => r.room).sort()).toEqual(['hoge', 'test'])
-})
-
-test('Load from file in the home config direcotry', () => {
-  const homePath = os.tmpdir()
-  configPath = path.join(homePath, '.config')
-  const configFileParentPath = path.join(configPath, 'live-comment')
-  fs.mkdirSync(configFileParentPath, { recursive: true })
-  const configFilePath = path.join(configFileParentPath, 'server.config.json')
-  writeConfig(configFilePath)
-  process.env['HOME'] = homePath
-
-  const sut = new Configuration()
-
-  expect(sut.rooms.map(r => r.room).sort()).toEqual(['hoge', 'test'])
-})
-
-test('Load from file specified by envirnment variable', () => {
-  configPath = path.join(os.tmpdir(), 'test.json')
-  writeConfig(configPath)
-  process.env['LIVE_COMMENT_SERVER_CONFIG'] = configPath
-
-  const sut = new Configuration()
-
-  expect(sut.rooms.map(r => r.room).sort()).toEqual(['hoge', 'test'])
-})
-
-test('Load from file specified by command line', () => {
-  configPath = path.join(os.tmpdir(), 'test.json')
-  writeConfig(configPath)
-  process.argv.push(...['--configPath', configPath])
-
-  const sut = new Configuration()
-
-  expect(sut.rooms.map(r => r.room).sort()).toEqual(['hoge', 'test'])
-})
-
-
 test('Error if configuration file does not have any room definition', () => {
   configPath = path.join(os.tmpdir(), 'test.json')
   writeConfig(configPath, {})
-  process.argv.push(...['--configPath', configPath])
+  argv.configPath = configPath
 
-  expect(() => new Configuration()).toThrow('Room definition does not exist.')
+  expect(() => new Configuration(argv)).toThrow('Room definition does not exist.')
 })
 
 test('Error if configuration file have empty rooms', () => {
   configPath = path.join(os.tmpdir(), 'test.json')
   writeConfig(configPath, { rooms: [] })
-  process.argv.push(...['--configPath', configPath])
+  argv.configPath = configPath
 
-  expect(() => new Configuration()).toThrow('Room definition does not exist.')
+  expect(() => new Configuration(argv)).toThrow('Room definition does not exist.')
 })
 
 test('Error if a room has no name', () => {
   configPath = path.join(os.tmpdir(), 'test.json')
   writeConfig(configPath, { rooms: [{ hash: 'hash' }] })
-  process.argv.push(...['--configPath', configPath])
+  argv.configPath = configPath
 
-  expect(() => new Configuration()).toThrow('Unexpected room definition: {"hash":"hash"}')
+  expect(() => new Configuration(argv)).toThrow('Unexpected room definition: {"hash":"hash"}')
 })
 
 test('Error if a room has no hash', () => {
   configPath = path.join(os.tmpdir(), 'test.json')
   writeConfig(configPath, { rooms: [{ room: 'room' }] })
-  process.argv.push(...['--configPath', configPath])
+  argv.configPath = configPath
 
-  expect(() => new Configuration()).toThrow('Unexpected room definition: {"room":"room"}')
+  expect(() => new Configuration(argv)).toThrow('Unexpected room definition: {"room":"room"}')
 })
 
 test('Default port is 8080', () => {
   configPath = path.join(os.tmpdir(), 'test.json')
   writeConfig(configPath)
-  process.argv.push(...['--configPath', configPath])
+  argv.configPath = configPath
 
-  const sut = new Configuration()
+  const sut = new Configuration(argv)
 
   expect(sut.port).toBe(8080)
 })
 
 test('Get port specified at command line', () => {
-  process.argv.push(...['-p', '8888'])
   configPath = path.join(os.tmpdir(), 'test.json')
   writeConfig(configPath)
+  argv.configPath = configPath
+  argv.port = 8888
 
-  const sut = new Configuration()
+  const sut = new Configuration(argv)
 
   expect(sut.port).toBe(8888)
 })
@@ -136,19 +96,20 @@ test('Get port specified at command line', () => {
 test('Default loglevel is INFO', () => {
   configPath = path.join(os.tmpdir(), 'test.json')
   writeConfig(configPath)
-  process.argv.push(...['--configPath', configPath])
+  argv.configPath = configPath
 
-  const sut = new Configuration()
+  const sut = new Configuration(argv)
 
   expect(sut.logLevel).toBe(LogLevels.INFO)
 })
 
 test('Get loglevel specified at command line', () => {
-  process.argv.push(...['-l', 'debug'])
   configPath = path.join(os.tmpdir(), 'test.json')
   writeConfig(configPath)
+  argv.configPath = configPath
+  argv.loglevel = LogLevels.DEBUG
 
-  const sut = new Configuration()
+  const sut = new Configuration(argv)
 
   expect(sut.logLevel).toBe(LogLevels.DEBUG)
 })

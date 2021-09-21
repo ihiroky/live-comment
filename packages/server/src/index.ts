@@ -7,8 +7,10 @@ import {
 } from 'common'
 import 'tslib'
 import { HealthCheck } from './HealthCheck'
+import { parseArgv } from './argv'
 
-const configuration = new Configuration()
+const argv = parseArgv()
+const configuration = new Configuration(argv)
 const log = getLogger('index')
 log.setLevel(configuration.logLevel)
 if (log.enabledFor(LogLevels.DEBUG)) {
