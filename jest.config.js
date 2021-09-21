@@ -4,5 +4,6 @@ module.exports = {
     "packages/comment",
     "packages/desktop",
     "packages/poll",
+    "packages/screen",
   ]
 }

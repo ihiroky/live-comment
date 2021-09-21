@@ -1,4 +1,4 @@
-import { isObject } from './isObject'
+import { isObject } from './utils'
 
 test('null is not "Object"', () => {
   const actual = isObject(null)

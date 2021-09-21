@@ -5,12 +5,14 @@ import {
   isCommentMessage,
   CloseCode,
   getLogger,
+  getRandomInteger,
 } from 'common'
 import { WebSocketControl } from 'wscomp'
 import React from 'react'
 
 export type MarqueeProps = {
   key: number
+  created: number
   level: number
   comment: string
   ref: React.RefObject<HTMLParagraphElement>
@@ -18,27 +20,29 @@ export type MarqueeProps = {
 
 export type MarqueePropsList = Readonly<Readonly<MarqueeProps>[]>
 
+const SPACE_BETWEEN_COMMENTS = 384
 const MAX_MESSAGES = 500
-const SPACE_BETWEEN_COMMENTS = 256
 const log = getLogger('MarqueePropsGenerator')
 
-function calcMinimumEmptyLevel(messages: MarqueeProps[]): number {
-  if (messages.length === 0 || messages[0].level > 0) {
+export function calcMinimumEmptyLevel(sorted: MarqueeProps[]): number {
+  if (sorted.length === 0 || sorted[0].level > 0) {
     return 0
   }
 
   let nextLevel = 1
-  for (let i = 1; i < messages.length; i++) {
-    const m = messages[i]
+  for (let i = 1; i < sorted.length; i++) {
+    const m = sorted[i]
     if (m.level > nextLevel) {
       return nextLevel
     }
-    nextLevel = m.level + 1
+    if (nextLevel === m.level) {
+      nextLevel = m.level + 1
+    }
   }
   return -1
 }
 
-function findLevelRightSpaceExists(marquees: MarqueeProps[]): number {
+export function findLevelRightSpaceExists(marquees: MarqueeProps[]): number {
   if (marquees.length === 0 || marquees[0].level > 0) {
     return 0
   }
@@ -83,10 +87,6 @@ export class MarqueePropsGenerator {
     this.marquees = []
     this.webSocketControl = null
     this.marqueePropsListUpdated = listener
-
-    this.onOpen = this.onOpen.bind(this)
-    this.onClose = this.onClose.bind(this)
-    this.onMessage = this.onMessage.bind(this)
   }
 
   close(): void {
@@ -95,7 +95,7 @@ export class MarqueePropsGenerator {
     }
   }
 
-  onOpen(control: WebSocketControl): void {
+  readonly onOpen = (control: WebSocketControl): void => {
     log.debug('[onOpen]', control)
     const message: AcnMessage = {
       type: 'acn',
@@ -106,7 +106,7 @@ export class MarqueePropsGenerator {
     this.webSocketControl = control
   }
 
-  onClose(ev: CloseEvent): void {
+  readonly onClose = (ev: CloseEvent): void => {
     if (ev.code === CloseCode.ACN_FAILED) {
       const comment: CommentMessage = {
         type: 'comment',
@@ -124,14 +124,14 @@ export class MarqueePropsGenerator {
     this.webSocketControl?.reconnectWithBackoff()
   }
 
-  onMessage(message: Message): void {
+  readonly onMessage = (message: Message): void => {
     const now = Date.now()
     if (!isCommentMessage(message)) {
       log.warn('[onMessage] Unexpected message:', message)
       return
     }
 
-    const marquees = this.marquees.filter(m => now - m.key <= this.duration)
+    const marquees = this.marquees.filter(m => now - m.created <= this.duration)
     if (marquees.length >= MAX_MESSAGES)  {
       log.warn('[onMessage] Dropped:', message.comment)
       return
@@ -149,15 +149,16 @@ export class MarqueePropsGenerator {
     let insertPosition = marquees.length
     if (length > 0 && marquees[length - 1].level >= level) {
       for (let i = marquees.length - 1; i >= 0; i--) {
-        if (marquees[i].level === level) {
-          insertPosition = i
+        if (marquees[i].level <= level) {
+          insertPosition = i + 1
           break
         }
       }
     }
 
     marquees.splice(insertPosition, 0, {
-      key: now,  // TODO Do not use Date.now()
+      key: getRandomInteger(),
+      created: now,
       comment: message.comment,
       level: level,
       ref: React.createRef<HTMLParagraphElement>()

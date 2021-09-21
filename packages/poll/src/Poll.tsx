@@ -5,13 +5,12 @@ import {
   InputBase,
   makeStyles,
 } from '@material-ui/core'
-import { getLogger } from 'common'
+import { getLogger, getRandomInteger } from 'common'
 import { Mode, Update, PollEntry } from './types'
 import { Choice } from './Choice'
 import { PollEdit } from './PollEdit'
 import { Polling } from './Polling'
 import { PollResult, PollResultProps } from './PollResult'
-import { getRandomInteger } from './utils'
 
 const log = getLogger('Poll')
 

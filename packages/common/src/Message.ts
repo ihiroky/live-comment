@@ -1,4 +1,4 @@
-import { isObject } from './isObject'
+import { isObject } from './utils'
 
 const Errors = [
   'ACN_FAILED',
