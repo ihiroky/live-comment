@@ -73,7 +73,7 @@ function parsePort(v: unknown): number {
 }
 
 function parseArgv() {
-  const argv = yargs(hideBin(process.argv))
+  return yargs
     .option('configPath', {
       alias: 'c',
       type: 'string',
@@ -96,7 +96,7 @@ function parseArgv() {
       coerce: parseLogLevel
     })
     .help()
-  return argv.argv
+    .parse(hideBin(process.argv)) // Explicitly call parse() as it requires a reconfigured process.argv for testing
 }
 
 const log = getLogger('Configuration')
