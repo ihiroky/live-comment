@@ -1,7 +1,7 @@
 {
   "productName": "live-comment",
   "appId": "ml.live-comment.desktop",
-  "electronVersion": "12.0.5",
+  "electronVersion": "12.1.2",
   "files": [
     "package.json",
     "dist/js/**/*.js"

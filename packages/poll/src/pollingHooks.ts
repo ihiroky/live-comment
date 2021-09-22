@@ -5,28 +5,30 @@ import { isPollMessage, PollEntry, PollFinishMessage, PollStartMessage, Progress
 
 const log = getLogger('pollingHooks')
 
-export function useAcnOk(pollId: number, title: string, wsc: WebSocketControl | null): Deffered<PollEntry[]> {
+export function useAcnOk(
+  pollIdRef: React.MutableRefObject<number>, title: string, wscRef: React.MutableRefObject<WebSocketControl | null>
+): Deffered<PollEntry[]> {
   return React.useMemo<Deffered<PollEntry[]>>(() => {
     const deffered = new Deffered<PollEntry[]>()
     deffered.promise.then((entries: PollEntry[]): void => {
       const start: PollStartMessage = {
         type: 'app',
         cmd: 'poll/start',
-        id: 'poll-' + pollId,
+        id: 'poll-' + pollIdRef.current,
         title,
         entries: entries.map(e => ({ key: e.key, description: e.description })),
       }
-      log.info('Send', start)
-      wsc?.send(start)
+      log.debug('Send', wscRef.current !== null, start)
+      wscRef.current?.send(start)
     })
     return deffered
-  }, [pollId, title, wsc])
+  }, [pollIdRef, title, wscRef])
 }
 
 export function useOnMessage(
   acnOk: { resolve: (entries: PollEntry[]) => void },
   entries: PollEntry[],
-  progress: Progress,
+  progressRef: React.MutableRefObject<Progress>,
   onChange: (update: Update) => void
 ): (message: Message) => void {
   return React.useCallback((message: Message): void => {
@@ -39,7 +41,7 @@ export function useOnMessage(
       return
     }
     // choice = key of the chosen entry
-    const p = progress
+    const p = progressRef.current
     const oldChoice = p.get(message.from)
     if (message.choice === oldChoice) {
       return
@@ -51,7 +53,7 @@ export function useOnMessage(
       change.set(oldChoice, -1)
     }
     onChange(change)
-  }, [acnOk, entries, progress, onChange])
+  }, [acnOk, entries, progressRef, onChange])
 }
 
 export function useOnOpen(
@@ -71,35 +73,34 @@ export function useOnOpen(
   }, [wscRef, room, hash])
 }
 
-export function useOnClose(wsc: WebSocketControl | null): (ev: CloseEvent) => void {
+export function useOnClose(wscRef: React.MutableRefObject<WebSocketControl | null>): (ev: CloseEvent) => void {
   return React.useCallback((ev: CloseEvent): void => {
     log.info('[onClose]', ev.code, ev.reason)
-    if (wsc) {
-      wsc.reconnectWithBackoff()
-    }
-  }, [wsc])
+    wscRef.current?.reconnectWithBackoff()
+  }, [wscRef])
 }
 
 
 export function useOnClick(
-  progress: Progress | null,
-  wsc: WebSocketControl | null,
-  pollId: number,
+  progressRef: React.MutableRefObject<Progress>,
+  wscRef: React.MutableRefObject<WebSocketControl | null>,
+  pollIdRef: React.MutableRefObject<number>,
   onFinished: () => void
 ): () => void {
   return React.useCallback((): void => {
-    progress?.clear()
-    if (wsc) {
+    progressRef.current.clear()
+    if (wscRef.current) {
       const finish: PollFinishMessage = {
         type: 'app',
         cmd: 'poll/finish',
-        id:  'poll-' + pollId,
+        id:  'poll-' + pollIdRef.current,
       }
-      wsc.send(finish)
-      wsc.close()
+      wscRef.current.send(finish)
+      wscRef.current.close()
+      wscRef.current = null
     }
     onFinished()
-  }, [progress, wsc, pollId, onFinished])
+  }, [progressRef, wscRef, pollIdRef, onFinished])
 }
 
 
@@ -110,16 +111,22 @@ export function useOnUnmount(
 ): void {
   React.useEffect((): (() => void) => {
     return (): void => {
-      progress.current?.clear()
+      // progress is not a react node
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      progress.current.clear()
       if (wscRef.current) {
         const finish: PollFinishMessage = {
           type: 'app',
           cmd: 'poll/finish',
+          // pollIdRef is not a react node
+          // eslint-disable-next-line react-hooks/exhaustive-deps
           id:  'poll-' + pollIdRef.current,
         }
         wscRef.current.send(finish)
+        // wscRef is not a react node
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         wscRef.current.close()
       }
     }
-  }, [])
+  }, [pollIdRef, progress, wscRef])
 }

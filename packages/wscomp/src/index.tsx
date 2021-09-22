@@ -40,7 +40,7 @@ function createWebSocket(
           if (ws) {
             const json = JSON.stringify(message)
             ws.send(json)
-            log.trace('[send]', message)
+            log.debug('[send]', message)
           }
         },
         reconnect: (): void => {
@@ -105,10 +105,6 @@ function createWebSocket(
 
 export function WebSocketClient(props: WebSocketClientPropsType): JSX.Element {
   const webSocketRef = React.useRef<WebSocket | null>(null)
-  const createWebSocketMemo = React.useCallback(
-    () => createWebSocket(props, webSocketRef),
-    [props, webSocketRef]
-  )
 
   React.useEffect((): (() => void) => {
     if (props.noComments) {
@@ -119,7 +115,7 @@ export function WebSocketClient(props: WebSocketClientPropsType): JSX.Element {
       }
       props.onMessage(comment)
     }
-    createWebSocketMemo()
+    createWebSocket(props, webSocketRef)
 
     return (): void => {
       if (webSocketRef.current) {
@@ -128,7 +124,7 @@ export function WebSocketClient(props: WebSocketClientPropsType): JSX.Element {
         log.debug('[componentWillUnmount] Websocket closed.')
       }
     }
-  })
+  }, [])
 
   return <div />
 }
