@@ -21,18 +21,22 @@ export type WebSocketClientPropsType = {
 const log = getLogger('WebSocketClient')
 
 function createWebSocket(
-  props: WebSocketClientPropsType,
+  url: WebSocketClientPropsType['url'],
+  onOpen: WebSocketClientPropsType['onOpen'],
+  onClose: WebSocketClientPropsType['onClose'],
+  onError: WebSocketClientPropsType['onError'],
+  onMessage: WebSocketClientPropsType['onMessage'],
   webSocketRef: React.MutableRefObject<WebSocket | null>
 ): void {
-  if (!/^wss?:\/\/./.test(props.url)) {
+  if (!/^wss?:\/\/./.test(url)) {
     webSocketRef.current = null
     return
   }
 
-  const webSocket = new WebSocket(props.url)
+  const webSocket = new WebSocket(url)
   webSocket.addEventListener('open', (ev: Event): void => {
     log.debug('[onopen]', ev)
-    if (props.onOpen) {
+    if (onOpen) {
       const control: WebSocketControl = {
         _reconnectTimer: 0,
         send: (message: Message): void => {
@@ -46,7 +50,7 @@ function createWebSocket(
         reconnect: (): void => {
           log.debug('[WebSocketControl.reconnect] Start.')
           webSocketRef.current?.close()
-          createWebSocket(props, webSocketRef)
+          createWebSocket(url, onOpen, onClose, onError, onMessage, webSocketRef)
           log.debug('[WebSocketControl.reconnect] End.')
         },
         reconnectWithBackoff: (): void => {
@@ -74,7 +78,7 @@ function createWebSocket(
           }
         }
       }
-      props.onOpen(control)
+      onOpen(control)
     }
   })
   webSocket.addEventListener('close', (ev: CloseEvent): void => {
@@ -83,39 +87,41 @@ function createWebSocket(
       webSocketRef.current.close()
       webSocketRef.current = null
     }
-    if (props.onClose) {
-      props.onClose(ev)
+    if (onClose) {
+      onClose(ev)
     }
   })
   webSocket.addEventListener('error', (ev: Event): void => {
     log.debug('[onerror]', ev)
-    if (props.onError) {
-      props.onError(ev)
+    if (onError) {
+      onError(ev)
     }
   })
   webSocket.addEventListener('message', (ev: MessageEvent<string>): void => {
     log.trace('[onmessage]', ev)
     const message: Message = JSON.parse(ev.data)
-    props.onMessage(message)
+    onMessage(message)
   })
 
-  log.info('[createWebSocket] Websocket created.', props.url)
+  log.info('[createWebSocket] Websocket created.', url)
   webSocketRef.current = webSocket
 }
 
-export function WebSocketClient(props: WebSocketClientPropsType): JSX.Element {
+export function WebSocketClient(
+  { url, noComments, onOpen, onClose, onError, onMessage }: WebSocketClientPropsType
+): JSX.Element {
   const webSocketRef = React.useRef<WebSocket | null>(null)
 
   React.useEffect((): (() => void) => {
-    if (props.noComments) {
+    if (noComments) {
       log.debug('[componentDidMount] No comments mode.')
       const comment: CommentMessage = {
         type: 'comment',
         comment: 'Entering no comments mode.'
       }
-      props.onMessage(comment)
+      onMessage(comment)
     }
-    createWebSocket(props, webSocketRef)
+    createWebSocket(url, onOpen, onClose, onError, onMessage, webSocketRef)
 
     return (): void => {
       if (webSocketRef.current) {
@@ -124,7 +130,7 @@ export function WebSocketClient(props: WebSocketClientPropsType): JSX.Element {
         log.debug('[componentWillUnmount] Websocket closed.')
       }
     }
-  }, [])
+  }, [url, noComments, onOpen, onClose, onError, onMessage])
 
   return <div />
 }

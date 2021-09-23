@@ -25,7 +25,8 @@ export const Screen: React.FC<ScreenProps> = (props: React.PropsWithChildren<Scr
   const marqueeGenerator = React.useMemo((): MarqueePropsGenerator =>
     new MarqueePropsGenerator(props.room, props.hash, props.duration, (mpl: MarqueePropsList): void => {
       setMarqueePropsList(mpl)
-    }),[props])
+    }), [props]
+  )
 
   // TODO Need to work with css class screen
   const marqueeHeight = 64 + 8
