@@ -131,7 +131,7 @@ export function PollResult(
       setType(value)
       onTypeChanged(value)
     }
-  }, [])
+  }, [onTypeChanged])
 
   if ((mode !== 'result-graph' && mode !== 'result-list') || enchantedData === null) {
     return <>{children}</>

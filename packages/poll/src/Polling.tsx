@@ -4,31 +4,23 @@ import {
   Button,
 } from '@material-ui/core'
 import {
-  Message,
-  isApplicationMessage,
   getLogger,
-  AcnMessage,
-  isAcnMessage,
-  Deffered,
   getRandomInteger,
 } from 'common'
 import { WebSocketClient, WebSocketControl } from 'wscomp'
-/*
-// Separate from common to mock on testing.
-import { WebSocketClient } from 'common/WebSocketClient'
-*/
 import {
   Progress,
   Update,
   PollEntry,
-  PollFinishMessage,
-  PollMessage,
-  PollStartMessage,
 } from './types'
-
-function isPollMessage(m: Message): m is PollMessage {
-  return isApplicationMessage(m) && m.cmd === 'poll/poll'
-}
+import {
+  useAcnOk,
+  useOnClick,
+  useOnClose,
+  useOnMessage,
+  useOnOpen,
+  useOnUnmount,
+} from './pollingHooks'
 
 const log = getLogger('poll/Polling')
 
@@ -43,95 +35,15 @@ export function Polling({ url, room, hash, title, entries, onChange, onFinished 
 }): JSX.Element | null {
   log.info('Polling', entries)
   const wscRef = React.useRef<WebSocketControl | null>(null)
-  const progress = React.useRef<Progress>(new Map())
+  const progressRef = React.useRef<Progress>(new Map())
   const pollIdRef = React.useRef<number>(getRandomInteger())
-  const acnOk = React.useMemo<Deffered<PollEntry[]>>(() => {
-    const deffered = new Deffered<PollEntry[]>()
-    deffered.promise.then((entries: PollEntry[]): void => {
-      const start: PollStartMessage = {
-        type: 'app',
-        cmd: 'poll/start',
-        id: 'poll-' + pollIdRef.current,
-        title,
-        entries: entries.map(e => ({ key: e.key, description: e.description })),
-      }
-      log.info('Send', start)
-      wscRef.current?.send(start)
-    })
-    return deffered
-  }, [])
+  const acnOk = useAcnOk(pollIdRef, title, wscRef)
 
-  const onMessage = React.useCallback((message: Message): void => {
-    log.debug('[onMessage]', message)
-    if (isAcnMessage(message)) {
-      acnOk.resolve(entries)
-      return
-    }
-    if (!isPollMessage(message)) {
-      return
-    }
-    // choice = key of the chosen entry
-    const p = progress.current
-    const oldChoice = p.get(message.from)
-    if (message.choice === oldChoice) {
-      return
-    }
-    p.set(message.from, message.choice)
-    const change = new Map<PollEntry['key'], number>()
-    change.set(message.choice, 1)
-    if (oldChoice) {
-      change.set(oldChoice, -1)
-    }
-    onChange(change)
-  }, [onChange, entries])
-
-  const onOpen = React.useCallback((wsc: WebSocketControl): void => {
-    wscRef.current = wsc
-
-    const acn: AcnMessage = {
-      type: 'acn',
-      room,
-      hash,
-    }
-    wsc.send(acn)
-  }, [wscRef, entries])
-
-  const onClose = React.useCallback((ev: CloseEvent): void => {
-    log.info('[onClose]', ev.code, ev.reason)
-    const wsc = wscRef.current
-    if (wsc) {
-      wsc.reconnectWithBackoff()
-    }
-  }, [wscRef])
-
-  const onClick = React.useCallback((): void => {
-    progress.current?.clear()
-    if (wscRef.current) {
-      const finish: PollFinishMessage = {
-        type: 'app',
-        cmd: 'poll/finish',
-        id:  'poll-' + pollIdRef.current,
-      }
-      wscRef.current.send(finish)
-      wscRef.current.close()
-    }
-    onFinished()
-  }, [onFinished])
-
-  React.useEffect((): (() => void) => {
-    return (): void => {
-      progress.current?.clear()
-      if (wscRef.current) {
-        const finish: PollFinishMessage = {
-          type: 'app',
-          cmd: 'poll/finish',
-          id:  'poll-' + pollIdRef.current,
-        }
-        wscRef.current.send(finish)
-        wscRef.current.close()
-      }
-    }
-  }, [])
+  const onMessage = useOnMessage(acnOk, entries, progressRef, onChange)
+  const onOpen = useOnOpen(wscRef, room, hash)
+  const onClose = useOnClose(wscRef)
+  const onClick = useOnClick(progressRef, wscRef, pollIdRef, onFinished)
+  useOnUnmount(progressRef, wscRef, pollIdRef)
 
   return (
     <>

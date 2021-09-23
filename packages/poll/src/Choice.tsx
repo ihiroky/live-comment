@@ -31,12 +31,13 @@ function elementIdOf(e: PollEntry): string {
 }
 
 export function useBlinkCountedUpEntries(entries: PollEntry[], blinkClass: string): void {
-  const [prevCounts, setPrevCounts] = React.useState<number[]>([])
+  // const [prevCounts, setPrevCounts] = React.useState<number[]>([])
+  const prevCountsRef = React.useRef<number[]>([])
   const blinkReadyIdSetRef = React.useRef<Set<string>>(new Set())
 
   React.useEffect(() => {
-    if (prevCounts.length !== entries.length) {
-      setPrevCounts(entries.map(e => e.count))
+    if (prevCountsRef.current.length !== entries.length) {
+      prevCountsRef.current = entries.map(e => e.count)
       return
     }
     if (entries.every(e => e.count === 0)) {
@@ -44,7 +45,7 @@ export function useBlinkCountedUpEntries(entries: PollEntry[], blinkClass: strin
     }
 
     const blinkIds = entries
-      .filter((e, i) => prevCounts[i] < e.count)
+      .filter((e, i) => prevCountsRef.current[i] < e.count)
       .map(e => elementIdOf(e))
     for (const id of blinkIds) {
       const blinkReadyIdSet = blinkReadyIdSetRef.current
@@ -70,9 +71,8 @@ export function useBlinkCountedUpEntries(entries: PollEntry[], blinkClass: strin
         })
       })
     }
-
-    setPrevCounts(entries.map(e => e.count))
-  }, [entries])
+    prevCountsRef.current = entries.map(e => e.count)
+  }, [entries, blinkClass, prevCountsRef])
 }
 
 

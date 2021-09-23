@@ -72,6 +72,8 @@ export function useSettingsState(): SettingsState {
       watermark.offset.setValue({ data: w.offset, error: false})
       watermark.noComments.setValue({ data: w.noComments, error: false })
     })
+  // Request initial values on initialization only.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return {

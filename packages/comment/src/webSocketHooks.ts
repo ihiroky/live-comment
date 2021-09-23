@@ -35,7 +35,7 @@ export function useWebSocketOnOpen(
       hash: createHash(password),
     }
     wsc.send(acn)
-  }, [cookies])
+  }, [cookies, wscRef])
 }
 
 
@@ -55,7 +55,7 @@ export function useWebSocketOnClose(
         wscRef.current?.reconnectWithBackoff()
         break
     }
-  }, [modCookies])
+  }, [modCookies, wscRef])
 }
 
 export function useWebSocketOnMessage(
@@ -107,5 +107,5 @@ export function useWebSocketOnMessage(
     if (state.autoScroll && autoScrollRef.current && messageListDivRef.current) {
       messageListDivRef.current.scrollTo(0, autoScrollRef.current.offsetTop)
     }
-  }, [state, maxMessageCount, closePoll])
+  }, [state, maxMessageCount, closePoll, autoScrollRef, messageListDivRef, setState])
 }

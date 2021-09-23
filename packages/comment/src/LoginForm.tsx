@@ -70,10 +70,10 @@ export const LoginForm: React.FC = (): JSX.Element => {
     modCookies.str('room', room.value)
     modCookies.str('password', password.value)
     window.location.href = './comment'
-  }, [])
+  }, [room, password, modCookies])
 
   const onTextFieldChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>): void => {
-    log.trace('[onTextFieldChanged]', e.target.name, e.target.value)
+    log.debug('[onTextFieldChanged]', e.target.name, e.target.value)
     if (notification.message.length > 0) {
       setNotification({ message: '' })
     }
@@ -95,7 +95,7 @@ export const LoginForm: React.FC = (): JSX.Element => {
         break
       }
     }
-  }, [])
+  }, [notification.message.length])
 
   const hasError = React.useCallback((): boolean => {
     return room.helperText.length > 0 || password.helperText.length > 0

@@ -91,17 +91,17 @@ export const Poll: React.FC<Props> = (props: Props): JSX.Element => {
     // TODO Check if data exists.
     setMode('poll')
     props.onCreated && props.onCreated()
-  }, [props.onCreated])
+  }, [props])
   const onCanceled = React.useCallback((): void => {
     props.onCanceled && props.onCanceled()
-  }, [props.onCanceled])
+  }, [props])
   const onFinished = React.useCallback((): void => {
     setMode('result-list')
     props.onPollClosed && props.onPollClosed()
-  }, [props.onPollClosed])
+  }, [props])
   const onClosed = React.useCallback((): void => {
     props.onResultClosed && props.onResultClosed()
-  }, [props.onResultClosed])
+  }, [props])
 
   function onResultTypeChanged(type: string): void {
     switch (type) {

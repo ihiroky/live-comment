@@ -17,8 +17,10 @@ function pad00(n: number): string {
       : String(n)
 }
 
+// This is not a react hooks
+// eslint-disable-next-line react-hooks/rules-of-hooks
 JsLogger.useDefaults({
-  defaultLevel: JsLogger.INFO,
+  defaultLevel: JsLogger.DEBUG,
   formatter: function(messages: unknown[], context: IContext): void {
     const now = new Date()
     const timestamp = now.getFullYear() + '/' +

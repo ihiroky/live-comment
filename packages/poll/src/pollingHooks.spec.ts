@@ -3,6 +3,7 @@ import { useAcnOk, useOnClick, useOnClose, useOnMessage, useOnOpen, useOnUnmount
 import { AcnMessage, AcnOkMessage, CommentMessage } from 'common'
 import { WebSocketControl } from 'wscomp'
 import { PollEntry, PollMessage, PollStartMessage, Progress, Update } from './types'
+import React from 'react'
 
 function createPollEntries(): PollEntry[] {
   return [
@@ -23,10 +24,14 @@ function createWebSocketControlMock(): WebSocketControl {
 }
 
 test('useAcnOk create defered to send PollStartMessage', async () => {
-  const props: { pollId: number, title: string, wsc: WebSocketControl | null } = {
-    pollId: 0,
+  const props: {
+    pollId: React.MutableRefObject<number>
+    title: string
+    wsc: React.MutableRefObject<WebSocketControl | null>
+  } = {
+    pollId: { current: 0 },
     title: 'title',
-    wsc: createWebSocketControlMock(),
+    wsc: { current: createWebSocketControlMock() },
   }
 
   const { result, waitFor } = renderHook((p) => useAcnOk(p.pollId, p.title, p.wsc), {
@@ -39,19 +44,19 @@ test('useAcnOk create defered to send PollStartMessage', async () => {
   const expected: PollStartMessage = {
     type: 'app',
     cmd: 'poll/start',
-    id: 'poll-' + props.pollId,
+    id: 'poll-' + props.pollId.current,
     title: props.title,
     entries: entries.map(e => ({ key: e.key, description: e.description })),
   }
   await waitFor(() => {
-    expect(props.wsc?.send).toBeCalledWith(expected)
+    expect(props.wsc.current?.send).toBeCalledWith(expected)
   })
 })
 
 function createOnMessageProps(progress: Progress = new Map()): {
   acnOk: { resolve: (entries: PollEntry[]) => void }
   entries: PollEntry[]
-  progress: Progress
+  progress: { current: Progress }
   onChange: (update: Update) => void
 } {
   return {
@@ -59,7 +64,7 @@ function createOnMessageProps(progress: Progress = new Map()): {
       resolve: jest.fn(),
     },
     entries: createPollEntries(),
-    progress,
+    progress: { current: progress },
     onChange: jest.fn(),
   }
 }
@@ -217,32 +222,34 @@ test('onOpen sends AcnMessage and cache WebSocketControl', () => {
 })
 
 test('onClose call reconnectWithBackoff()', () => {
-  const wsc = createWebSocketControlMock()
+  const wsc = { current: createWebSocketControlMock() }
 
   const { result } = renderHook(() => useOnClose(wsc))
   const onClose = result.current
   onClose({ code: 0, reason: '' } as CloseEvent)
 
-  expect(wsc.reconnectWithBackoff).toBeCalled()
+  expect(wsc.current.reconnectWithBackoff).toBeCalled()
 })
 
 test('onClick clear progress, send finish message and call onFinished', () => {
-  const progress = new Map([['key', 1]])
+  const progress = { current: new Map([['key', 1]]) }
   const wsc = createWebSocketControlMock()
-  const pollId = 1
+  const wscRef = { current: wsc }
+  const pollId = { current: 1 }
   const onFinished = jest.fn()
 
-  const { result } = renderHook(() => useOnClick(progress, wsc, pollId, onFinished))
+  const { result } = renderHook(() => useOnClick(progress, wscRef, pollId, onFinished))
   const onClick = result.current
   onClick()
 
-  expect(progress.size).toBe(0)
+  expect(progress.current.size).toBe(0)
   expect(wsc.send).toBeCalledWith({
     type: 'app',
     cmd: 'poll/finish',
-    id:  `poll-${pollId}`,
+    id:  `poll-${pollId.current}`,
   })
   expect(wsc.close).toBeCalled()
+  expect(wscRef.current).toBeNull()
   expect(onFinished).toBeCalled()
 })
 
