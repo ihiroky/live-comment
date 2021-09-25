@@ -1,0 +1,8 @@
+{
+  "name": "unzip",
+  "version": "1.0.0",
+  "main": "unzip.min.js",
+  "types": "index.d.js",
+  "license": "MIT",
+  "private": true
+}

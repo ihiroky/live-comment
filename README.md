@@ -94,8 +94,8 @@ yarn start --debug # Starts http/ws server on port 8080
 ### Serve comment from on development server
 ```bash
 cd packages/comment
-yarn start  # Starts http server on port 3000
-# Access http://localhost:3000/login
+yarn start  # Starts http server on port 18080
+# Access http://localhost:18080/login
 ```
 
 ### Build desktop application

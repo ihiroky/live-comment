@@ -35,6 +35,9 @@ export default [{
     name: 'Screen',
     format: 'iife'
   },
+  watch: {
+    buildDelay: 5000
+  },
   plugins: plugins(),
 }, {
   input: 'dist/js/settings/index.js',
@@ -43,6 +46,9 @@ export default [{
     name: 'Settings',
     format: 'iife'
   },
+  watch: {
+    buildDelay: 5000
+  },
   plugins: plugins(),
 }, {
   input: 'dist/js/poll/index.js',
@@ -50,6 +56,9 @@ export default [{
     file: 'resources/poll.js',
     name: 'Screen',
     format: 'iife'
+  },
+  watch: {
+    buildDelay: 5000
   },
   plugins: plugins(),
 }];

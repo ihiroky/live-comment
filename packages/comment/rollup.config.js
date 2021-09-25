@@ -35,6 +35,9 @@ export default [{
     name: 'Screen',
     format: 'iife'
   },
+  watch: {
+    buildDelay: 3333,
+  },
   context: 'this',  // For react-cookie es6 module
   plugins: plugins(),
 }]
