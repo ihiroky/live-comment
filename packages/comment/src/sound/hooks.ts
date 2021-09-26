@@ -237,13 +237,13 @@ export function useExistsSounds(url: string, room: string | null, hash: string |
   return existsSounds
 }
 
-export function usePlaySound(): (id: string, onFinsih?: (e?: Error | DOMException) => void) => void {
-  return React.useCallback((id: string, onFinish?: (e?: Error | DOMException) => void): void => {
+export function usePlaySound(): (id: string, volume: number, onFinsih?: (e?: Error | DOMException) => void) => void {
+  return React.useCallback((id: string, volume: number, onFinish?: (e?: Error | DOMException) => void): void => {
     const soundData = get<StoredSound>('sound', id)
     const context = new AudioContext()
     const source = context.createBufferSource()
     const gain = context.createGain()
-    gain.gain.value = 0.05
+    gain.gain.value = volume / 100
     gain.connect(context.destination)
     const decodeSuccess: DecodeSuccessCallback = (decoded: AudioBuffer): void => {
       source.buffer = decoded
