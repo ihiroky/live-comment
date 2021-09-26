@@ -53,7 +53,7 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
 
   return (
     <div style={{ width }}>
-      <Grid container spacing={1}>
+      <Grid container spacing={0}>
         <Grid item xs={12} className={style.title}>
           <div>Ding Dong Ring</div>
         </Grid>
