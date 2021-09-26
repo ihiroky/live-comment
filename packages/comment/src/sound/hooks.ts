@@ -112,7 +112,7 @@ async function isSoundsAvailable(
 }
 
 async function storeSounds(url: string, room: string, hash: string, checksum: string): Promise<void> {
-  const blob = await fetch(
+  const zipBlob = await fetch(
     `${url}${SOUND_FILE_PATH}?room=${room}&hash=${hash}`,
     {
       method: 'GET',
@@ -121,51 +121,37 @@ async function storeSounds(url: string, room: string, hash: string, checksum: st
       headers: { 'Accept': 'application/zip' }
     }
   ).then((response: Response): Promise<Blob> => response.blob())
-
-  const reader = new FileReader()
-  reader.addEventListener('load', function (): void {
-    if (this.result === null) {
-      log.error('[storeSounds] No data to read.')
-      return
-    }
-    if (typeof this.result === 'string') {
-      log.error('[storeSounds] The data is not buffer.')
-      return
-    }
-
-    const zipData = new Uint8Array(this.result)
-
-    const unzip = new Zlib.Unzip(zipData)
-    const utf8Decoder = new TextDecoder()
-    const manifest: SoundManifest = JSON.parse(utf8Decoder.decode(unzip.decompress(MANIFEST_JSON)))
-    log.debug('manifest', manifest)
-    const manifestMap = new Map(
-      manifest.files
-        .map(normalizeSoundFileDefinition)
-        .filter(e => e !== null)
-        .map(e => [e.file, e])
-    )
-    update((store: Store): void => {
-      store.clear()
-      store.put(CHECKSUM, checksum)
-      for (const fileName of unzip.getFilenames()) {
-        const name = trimAcceptableSuffix(fileName)
-        if (name === null) {
-          continue
-        }
-        const data = unzip.decompress(fileName)
-        const manifestForFile = manifestMap.get(fileName)
-        const displayName = manifestForFile?.displayName ?? name
-        const alias = manifestForFile?.alias ?? null
-        const value: StoredSound = { displayName, alias, data }
-        store.put(name, value)
+  const zipBuffer = await zipBlob.arrayBuffer()
+  const zipData = new Uint8Array(zipBuffer)
+  const unzip = new Zlib.Unzip(zipData)
+  const utf8Decoder = new TextDecoder()
+  const manifest: SoundManifest = JSON.parse(utf8Decoder.decode(unzip.decompress(MANIFEST_JSON)))
+  log.debug('manifest', manifest)
+  const manifestMap = new Map(
+    manifest.files
+      .map(normalizeSoundFileDefinition)
+      .filter(e => e !== null)
+      .map(e => [e.file, e])
+  )
+  await update((store: Store): void => {
+    store.clear()
+    store.put(CHECKSUM, checksum)
+    for (const fileName of unzip.getFilenames()) {
+      const name = trimAcceptableSuffix(fileName)
+      if (name === null) {
+        continue
       }
-    })
+      const data = unzip.decompress(fileName)
+      const manifestForFile = manifestMap.get(fileName)
+      const displayName = manifestForFile?.displayName ?? name
+      const alias = manifestForFile?.alias ?? null
+      const value: StoredSound = { displayName, alias, data }
+      store.put(name, value)
+    }
   })
-  reader.readAsArrayBuffer(blob)
 }
 
-// TODO Sort by LRU
+// TODO Sort by LRU ?
 export function useSounds(existsSounds: boolean): Sound[] | null {
   const [sounds, setSounds] = React.useState<Sound[] | null>([])
 
