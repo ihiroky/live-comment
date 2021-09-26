@@ -1,12 +1,11 @@
 import React from 'react'
-import './App.css'
 import { Message, createHash } from 'common'
 import { WebSocketClient, WebSocketControl } from 'wscomp'
 import { SendCommentForm } from './SendCommentForm'
 import { AppState } from './types'
 import { PollControl } from './PollControl'
 import { LabeledCheckbox } from './LabeledCheckbox'
-import { FormGroup, Link } from '@material-ui/core'
+import { FormGroup, Link, makeStyles } from '@material-ui/core'
 import { useAppCookies, Name as AppCookieName, FAR_ENOUGH } from './useAppCookies'
 import { useWebSocketOnOpen, useWebSocketOnClose, useWebSocketOnMessage } from './webSocketHooks'
 import { useOnPoll, useOnClosePoll } from './pollHooks'
@@ -20,6 +19,98 @@ type AppProps = {
 type CheckboxStateName = 'autoScroll' | 'sendWithCtrlEnter' | 'openSoundPanel'
 
 // TODO User should be able to restart poll if the poll entry is closed by mistake.
+
+const useStyles = makeStyles({
+  App: {
+    width: '100vw',
+    height: '100vh',
+    backgroundColor: '#ccffcc',
+    padding: 0,
+    margin: 0,
+  },
+  nav: {
+    minWidth: 300,
+    width: '90%',
+    minHeight: 16,
+    height: '3vh',
+    margin: 'auto',
+    display: 'flex',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    padding: 6,
+  },
+  box: {
+    display: 'flex',
+    height: 'calc(100% - (3vh + 12px))',  /* 3vh + 12px : acutal nav height */
+    margin: 0,
+    padding: 0,
+  },
+  main: {
+    textAlign: 'center',
+    background: 'rgba(32, 32, 32, 0.1)',
+    borderRadius: 6,
+    padding: 10,
+    margin: 10,
+    minWidth: 300,
+    width: '95%',
+    height: 'calc(100% - 40px)', /* 40px: margin + padding */
+    '& form': {
+      width: '100%',
+      margin: 0,
+      '& input[type="text"]': {
+        border: 'none',
+        padding: 6,
+        margin: '10px 0px',
+        borderRadius: 6,
+        width: '85%'
+      },
+      '& input[type="submit"]': {
+        width: '10%',
+        maxWidth: '5vw',
+        border: 'none',
+        padding: '6px 3px',
+        marginTop: 10,
+        marginBottom: 10,
+        marginLeft: 3,
+        borderRadius: 6,
+      },
+      '& $options': {
+        width: '90%',
+        padding: '0px 4%',
+        fontSize: 8,
+      }
+    },
+  },
+  sound: {
+    overflow: 'hidden',
+    resize: 'horizontal',
+    width: 250,
+    height: '100%',
+    '& iframe': {
+      overflow: 'auto',
+      border: 0,
+      margin: 0,
+      padding: 0,
+      width: '100%',
+      height: '100%',
+    },
+  },
+  'message-list': {
+    /* 52px: send form height, 42px: option form height */
+    height: 'calc(100% - 52px - 42px)',
+    wordWrap: 'break-word',
+    overflowY: 'auto',
+    margin: 'auto',
+  },
+  message: {
+    textAlign: 'left',
+    backgroundColor: '#99ffcc',
+    borderRadius: 6,
+    padding: 10,
+    margin: '10px 20px',
+  },
+  'options': {}
+})
 
 export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
   const [cookies, modCookies] = useAppCookies()
@@ -69,6 +160,7 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
       goToLoginPage()
     }
   }, [cookies])
+  const style = useStyles()
 
   const room = cookies.str('room')
   const password = cookies.str('password')
@@ -78,18 +170,18 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
     { label: 'Open DDR', name: 'open_ddr', key: 'openSoundPanel' },
   ]
   return (
-    <div className="App">
-      <div className="nav">
+    <div className={style.App}>
+      <div className={style.nav}>
         <div style={{ padding: '0px 12px' }}>Room: {cookies.str('room')}</div>
         <Link href="#" onClick={goToLoginPage}>Back to login</Link>
       </div>
-      <div className="box">
+      <div className={style.box}>
         <div>
           { room && password ? (
             <>
               <WebSocketClient url={props.url} onOpen={onOpen} onClose={onClose} onMessage={onMessage} />
               { state.openSoundPanel ? (
-                <div className="sound">
+                <div className={style.sound}>
                   <iframe
                     src={`/sound?room=${room}&hash=${createHash(password)}`}
                     allow="autoplay 'src'"
@@ -98,11 +190,11 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
               ) : null }
             </>) : null }
         </div>
-        <div className="main">
-          <div className="message-list" ref={messageListDivRef}>
+        <div className={style.main}>
+          <div className={style['message-list']} ref={messageListDivRef}>
             {
               state.comments.map(
-                (m: AppState['comments'][number]) => <p key={m.key} className="message">{m.comment}</p>
+                (m: AppState['comments'][number]) => <p key={m.key} className={style.message}>{m.comment}</p>
               )
             }
             {
@@ -119,7 +211,7 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
           </div>
           <SendCommentForm onSubmit={onSubmit} sendWithCtrlEnter={state.sendWithCtrlEnter} />
           <form>
-            <div className="options">
+            <div className={style.options}>
               <FormGroup row>
                 { checkBoxMeta.map(m => (
                   <LabeledCheckbox

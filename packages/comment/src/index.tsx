@@ -1,12 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { BrowserRouter, Route } from 'react-router-dom'
-import './index.css'
 import { App } from './App'
 import { LoginForm } from './LoginForm'
 import { CookiesProvider } from 'react-cookie'
 import * as serviceWorker from './serviceWorker'
-
 import { SoundPlayer } from './sound/SoundPlayer'
 
 const wsUrl = process.env.NODE_ENV === 'production'
