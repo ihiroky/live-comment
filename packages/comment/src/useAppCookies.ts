@@ -6,8 +6,9 @@ const Names = [
   'password',
   'autoScroll',
   'sendWithCtrlEnter',
+  'openSoundPanel',
 ] as const
-type Name = typeof Names[number]
+export type Name = typeof Names[number]
 
 type AppCookies = {
   str: (name: Name) => string | undefined

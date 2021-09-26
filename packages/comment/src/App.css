@@ -19,6 +19,10 @@
 }
 
 .box {
+  display: flex;
+}
+
+.main {
   text-align: center;
   background: rgba(32, 32, 32, 0.1);
   border-radius: 6px;
@@ -27,6 +31,21 @@
   width: 90%;
   height: 92vh;
   margin: auto;
+}
+
+.sound {
+  overflow: hidden;
+  resize: horizontal;
+  width: 250px;
+  height: 100%;
+}
+
+.sound > iframe {
+  overflow: auto;
+  margin: 0px;
+  padding: 0px;
+  width: 100%;
+  height: 100%;
 }
 
 @media screen and ( max-width: 400px) {

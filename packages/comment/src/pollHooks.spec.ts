@@ -54,6 +54,7 @@ function createAppState(): AppState {
     }],
     autoScroll: true,
     sendWithCtrlEnter: true,
+    openSoundPanel: false,
   }
 }
 

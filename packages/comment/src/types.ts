@@ -16,6 +16,7 @@ export type AppState = {
   }[]
   autoScroll: boolean
   sendWithCtrlEnter: boolean
+  openSoundPanel: boolean
 }
 
 export type StreamingClient = typeof WebSocketClient

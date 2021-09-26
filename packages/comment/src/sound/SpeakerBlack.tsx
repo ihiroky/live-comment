@@ -1,7 +1,7 @@
 import React from 'react'
 
 export const NoteBlack: React.FC = (): JSX.Element => (
-  <svg x="0px" y="0px" width="512px" height="512px" viewBox="0 0 512 512" style={{ width: 48, height: 48, opacity: 1 }}>
+  <svg x="0px" y="0px" width="512px" height="512px" viewBox="0 0 512 512" style={{ width: 32, height: 32, opacity: 1 }}>
     <g>
       <path
         d="M300.488,94.756c-5.494-3.162-11.622-4.743-17.75-4.743c-6.175,0-12.358,1.612-17.89,4.828l-117.401,68.277

@@ -1,12 +1,10 @@
 import { Grid, IconButton, makeStyles } from '@material-ui/core'
 import React from 'react'
-import { useExistsSounds, useSounds, usePlaySound } from './hooks'
+import { useExistsSounds, useSounds, usePlaySound, useRoomHash } from './hooks'
 import { NoteBlack } from './NoteBlack'
 
 type Props = {
-  protocolHost: string
-  room: string
-  hash: string
+  url: string
 }
 
 const useStyles = makeStyles({
@@ -22,8 +20,9 @@ const useStyles = makeStyles({
   }
 })
 
-export const SoundPlayer: React.FC<Props> = ({ protocolHost, room, hash }: Props): JSX.Element => {
-  const existsSounds = useExistsSounds(protocolHost, room, hash)
+export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
+  const [room, hash] = useRoomHash()
+  const existsSounds = useExistsSounds(url, room, hash)
   const [width, setWidth] = React.useState(window.innerWidth)
   const sounds = useSounds(existsSounds)
   const playSound = usePlaySound()
@@ -40,10 +39,10 @@ export const SoundPlayer: React.FC<Props> = ({ protocolHost, room, hash }: Props
     })
   }, [])
   const xs = React.useMemo((): 12 | 6 | 4 | 3 | 2 => {
-    const cols = width <= 200 ? 1
-      : width <= 400 ? 2
-        : width <= 600 ? 3
-          : width <= 800 ? 4
+    const cols = width <= 250 ? 1
+      : width <= 500 ? 2
+        : width <= 750 ? 3
+          : width <= 1000 ? 4
             : 6
     return cols === 1 ? 12
       : cols === 2 ? 6

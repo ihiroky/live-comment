@@ -74,17 +74,17 @@ function trimAcceptableSuffix(fileName: string): string | null {
 
 
 async function isSoundsAvailable(
-  protocolHost: string,
+  url: string,
   room: string,
   hash: string
 ): Promise<{ available: boolean, update: boolean, checksum: string }> {
-  log.debug('[getNewChecksum]', protocolHost, room, hash)
+  log.debug('[getNewChecksum]', url, room, hash)
 
   const abort = new AbortController()
   const timeout = window.setTimeout(() => abort.abort(), 3000)
   try {
     const checksum = await fetch(
-      `${protocolHost}${CHECKSUM_FILE_PATH}?room=${room}&hash=${hash}`,
+      `${url}${CHECKSUM_FILE_PATH}?room=${room}&hash=${hash}`,
       {
         method: 'GET',
         cache: 'no-store',
@@ -111,9 +111,9 @@ async function isSoundsAvailable(
   }
 }
 
-async function storeSounds(protocolHost: string, room: string, hash: string, checksum: string): Promise<void> {
+async function storeSounds(url: string, room: string, hash: string, checksum: string): Promise<void> {
   const blob = await fetch(
-    `${protocolHost}${SOUND_FILE_PATH}?room=${room}&hash=${hash}`,
+    `${url}${SOUND_FILE_PATH}?room=${room}&hash=${hash}`,
     {
       method: 'GET',
       cache: 'no-store',
@@ -165,6 +165,7 @@ async function storeSounds(protocolHost: string, room: string, hash: string, che
   reader.readAsArrayBuffer(blob)
 }
 
+// TODO Sort by LRU
 export function useSounds(existsSounds: boolean): Sound[] | null {
   const [sounds, setSounds] = React.useState<Sound[] | null>([])
 
@@ -202,24 +203,29 @@ export function useSounds(existsSounds: boolean): Sound[] | null {
   return sounds
 }
 
-export function useExistsSounds(protocolHost: string, room: string, hash: string): boolean {
+export function useExistsSounds(url: string, room: string | null, hash: string | null): boolean {
   const [existsSounds, setExistsSounds] = React.useState(false)
 
   React.useEffect((): void => {
     setExistsSounds(false)
-    isSoundsAvailable(protocolHost, room, hash).then(({ available, update, checksum }) => {
+    if (room === null || hash === null) {
+      return
+    }
+
+    const urlEndNoSlash = url.replace(/\/+$/, '')
+    isSoundsAvailable(urlEndNoSlash, room, hash).then(({ available, update, checksum }) => {
       if (available) {
         if (!update) {
           setExistsSounds(true)
           return
         }
-        storeSounds(protocolHost, room, hash, checksum).then(() => setExistsSounds(true))
+        storeSounds(urlEndNoSlash, room, hash, checksum).then(() => setExistsSounds(true))
       }
     }).catch(e => {
       log.error(e)
       setExistsSounds(false)
     })
-  }, [protocolHost, room, hash])
+  }, [url, room, hash])
 
   return existsSounds
 }
@@ -252,5 +258,12 @@ export function usePlaySound(): (data: Uint8Array, onFinsih?: () => void) => voi
     }
     const buffer = Uint8Array.from(data)
     context.decodeAudioData(buffer.buffer, decodeSuccess, decodeError)
+  }, [])
+}
+
+export function useRoomHash(): [string | null, string | null] {
+  return React.useMemo((): [string | null, string | null] => {
+    const params = new URLSearchParams(window.location.search)
+    return [params.get('room'), params.get('hash')]
   }, [])
 }
