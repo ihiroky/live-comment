@@ -1,7 +1,11 @@
 import { getLogger } from 'common'
 const DB_NAME = 'live-comment'
 const DB_VERSION = 1
-const STORE_NAME = 'sound'
+const StoreNames = [
+  'soundMetadata',
+  'sound',
+] as const
+export type StoreName = typeof StoreNames[number]
 
 const log = getLogger('sound/db')
 
@@ -11,7 +15,9 @@ function open(): Promise<IDBDatabase> {
       const req = indexedDB.open(DB_NAME, DB_VERSION)
       req.addEventListener('upgradeneeded', function(this: IDBOpenDBRequest, e: IDBVersionChangeEvent): void {
         log.debug(this.result.version, e.oldVersion, e.newVersion)
-        this.result.createObjectStore(STORE_NAME, { keyPath: 'id' })
+        for (const name of StoreNames) {
+          this.result.createObjectStore(name, { keyPath: 'id' })
+        }
       })
       req.addEventListener('success', function(this: IDBOpenDBRequest): void {
         resolve(this.result)
@@ -23,10 +29,10 @@ function open(): Promise<IDBDatabase> {
   )
 }
 
-export async function get<T>(id: string): Promise<T | null> {
+export async function get<T>(storeName: StoreName, id: string): Promise<T | null> {
   const db = await open()
   return new Promise<T | null>((resolve: (checksum: T | null) => void, reject: (e: Error) => void): void => {
-    const req = db.transaction([STORE_NAME], 'readonly').objectStore(STORE_NAME).get(id)
+    const req = db.transaction([storeName], 'readonly').objectStore(storeName).get(id)
     if (!req) {
       resolve(null)
       return
@@ -42,10 +48,13 @@ export async function get<T>(id: string): Promise<T | null> {
   })
 }
 
-export async function getAll<T>(receiver: (id: string, value: unknown) => T | undefined): Promise<T[]> {
+export async function getAll<T>(
+  storeName: StoreName,
+  receiver: (id: string, value: unknown) => T | undefined
+): Promise<T[]> {
   const db = await open()
   return new Promise<T[]>((resolve: (values: T[]) => void, reject: (e: unknown) => void): void => {
-    const req = db.transaction([STORE_NAME], 'readonly').objectStore(STORE_NAME).openCursor()
+    const req = db.transaction([storeName], 'readonly').objectStore(storeName).openCursor()
     if (!req) {
       reject(new Error('Failed to open cursor.'))
       return
@@ -76,23 +85,38 @@ export async function getAll<T>(receiver: (id: string, value: unknown) => T | un
   })
 }
 
-export type Store = {
-  put(id: string, value: unknown): void
-  clear(): void
+export type StoreOperation = {
+  put(storeName: StoreName, id: string, value: unknown): void
+  clear(storeName: StoreName): void
   transaction: {
     commit(): void
     abort(): void
   }
 }
 
-export async function update(updater: (store: Store) => void): Promise<void> {
+export async function update(storeNames: StoreName[], updater: (op: StoreOperation) => void): Promise<void> {
   const db = await open()
-  const tx = db.transaction([STORE_NAME], 'readwrite')
-  const os = tx.objectStore(STORE_NAME)
+  const tx = db.transaction(storeNames, 'readwrite')
+  const stores: Map<StoreName, IDBObjectStore> = new Map()
+  for (const name of storeNames) {
+    stores.set(name, tx.objectStore(name))
+  }
   try {
     updater({
-      put: (id: string, value: unknown): void => { os.put({ id, value }) },
-      clear: (): void => { os.clear() },
+      put: (storeName: StoreName, id: string, value: unknown): void => {
+        const store = stores.get(storeName)
+        if (!store) {
+          throw new Error(`No object store: ${storeName}`)
+        }
+        store.put({ id, value })
+      },
+      clear: (storeName: StoreName): void => {
+        const store = stores.get(storeName)
+        if (!store) {
+          throw new Error(`No object store: ${storeName}`)
+        }
+        store.clear()
+      },
       transaction: {
         commit: () => tx.commit(),
         abort: () => tx.abort(),

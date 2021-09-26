@@ -1,5 +1,5 @@
 import { isObject, getLogger } from 'common'
-import { get, getAll, update, Store } from './db'
+import { get, getAll, update, StoreOperation } from './db'
 import { Zlib } from 'unzip'
 import React from 'react'
 
@@ -12,7 +12,7 @@ const ACCEPTABLE_SUFFIX = ['.mp3', '.wav']
 type SoundFileDefinition = {
   file: string
   displayName?: string
-  alias?: string | string[]
+  command?: string | string[]
 }
 
 type SoundManifest = {
@@ -26,25 +26,27 @@ type SoundManifest = {
   >
 }
 
-type StoredSound = {
+type StoredSoundMetadata = {
   displayName: string
-  alias: string | string[] | null
+  command: string | string[] | null
+}
+
+type StoredSound = {
   data: Uint8Array
 }
 
-type Sound = {
-  name: string[]
+type SoundMetadata = {
+  id: string
   displayName: string
-  data: Uint8Array
+  command: string[]
 }
 
 const log = getLogger('sound/hooks')
 
-function isStoredSound(value: unknown): value is StoredSound {
+function isStoredSoundMetadata(value: unknown): value is StoredSoundMetadata {
   return isObject(value) && (
     typeof value.displayName === 'string' &&
-    (typeof value.alias === 'string' || Array.isArray(value.alias) || value.alias === null) &&
-    value.data instanceof Uint8Array
+    (typeof value.command === 'string' || Array.isArray(value.command) || value.command === null)
   )
 }
 
@@ -59,7 +61,7 @@ function normalizeSoundFileDefinition(def: SoundManifest['files'][number]): Soun
   switch (def.length) {
     case 1: return { file: def[0] }
     case 2: return { file: def[0], displayName: def[1] }
-    case 3: return { file: def[0], displayName: def[1], alias: def[2] }
+    case 3: return { file: def[0], displayName: def[1], command: def[2] }
   }
 }
 
@@ -100,7 +102,7 @@ async function isSoundsAvailable(
         checksum: '',
       }
     }
-    const storedChecksum = await get<string>(CHECKSUM)
+    const storedChecksum = await get<string>('soundMetadata', CHECKSUM)
     return {
       available: true,
       update: checksum !== storedChecksum,
@@ -133,60 +135,79 @@ async function storeSounds(url: string, room: string, hash: string, checksum: st
       .filter(e => e !== null)
       .map(e => [e.file, e])
   )
-  await update((store: Store): void => {
-    store.clear()
-    store.put(CHECKSUM, checksum)
+  await update(['soundMetadata', 'sound'], (op: StoreOperation): void => {
+    op.clear('soundMetadata')
+    op.clear('sound')
+
+    op.put('soundMetadata', CHECKSUM, checksum)
     for (const fileName of unzip.getFilenames()) {
-      const name = trimAcceptableSuffix(fileName)
-      if (name === null) {
+      const id = trimAcceptableSuffix(fileName)
+      if (id === null) {
         continue
       }
       const data = unzip.decompress(fileName)
       const manifestForFile = manifestMap.get(fileName)
-      const displayName = manifestForFile?.displayName ?? name
-      const alias = manifestForFile?.alias ?? null
-      const value: StoredSound = { displayName, alias, data }
-      store.put(name, value)
+      const displayName = manifestForFile?.displayName ?? id
+      const command = manifestForFile?.command ?? null
+      const metadataValue: StoredSoundMetadata = { displayName, command }
+      op.put('soundMetadata', id, metadataValue)
+      const value: StoredSound = { data }
+      op.put('sound', id, value)
     }
   })
 }
 
 // TODO Sort by LRU ?
-export function useSounds(existsSounds: boolean): Sound[] | null {
-  const [sounds, setSounds] = React.useState<Sound[] | null>([])
+export function useSoundMetadata(
+  existsSounds: boolean
+): [Record<string, SoundMetadata>, Record<string, string>] | [] {
+  const [sounds, setSounds] = React.useState<Record<string, SoundMetadata> | null>({})
+  const [commands, setCommands] = React.useState<Record<string, string> | null>({})
 
   React.useEffect((): void => {
     if (!existsSounds) {
-      setSounds([])
+      setSounds({})
       return
     }
 
     setSounds(null)
-    getAll<Sound>((id: string, value: unknown): Sound | undefined => {
+    setCommands(null)
+    getAll<SoundMetadata>('soundMetadata', (id: string, value: unknown): SoundMetadata | undefined => {
       log.debug('getAll', id, value)
-      if (id === CHECKSUM || !isStoredSound(value)) {
+      if (!isStoredSoundMetadata(value)) {
         return
       }
-      const name = (value.alias && value.alias.length > 0 && value.alias[0].length > 0) ? [] : [id]
       const displayName = value.displayName
-      const data = value.data
-      const alias = value.alias
-      if (alias) {
-        if (typeof alias === 'string') {
-          name.push(alias)
-        } else if (Array.isArray(alias)) {
-          for (const e of alias) {
-            name.push(e)
+      const cmd = value.command
+      const command: string[] = []
+      if (cmd) {
+        if (typeof cmd === 'string') {
+          command.push(cmd)
+        } else if (Array.isArray(cmd)) {
+          for (const e of cmd) {
+            command.push(e)
           }
         }
       }
-      return { name, displayName, data }
-    }).then((values: Sound[]) => {
-      setSounds(values)
+      if (command.length === 0) {
+        command.push(id)
+      }
+      return { id, displayName, command }
+    }).then((values: SoundMetadata[]) => {
+      const sounds: Record<string, SoundMetadata> = {}
+      const commands: Record<string, string> = {}
+      for (const v of values) {
+        sounds[v.id] = v
+        for (const cmd of v.command) {
+          commands[cmd] = v.id
+        }
+      }
+      setSounds(sounds)
+      setCommands(commands)
     })
   }, [existsSounds])
 
-  return sounds
+  return (sounds !== null && commands !== null) ? [sounds, commands] : []
 }
 
 export function useExistsSounds(url: string, room: string | null, hash: string | null): boolean {
@@ -216,8 +237,9 @@ export function useExistsSounds(url: string, room: string | null, hash: string |
   return existsSounds
 }
 
-export function usePlaySound(): (data: Uint8Array, onFinsih?: () => void) => void {
-  return React.useCallback((data: Uint8Array, onFinish?: () => void): void => {
+export function usePlaySound(): (id: string, onFinsih?: (e?: Error | DOMException) => void) => void {
+  return React.useCallback((id: string, onFinish?: (e?: Error | DOMException) => void): void => {
+    const soundData = get<StoredSound>('sound', id)
     const context = new AudioContext()
     const source = context.createBufferSource()
     const gain = context.createGain()
@@ -239,11 +261,19 @@ export function usePlaySound(): (data: Uint8Array, onFinsih?: () => void) => voi
       source.stop(0)
       source.disconnect()
       gain.disconnect()
-      onFinish && onFinish()
-      log.error(e)
+      onFinish && onFinish(e)
     }
-    const buffer = Uint8Array.from(data)
-    context.decodeAudioData(buffer.buffer, decodeSuccess, decodeError)
+    soundData.then((data: StoredSound | null): void => {
+      if (data === null) {
+        source.stop(0)
+        source.disconnect()
+        gain.disconnect()
+        onFinish && onFinish(new Error(`No sound data: ${id}`))
+        return
+      }
+      const buffer = Uint8Array.from(data.data)
+      context.decodeAudioData(buffer.buffer, decodeSuccess, decodeError)
+    })
   }, [])
 }
 

@@ -1,5 +1,5 @@
+import { ApplicationMessage } from 'common'
 import { PollStartMessage } from 'poll'
-import { WebSocketClient } from 'wscomp'
 
 export type AppState = {
   comments: {
@@ -19,4 +19,6 @@ export type AppState = {
   openSoundPanel: boolean
 }
 
-export type StreamingClient = typeof WebSocketClient
+export type PlaySoundMessage = ApplicationMessage & {
+
+}

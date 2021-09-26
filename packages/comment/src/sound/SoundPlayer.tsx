@@ -1,6 +1,6 @@
 import { Grid, IconButton, makeStyles } from '@material-ui/core'
 import React from 'react'
-import { useExistsSounds, useSounds, usePlaySound, useRoomHash } from './hooks'
+import { useExistsSounds, useSoundMetadata, usePlaySound, useRoomHash } from './hooks'
 import { NoteBlack } from './NoteBlack'
 
 type Props = {
@@ -24,13 +24,14 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
   const [room, hash] = useRoomHash()
   const existsSounds = useExistsSounds(url, room, hash)
   const [width, setWidth] = React.useState(window.innerWidth)
-  const sounds = useSounds(existsSounds)
+  const [sounds] = useSoundMetadata(existsSounds)
   const playSound = usePlaySound()
   const style = useStyles()
-  const onIconClick = React.useCallback((ev: React.MouseEvent<HTMLButtonElement>, data: Uint8Array): void => {
+  const onIconClick = React.useCallback((ev: React.MouseEvent<HTMLButtonElement>, id: string): void => {
+    //window.parent.postMessage()
     const button = ev.currentTarget
     button.disabled = true
-    playSound(data, (): void => { button.disabled = false})
+    playSound(id, (): void => { button.disabled = false})
   }, [playSound])
 
   React.useEffect((): void => {
@@ -58,22 +59,21 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
           <div>Ding Dong Ring</div>
         </Grid>
         {
-          sounds?.map((sound) => (
-            <Grid key={sound.name[0]} item xs={xs}>
+          sounds && Object.values(sounds).map((sound) => (
+            <Grid key={sound.id} item xs={xs}>
               <div className={style.item}>
-                <IconButton id='test' onClick={e => onIconClick(e, sound.data)}>
+                <IconButton id='test' onClick={e => onIconClick(e, sound.id)}>
                   <NoteBlack />
                 </IconButton>
                 <div>
                   <div>{sound.displayName}</div>
-                  <div>{sound.name.join(', ')}</div>
+                  <div>{sound.command.join(', ')}</div>
                 </div>
               </div>
             </Grid>
           ))
         }
       </Grid>
-
     </div>
   )
 }
