@@ -1,6 +1,7 @@
-import { Grid, IconButton, makeStyles } from '@material-ui/core'
+import { Grid, IconButton, InputLabel, makeStyles, MenuItem, Select, Slider } from '@material-ui/core'
 import { getLogger } from 'common'
 import React from 'react'
+import { isPlaySoundMessage, PlaySoundMessage } from '../types'
 import { useExistsSounds, useSoundMetadata, usePlaySound, useRoomHash } from './hooks'
 import { NoteBlack } from './NoteBlack'
 
@@ -14,15 +15,19 @@ const useStyles = makeStyles({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  volume: {
+  controls: {
     display: 'flex',
-    justifyContent: 'center',
+    flexDirection: 'column',
+  },
+  controlItem: {
+    display: 'flex',
+    //justifyContent: 'center',
   },
   list: {
     overflowY: 'auto',
     paddingTop: 6,
-    // 90px: title height(60px) + volume height(24px) + paddingTop(6px)
-    height: 'calc(100% - 90px)',
+    // title height(60px) + volume height(60px) + paddingTop(6px)
+    height: 'calc(100% - 126px)',
   },
   item: {
     display: 'flex',
@@ -40,22 +45,49 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
   const [room, hash] = useRoomHash()
   const existsSounds = useExistsSounds(url, room, hash)
   const [width, setWidth] = React.useState(window.innerWidth)
-  const [volume, setVolume] = React.useState(100)
+  const [volume, setVolume] = React.useState(33) // TODO save to cookie or db
+  const [maxPlays, setMaxPlays] = React.useState(3) // TODO save to cookie or db
+  const nowPlaysRef = React.useRef(0)
   const [sounds] = useSoundMetadata(existsSounds)
   const playSound = usePlaySound()
   const style = useStyles()
-  const onIconClick = React.useCallback((ev: React.MouseEvent<HTMLButtonElement>, id: string, volume: number): void => {
-    //window.parent.postMessage()
-    const button = ev.currentTarget
-    button.disabled = true
-    playSound(id, volume, (): void => { button.disabled = false})
-  }, [playSound])
-
-  React.useEffect((): void => {
-    window.addEventListener('resize', (): void => {
-      setWidth(window.innerWidth)
-    })
+  const onIconClick = React.useCallback((ev: React.MouseEvent<HTMLButtonElement>, id: string): void => {
+    const message: PlaySoundMessage = { type: 'app', cmd: 'sound/play', id }
+    window.parent.postMessage(message, window.location.origin)
   }, [])
+
+  React.useEffect((): (() => void) => {
+    const resizeListener = (): void => {
+      setWidth(window.innerWidth)
+    }
+    window.addEventListener('resize', resizeListener)
+
+    return (): void => {
+      window.removeEventListener('resize', resizeListener)
+    }
+  }, [])
+  React.useEffect((): (() => void) => {
+    const messageListener = (e: MessageEvent<PlaySoundMessage>): void => {
+      if (e.origin !== window.location.origin) {
+        log.warn('[messageListener] Receive a message from unexpected origin:', e.origin)
+        return
+      }
+      if (!isPlaySoundMessage(e.data)) {
+        log.warn('[messageListener] Receive an unexpected message:', e.data)
+        return
+      }
+      if (nowPlaysRef.current < maxPlays) {
+        nowPlaysRef.current++
+        playSound(e.data.id, volume, () => { nowPlaysRef.current-- })
+      }
+    }
+    window.addEventListener('message', messageListener)
+
+    return (): void => {
+      window.removeEventListener('message', messageListener)
+    }
+  }, [volume, playSound, maxPlays])
+
   const xs = React.useMemo((): 12 | 6 | 4 | 3 | 2 => {
     const cols = width <= 250 ? 1
       : width <= 500 ? 2
@@ -75,12 +107,23 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
       <div className={style.title}>
         <h3>Ding Dong Ring! 🔔</h3>
       </div>
-      <div className={style.volume}>
-        <label htmlFor="volume" style={{ padding: "0px 8px" }}>Vol:</label>
-        <input
-          type="range" id="volume" min={0} max={100} value={volume}
-          onChange={ev => setVolume(Number(ev.target.value))}
-        />
+      <div className={style.controls}>
+        <div className={style.controlItem}>
+          <InputLabel htmlFor="volume" style={{ paddingLeft: 6, paddingRight: 6 }}>Volume:</InputLabel>
+          <Slider aria-label="Volume" id="volume" value={volume} onChange={(ev, value) => setVolume(Number(value))} />
+        </div>
+        <div className={style.controlItem}>
+          <InputLabel id="max-sounds-label" style={{ paddingLeft: 6, paddingRight: 6, margin: 'auto 0px' }}>Max plays:</InputLabel>
+          <Select
+            labelId="max-sounds-label"
+            id="max-sounds"
+            value={maxPlays}
+            label="Max plays"
+            onChange={e => setMaxPlays(Number(e.target.value))}
+          >
+            { [1, 2, 3, 4, 5, 6, 7].map(n => <MenuItem key={`numOfSound-${n}`} value={n}>{n}</MenuItem> ) }
+          </Select>
+        </div>
       </div>
       <div className={style.list}>
         <Grid container spacing={0}>
@@ -88,7 +131,7 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
             sounds && Object.values(sounds).map((sound) => (
               <Grid key={sound.id} item xs={xs}>
                 <div className={style.item}>
-                  <IconButton id='test' onClick={e => onIconClick(e, sound.id, volume)}>
+                  <IconButton id='test' onClick={e => onIconClick(e, sound.id)}>
                     <NoteBlack />
                   </IconButton>
                   <div>

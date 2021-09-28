@@ -1,8 +1,8 @@
 import React from 'react'
-import { Message, createHash } from 'common'
+import { Message, createHash, getLogger } from 'common'
 import { WebSocketClient, WebSocketControl } from 'wscomp'
 import { SendCommentForm } from './SendCommentForm'
-import { AppState } from './types'
+import { AppState, isPlaySoundMessage, PlaySoundMessage } from './types'
 import { PollControl } from './PollControl'
 import { LabeledCheckbox } from './LabeledCheckbox'
 import { FormGroup, Link, makeStyles } from '@material-ui/core'
@@ -112,6 +112,8 @@ const useStyles = makeStyles({
   'options': {}
 })
 
+const log = getLogger('App')
+
 export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
   const [cookies, modCookies] = useAppCookies()
   // TODO Divide state
@@ -128,13 +130,14 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
   const autoScrollRef = React.useRef<HTMLDivElement>(null)
   const messageListDivRef = React.useRef<HTMLDivElement>(null)
   const wscRef = React.useRef<WebSocketControl | null>(null)
+  const soundPanelRef = React.useRef<HTMLIFrameElement>(null)
 
   const onOpen = useWebSocketOnOpen(wscRef, cookies)
   const onClose = useWebSocketOnClose(wscRef, modCookies)
   const onPoll = useOnPoll(wscRef)
   const onClosePoll = useOnClosePoll(state, setState)
   const onMessage = useWebSocketOnMessage(
-    props.maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef
+    props.maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef
   )
   const onSubmit = React.useCallback((message: Message): void => {
     wscRef.current?.send(message)
@@ -160,6 +163,24 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
       goToLoginPage()
     }
   }, [cookies])
+  React.useEffect((): (() => void)=> {
+    const messageListener = (e: MessageEvent<PlaySoundMessage>): void => {
+      if (e.origin !== window.location.origin) {
+        log.warn('[messageListener] Receive a message from unexpected origin:', e.origin)
+        return
+      }
+      if (!isPlaySoundMessage(e.data)) {
+        log.warn('[messageListener] Receive an unexpected message:', e.data)
+        return
+      }
+      wscRef.current?.send(e.data)
+    }
+    window.addEventListener('message', messageListener)
+    return (): void => {
+      window.removeEventListener('message', messageListener)
+    }
+  }, [])
+
   const style = useStyles()
 
   const room = cookies.str('room')
@@ -183,7 +204,8 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
               { state.openSoundPanel ? (
                 <div className={style.sound}>
                   <iframe
-                    src={`/sound?room=${room}&hash=${createHash(password)}`}
+                    ref={soundPanelRef}
+                    src={`/sound?room=${room}&hash=${createHash(password)}`} // Use cookie??
                     allow="autoplay 'src'"
                   />
                 </div>

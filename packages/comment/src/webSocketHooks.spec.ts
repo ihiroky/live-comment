@@ -185,9 +185,12 @@ test('onMessage ignores non poll application message', () => {
   const autoScrollRef: React.RefObject<HTMLDivElement> = {
     current: document.createElement('div')
   }
+  const soundPanelRef: React.RefObject<HTMLIFrameElement> = {
+    current: document.createElement('iframe')
+  }
 
   const { result } = renderHook(() => {
-    return useWebSocketOnMessage(10, state, setState, onClosePoll, messageListDivRef, autoScrollRef)
+    return useWebSocketOnMessage(10, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef)
   })
   const onMessage = result.current
   const someAppMessage: ApplicationMessage = {
@@ -209,9 +212,12 @@ test('onMessage which receives comment message add a comment entry', () => {
   const autoScrollRef: React.RefObject<HTMLDivElement> = {
     current: document.createElement('div')
   }
+  const soundPanelRef: React.RefObject<HTMLIFrameElement> = {
+    current: document.createElement('iframe')
+  }
 
   const { result } = renderHook(() => {
-    return useWebSocketOnMessage(10, state, setState, onClosePoll, messageListDivRef, autoScrollRef)
+    return useWebSocketOnMessage(10, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef)
   })
   const onMessage = result.current
   const comment: CommentMessage = {
@@ -244,10 +250,15 @@ test('onMessage drop old comment if count of comments exceeds maxMessageCount', 
   const autoScrollRef: React.RefObject<HTMLDivElement> = {
     current: document.createElement('div')
   }
+  const soundPanelRef: React.RefObject<HTMLIFrameElement> = {
+    current: document.createElement('iframe')
+  }
 
   const { result } = renderHook(() => {
     const maxMessageCount = state.comments.length
-    return useWebSocketOnMessage(maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef)
+    return useWebSocketOnMessage(
+      maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef
+    )
   })
   const onMessage = result.current
   const comment: CommentMessage = {
@@ -280,10 +291,15 @@ test('onMessage which receives PollStartMessage add a poll entry', () => {
   const autoScrollRef: React.RefObject<HTMLDivElement> = {
     current: document.createElement('div')
   }
+  const soundPanelRef: React.RefObject<HTMLIFrameElement> = {
+    current: document.createElement('iframe')
+  }
 
   const { result } = renderHook(() => {
     const maxMessageCount = state.comments.length
-    return useWebSocketOnMessage(maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef)
+    return useWebSocketOnMessage(
+      maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef
+    )
   })
   const onMessage = result.current
   const message: PollStartMessage = {
@@ -325,10 +341,15 @@ test('onMessage which receives PollFinishMessage removes a poll entry', () => {
   const autoScrollRef: React.RefObject<HTMLDivElement> = {
     current: document.createElement('div')
   }
+  const soundPanelRef: React.RefObject<HTMLIFrameElement> = {
+    current: document.createElement('iframe')
+  }
 
   const { result } = renderHook(() => {
     const maxMessageCount = state.comments.length
-    return useWebSocketOnMessage(maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef)
+    return useWebSocketOnMessage(
+      maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef
+    )
   })
   const onMessage = result.current
   const message: PollFinishMessage = {
@@ -359,9 +380,12 @@ test('onMessage scrolls to autoScrollRef if autoScroll is true', () => {
       offsetTop: 123
     } as any  // eslint-disable-line @typescript-eslint/no-explicit-any
   }
+  const soundPanelRef: React.RefObject<HTMLIFrameElement> = {
+    current: document.createElement('iframe')
+  }
 
   const { result } = renderHook(() => {
-    return useWebSocketOnMessage(10, state, setState, onClosePoll, messageListDivRef, autoScrollRef)
+    return useWebSocketOnMessage(10, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef)
   })
   const onMessage = result.current
   const comment: CommentMessage = {

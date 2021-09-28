@@ -116,7 +116,7 @@ test('Acn OK, and count up before sending and count down after sended', () => {
   onMessage.bind(session)(JSON.stringify(m0))
   const res: AcnOkMessage = {
     type: 'acn',
-    attrs: {},
+    attrs: { sessionId: 'sessionId' },
   }
   const charCount = JSON.stringify(res).length
   expect(countUpPending).toBeCalledWith(session, charCount)

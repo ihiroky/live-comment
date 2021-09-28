@@ -1,4 +1,4 @@
-import { ApplicationMessage } from 'common'
+import { ApplicationMessage, isObject } from 'common'
 import { PollStartMessage } from 'poll'
 
 export type AppState = {
@@ -20,5 +20,14 @@ export type AppState = {
 }
 
 export type PlaySoundMessage = ApplicationMessage & {
+  cmd: 'sound/play'
+  id: string
+}
 
+export function isPlaySoundMessage(obj: unknown): obj is PlaySoundMessage {
+  // type: 'app', cmd: 'sound/play', id
+  return isObject(obj) &&
+    obj.type === 'app' &&
+    obj.cmd === 'sound/play' &&
+    typeof obj.id === 'string'
 }
