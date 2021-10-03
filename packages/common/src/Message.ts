@@ -66,7 +66,9 @@ export function isAcnOkMessage(m: unknown): m is AcnOkMessage {
   if (!isObject(m)) {
     return false
   }
-  return m.type === 'acn' && typeof m.sessionId === 'string'
+  return m.type === 'acn' &&
+    isObject(m.attrs) &&
+    typeof m.attrs.sessionId === 'string'
 }
 
 export function isErrorMessage(m: unknown): m is ErrorMessage {

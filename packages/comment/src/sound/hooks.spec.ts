@@ -45,7 +45,7 @@ describe('useExistsSounds', () => {
     window.fetch = jest.fn().mockResolvedValue({
       ok: false,
       text: () => Promise.resolve('')
-    } as any)
+    } as Response)
 
     const { result } = renderHook(() => useExistsSounds('https://host/', 'r', 'h'))
     await new Promise<void>((resolve: () => void): void => {
@@ -302,7 +302,7 @@ describe('usePlaySound', () => {
       start: jest.fn(),
       stop: jest.fn(),
       addEventListener: jest.fn()
-    } as any
+    } as any // eslint-disable-line @typescript-eslint/no-explicit-any
     audioContext.createBufferSource = jest.fn<AudioBufferSourceNode, []>(() => audioBufferSouce)
     gain = {
       gain: {
@@ -310,7 +310,7 @@ describe('usePlaySound', () => {
       },
       connect: jest.fn(),
       disconnect: jest.fn(),
-    } as any
+    } as any // eslint-disable-line @typescript-eslint/no-explicit-any
     audioContext.createGain = jest.fn<GainNode, []>(() => gain)
     audioContext.decodeAudioData = jest.fn()
     mocked(global.AudioContext).mockImplementation(() => audioContext)

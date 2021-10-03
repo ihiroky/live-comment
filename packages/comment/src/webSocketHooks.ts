@@ -9,7 +9,7 @@ import {
   Message,
 } from 'common'
 import { WebSocketClient, WebSocketControl } from 'wscomp'
-import { useNamedCookies, CookieAccessor, CookieModifier } from './useNamedCookies'
+import { CookieAccessor, CookieModifier } from './useNamedCookies'
 import { goToLoginPage } from './utils'
 import { AppState, isPlaySoundMessage, AppCookieName } from './types'
 import { isPollFinishMessage, isPollStartMessage } from 'poll'

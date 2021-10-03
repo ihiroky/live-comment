@@ -1,12 +1,12 @@
 import { renderHook } from '@testing-library/react-hooks'
 import '@testing-library/jest-dom'
 import { useWebSocketOnOpen, useWebSocketOnClose, useWebSocketOnMessage } from './webSocketHooks'
-import { useAppCookies } from './useAppCookies'
+import { CookieAccessor, CookieModifier } from './useNamedCookies'
 import {  ApplicationMessage, CloseCode, CommentMessage, createHash } from 'common'
 import { WebSocketControl } from 'wscomp'
 import React from 'react'
 import { goToLoginPage } from './utils'
-import { AppState } from './types'
+import { AppState, AppCookieName } from './types'
 import { PollFinishMessage, PollStartMessage } from 'poll'
 
 jest.mock('./utils')
@@ -73,9 +73,11 @@ test('onOpen does nothing if no room cookies', () => {
   }
   const wsc = createWebSocketControlMock()
 
-  const cookies: ReturnType<typeof useAppCookies>[0] = {
+  const cookies: CookieAccessor<AppCookieName> = {
     str: jest.fn().mockImplementation((a: string) => a === 'room' ? undefined : 'hoge'),
     bool: jest.fn(),
+    num: jest.fn(),
+    obj: jest.fn(),
   }
   const { result } = renderHook(() => useWebSocketOnOpen(wscRefMock, cookies))
   const onOpen = result.current
@@ -92,9 +94,11 @@ test('onOpen does nothing if no password cookies', () => {
   }
   const wsc = createWebSocketControlMock()
 
-  const cookies: ReturnType<typeof useAppCookies>[0] = {
+  const cookies: CookieAccessor<AppCookieName> = {
     str: jest.fn().mockImplementation((a: string) => a === 'password' ? undefined : 'hoge'),
     bool: jest.fn(),
+    num: jest.fn(),
+    obj: jest.fn(),
   }
   const { result } = renderHook(() => useWebSocketOnOpen(wscRefMock, cookies))
   const onOpen = result.current
@@ -111,9 +115,11 @@ test('onOpen sets wscRef and send an acn message', () => {
   }
   const wsc = createWebSocketControlMock()
 
-  const cookies: ReturnType<typeof useAppCookies>[0] = {
+  const cookies: CookieAccessor<AppCookieName> = {
     str: jest.fn().mockImplementation(() => 'hoge'),
     bool: jest.fn(),
+    num: jest.fn(),
+    obj: jest.fn(),
   }
   const { result } = renderHook(() => useWebSocketOnOpen(wscRefMock, cookies))
   const onOpen = result.current
@@ -132,9 +138,11 @@ test('onClose with ACN_FAILED goes to login page', () => {
   const wscRefMock: React.MutableRefObject<WebSocketControl | null> = {
     current: createWebSocketControlMock()
   }
-  const modCookieMock: ReturnType<typeof useAppCookies>[1] = {
+  const modCookieMock: CookieModifier<AppCookieName> = {
     str: jest.fn(),
     bool: jest.fn(),
+    num: jest.fn(),
+    obj: jest.fn(),
     remove: jest.fn(),
   }
 
@@ -157,9 +165,11 @@ test('onClose with no ACN_FAILED tries to reconnect', () => {
   const wscRefMock: React.MutableRefObject<WebSocketControl | null> = {
     current: createWebSocketControlMock()
   }
-  const modCookieMock: ReturnType<typeof useAppCookies>[1] = {
+  const modCookieMock: CookieModifier<AppCookieName> = {
     str: jest.fn(),
     bool: jest.fn(),
+    num: jest.fn(),
+    obj: jest.fn(),
     remove: jest.fn(),
   }
 
