@@ -2,11 +2,11 @@ import React from 'react'
 import { Message, createHash, getLogger } from 'common'
 import { WebSocketClient, WebSocketControl } from 'wscomp'
 import { SendCommentForm } from './SendCommentForm'
-import { AppState, isPlaySoundMessage, PlaySoundMessage } from './types'
+import { AppState, isPlaySoundMessage, PlaySoundMessage, AppCookieNames } from './types'
 import { PollControl } from './PollControl'
 import { LabeledCheckbox } from './LabeledCheckbox'
 import { FormGroup, Link, makeStyles } from '@material-ui/core'
-import { useAppCookies, Name as AppCookieName, FAR_ENOUGH } from './useAppCookies'
+import { useNamedCookies, FAR_ENOUGH } from './useNamedCookies'
 import { useWebSocketOnOpen, useWebSocketOnClose, useWebSocketOnMessage } from './webSocketHooks'
 import { useOnPoll, useOnClosePoll } from './pollHooks'
 import { goToLoginPage } from './utils'
@@ -115,7 +115,7 @@ const useStyles = makeStyles({
 const log = getLogger('App')
 
 export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
-  const [cookies, modCookies] = useAppCookies()
+  const [cookies, modCookies] = useNamedCookies(AppCookieNames)
   // TODO Divide state
   const autoScroll = cookies.bool('autoScroll')
   const sendWithCtrlEnter = cookies.bool('sendWithCtrlEnter')
@@ -143,7 +143,7 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
     wscRef.current?.send(message)
   }, [])
   const onCheckChangeBox = React.useCallback((name: CheckboxStateName, value: boolean): void => {
-    modCookies.bool(name as AppCookieName, value, FAR_ENOUGH)
+    modCookies.bool(name, value, FAR_ENOUGH)
     setState({
       ...state,
       [name]: value

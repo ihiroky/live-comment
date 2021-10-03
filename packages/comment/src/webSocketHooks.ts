@@ -9,16 +9,16 @@ import {
   Message,
 } from 'common'
 import { WebSocketClient, WebSocketControl } from 'wscomp'
-import { useAppCookies } from './useAppCookies'
+import { useNamedCookies, CookieAccessor, CookieModifier } from './useNamedCookies'
 import { goToLoginPage } from './utils'
-import { AppState, isPlaySoundMessage } from './types'
+import { AppState, isPlaySoundMessage, AppCookieName } from './types'
 import { isPollFinishMessage, isPollStartMessage } from 'poll'
 
 const log = getLogger('webSocketHooks')
 
 export function useWebSocketOnOpen(
   wscRef: React.MutableRefObject<WebSocketControl | null>,
-  cookies: ReturnType<typeof useAppCookies>[0],
+  cookies: CookieAccessor<AppCookieName>,
 ): NonNullable<React.ComponentProps<typeof WebSocketClient>['onOpen']> {
   return React.useCallback((wsc: WebSocketControl): void => {
     log.debug('[onOpen]', wsc)
@@ -41,7 +41,7 @@ export function useWebSocketOnOpen(
 
 export function useWebSocketOnClose(
   wscRef: React.MutableRefObject<WebSocketControl | null>,
-  modCookies: ReturnType<typeof useAppCookies>[1],
+  modCookies: CookieModifier<AppCookieName>,
 ): NonNullable<React.ComponentProps<typeof WebSocketClient>['onClose']> {
   return React.useCallback((ev: CloseEvent): void => {
     switch (ev.code) {

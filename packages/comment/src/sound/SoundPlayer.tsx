@@ -4,10 +4,17 @@ import React from 'react'
 import { isPlaySoundMessage, PlaySoundMessage } from '../types'
 import { useExistsSounds, useSoundMetadata, usePlaySound, useRoomHash } from './hooks'
 import { NoteBlack } from './NoteBlack'
+import { FAR_ENOUGH, useNamedCookies } from '../useNamedCookies'
 
 type Props = {
   url: string
 }
+
+const CookieNames = [
+  'volume',
+  'maxPlays',
+] as const
+export type CookieName = typeof CookieNames[number]
 
 const useStyles = makeStyles({
   title: {
@@ -21,12 +28,11 @@ const useStyles = makeStyles({
   },
   controlItem: {
     display: 'flex',
-    //justifyContent: 'center',
   },
   list: {
     overflowY: 'auto',
     paddingTop: 6,
-    // title height(60px) + volume height(60px) + paddingTop(6px)
+    // title height(60px) + control height(60px) + paddingTop(6px)
     height: 'calc(100% - 126px)',
   },
   item: {
@@ -42,11 +48,12 @@ const useStyles = makeStyles({
 const log = getLogger('sound/SoundPlayer')
 
 export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
+  const [cookies, modCookies] = useNamedCookies(CookieNames)
   const [room, hash] = useRoomHash()
   const existsSounds = useExistsSounds(url, room, hash)
   const [width, setWidth] = React.useState(window.innerWidth)
-  const [volume, setVolume] = React.useState(33) // TODO save to cookie or db
-  const [maxPlays, setMaxPlays] = React.useState(3) // TODO save to cookie or db
+  const [volume, setVolume] = React.useState(Number(cookies.str('volume')) | 33)
+  const [maxPlays, setMaxPlays] = React.useState(Number(cookies.str('maxPlays')) | 3)
   const nowPlaysRef = React.useRef(0)
   const [sounds] = useSoundMetadata(existsSounds)
   const playSound = usePlaySound()
@@ -55,7 +62,6 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
     const message: PlaySoundMessage = { type: 'app', cmd: 'sound/play', id }
     window.parent.postMessage(message, window.location.origin)
   }, [])
-
   React.useEffect((): (() => void) => {
     const resizeListener = (): void => {
       setWidth(window.innerWidth)
@@ -87,6 +93,16 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
       window.removeEventListener('message', messageListener)
     }
   }, [volume, playSound, maxPlays])
+  const onVolumeChanged = React.useCallback((_: React.ChangeEvent<unknown>, value: number | number[]): void => {
+    const v = Array.isArray(value) ? value[0] : value
+    setVolume(v)
+    modCookies.num('volume', v, FAR_ENOUGH)
+  }, [modCookies])
+  const onMaxPlaysChanged = React.useCallback((e: React.ChangeEvent<{ value: unknown }>): void => {
+    const v = Number(e.target.value)
+    setMaxPlays(v)
+    modCookies.num('maxPlays', v, FAR_ENOUGH)
+  }, [modCookies])
 
   const xs = React.useMemo((): 12 | 6 | 4 | 3 | 2 => {
     const cols = width <= 250 ? 1
@@ -110,7 +126,7 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
       <div className={style.controls}>
         <div className={style.controlItem}>
           <InputLabel htmlFor="volume" style={{ paddingLeft: 6, paddingRight: 6 }}>Volume:</InputLabel>
-          <Slider aria-label="Volume" id="volume" value={volume} onChange={(ev, value) => setVolume(Number(value))} />
+          <Slider aria-label="Volume" id="volume" value={volume} onChange={onVolumeChanged} max={100} />
         </div>
         <div className={style.controlItem}>
           <InputLabel id="max-sounds-label" style={{ paddingLeft: 6, paddingRight: 6, margin: 'auto 0px' }}>Max plays:</InputLabel>
@@ -119,9 +135,9 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
             id="max-sounds"
             value={maxPlays}
             label="Max plays"
-            onChange={e => setMaxPlays(Number(e.target.value))}
+            onChange={onMaxPlaysChanged}
           >
-            { [1, 2, 3, 4, 5, 6, 7].map(n => <MenuItem key={`numOfSound-${n}`} value={n}>{n}</MenuItem> ) }
+            { [0, 1, 2, 3, 5, 8, 13, Infinity].map(n => <MenuItem key={`numOfSound-${n}`} value={n}>{n}</MenuItem> ) }
           </Select>
         </div>
       </div>
@@ -131,7 +147,7 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
             sounds && Object.values(sounds).map((sound) => (
               <Grid key={sound.id} item xs={xs}>
                 <div className={style.item}>
-                  <IconButton id='test' onClick={e => onIconClick(e, sound.id)}>
+                  <IconButton data-testid={`play-${sound.id}`} onClick={e => onIconClick(e, sound.id)}>
                     <NoteBlack />
                   </IconButton>
                   <div>

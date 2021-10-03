@@ -28,7 +28,11 @@ ReactDOM.render(
         )
       }}/>
       <Route path="/sound" exact render={(): React.ReactNode => {
-        return <SoundPlayer url={httpUrl} />
+        return (
+          <CookiesProvider>
+            <SoundPlayer url={httpUrl} />
+          </CookiesProvider>
+        )
       }}/>
     </BrowserRouter>
   </React.StrictMode>,

@@ -52,9 +52,14 @@ function isStoredSoundMetadata(value: unknown): value is StoredSoundMetadata {
 
 function normalizeSoundFileDefinition(def: SoundManifest['files'][number]): SoundFileDefinition {
   if (!Array.isArray(def)) {
-    return typeof def === 'string' ? { file: def } : def
+    if (typeof def === 'string') {
+      return { file: def }
+    }
+    if (isObject(def) && typeof def.file === 'string') {
+      return def
+    }
+    throw new Error(`Unexpected format: ${def}`)
   }
-
   if (def.length !== 1 && def.length !== 2 && def.length !== 3) {
     throw new Error(`Unexpected format: ${def}`)
   }
@@ -74,6 +79,27 @@ function trimAcceptableSuffix(fileName: string): string | null {
   return null
 }
 
+function fetchWithTimeout(
+  input: RequestInfo,
+  init: RequestInit | undefined,
+  timeoutMillis: number
+): Promise<Response> {
+  const abort = new AbortController()
+  const timeout = window.setTimeout(() => abort.abort(), timeoutMillis)
+  try {
+    return fetch(input, init
+      ? {
+        ...init,
+        signal: abort.signal
+      }
+      : {
+        signal: abort.signal
+      }
+    )
+  } finally {
+    clearTimeout(timeout)
+  }
+}
 
 async function isSoundsAvailable(
   url: string,
@@ -82,47 +108,50 @@ async function isSoundsAvailable(
 ): Promise<{ available: boolean, update: boolean, checksum: string }> {
   log.debug('[getNewChecksum]', url, room, hash)
 
-  const abort = new AbortController()
-  const timeout = window.setTimeout(() => abort.abort(), 3000)
-  try {
-    const checksum = await fetch(
-      `${url}${CHECKSUM_FILE_PATH}?room=${room}&hash=${hash}`,
-      {
-        method: 'GET',
-        cache: 'no-store',
-        mode: 'cors',
-        headers: { 'Accept': 'text/plain' },
-        signal: abort.signal
-      }
-    ).then((response: Response): Promise<string> | null => response.ok ? response.text() : null)
-    if (checksum === null) {
-      return {
-        available: false,
-        update: false,
-        checksum: '',
-      }
-    }
-    const storedChecksum = await get<string>('soundMetadata', CHECKSUM)
+  const checksum = await fetchWithTimeout(
+    `${url}${CHECKSUM_FILE_PATH}?room=${room}&hash=${hash}`,
+    {
+      method: 'GET',
+      cache: 'no-store',
+      mode: 'cors',
+      headers: { 'Accept': 'text/plain' },
+    },
+    3000
+  ).then((response: Response): Promise<string> | null => {
+    return response.ok ? response.text() : null
+  })
+  if (checksum === null) {
     return {
-      available: true,
-      update: checksum !== storedChecksum,
-      checksum,
+      available: false,
+      update: false,
+      checksum: '',
     }
-  } finally {
-    window.clearTimeout(timeout)
+  }
+  const storedChecksum = await get<string>('soundMetadata', CHECKSUM)
+  return {
+    available: true,
+    update: checksum !== storedChecksum,
+    checksum,
   }
 }
 
 async function storeSounds(url: string, room: string, hash: string, checksum: string): Promise<void> {
-  const zipBlob = await fetch(
+  const zipBlob = await fetchWithTimeout(
     `${url}${SOUND_FILE_PATH}?room=${room}&hash=${hash}`,
     {
       method: 'GET',
       cache: 'no-store',
       mode: 'cors',
       headers: { 'Accept': 'application/zip' }
-    }
-  ).then((response: Response): Promise<Blob> => response.blob())
+    },
+    10000
+  ).then((response: Response): Promise<Blob> | null => {
+    return response.ok ? response.blob() : null
+  })
+  if (zipBlob === null) {
+    throw new Error('Failed to get sound file.')
+  }
+
   const zipBuffer = await zipBlob.arrayBuffer()
   const zipData = new Uint8Array(zipBuffer)
   const unzip = new Zlib.Unzip(zipData)
@@ -157,6 +186,35 @@ async function storeSounds(url: string, room: string, hash: string, checksum: st
   })
 }
 
+export function useExistsSounds(url: string, room: string | null, hash: string | null): boolean {
+  const [existsSounds, setExistsSounds] = React.useState(false)
+
+  React.useEffect((): void => {
+    setExistsSounds(false)
+    if (room === null || hash === null) {
+      return
+    }
+
+    const urlEndNoSlash = url.replace(/\/+$/, '')
+    isSoundsAvailable(urlEndNoSlash, room, hash).then(({ available, update, checksum }) => {
+      if (!available) {
+        return false
+      }
+      return update
+        ? storeSounds(urlEndNoSlash, room, hash, checksum).then(() => true)
+        : true
+    }).then((available: boolean): void => {
+      if (available) {
+        setExistsSounds(true)
+      }
+    }).catch(e => {
+      log.error(e)
+    })
+  }, [url, room, hash])
+
+  return existsSounds
+}
+
 // TODO Sort by LRU ?
 export function useSoundMetadata(
   existsSounds: boolean
@@ -165,13 +223,12 @@ export function useSoundMetadata(
   const [commands, setCommands] = React.useState<Record<string, string> | null>({})
 
   React.useEffect((): void => {
+    setSounds(null)
+    setCommands(null)
     if (!existsSounds) {
-      setSounds({})
       return
     }
 
-    setSounds(null)
-    setCommands(null)
     getAll<SoundMetadata>('soundMetadata', (id: string, value: unknown): SoundMetadata | undefined => {
       log.debug('getAll', id, value)
       if (!isStoredSoundMetadata(value)) {
@@ -208,33 +265,6 @@ export function useSoundMetadata(
   }, [existsSounds])
 
   return (sounds !== null && commands !== null) ? [sounds, commands] : []
-}
-
-export function useExistsSounds(url: string, room: string | null, hash: string | null): boolean {
-  const [existsSounds, setExistsSounds] = React.useState(false)
-
-  React.useEffect((): void => {
-    setExistsSounds(false)
-    if (room === null || hash === null) {
-      return
-    }
-
-    const urlEndNoSlash = url.replace(/\/+$/, '')
-    isSoundsAvailable(urlEndNoSlash, room, hash).then(({ available, update, checksum }) => {
-      if (available) {
-        if (!update) {
-          setExistsSounds(true)
-          return
-        }
-        storeSounds(urlEndNoSlash, room, hash, checksum).then(() => setExistsSounds(true))
-      }
-    }).catch(e => {
-      log.error(e)
-      setExistsSounds(false)
-    })
-  }, [url, room, hash])
-
-  return existsSounds
 }
 
 export function usePlaySound(): (id: string, volume: number, onFinsih?: (e?: Error | DOMException) => void) => void {

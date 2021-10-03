@@ -19,6 +19,16 @@ export type AppState = {
   openSoundPanel: boolean
 }
 
+export const AppCookieNames = [
+  'room',
+  'password',
+  'saveCred',
+  'autoScroll',
+  'sendWithCtrlEnter',
+  'openSoundPanel',
+] as const
+export type AppCookieName = typeof AppCookieNames[number]
+
 export type PlaySoundMessage = ApplicationMessage & {
   cmd: 'sound/play'
   id: string
