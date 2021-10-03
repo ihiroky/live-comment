@@ -9,16 +9,16 @@ import {
   Message,
 } from 'common'
 import { WebSocketClient, WebSocketControl } from 'wscomp'
-import { useAppCookies } from './useAppCookies'
+import { CookieAccessor, CookieModifier } from './useNamedCookies'
 import { goToLoginPage } from './utils'
-import { AppState } from './types'
+import { AppState, isPlaySoundMessage, AppCookieName } from './types'
 import { isPollFinishMessage, isPollStartMessage } from 'poll'
 
 const log = getLogger('webSocketHooks')
 
 export function useWebSocketOnOpen(
   wscRef: React.MutableRefObject<WebSocketControl | null>,
-  cookies: ReturnType<typeof useAppCookies>[0],
+  cookies: CookieAccessor<AppCookieName>,
 ): NonNullable<React.ComponentProps<typeof WebSocketClient>['onOpen']> {
   return React.useCallback((wsc: WebSocketControl): void => {
     log.debug('[onOpen]', wsc)
@@ -41,7 +41,7 @@ export function useWebSocketOnOpen(
 
 export function useWebSocketOnClose(
   wscRef: React.MutableRefObject<WebSocketControl | null>,
-  modCookies: ReturnType<typeof useAppCookies>[1],
+  modCookies: CookieModifier<AppCookieName>,
 ): NonNullable<React.ComponentProps<typeof WebSocketClient>['onClose']> {
   return React.useCallback((ev: CloseEvent): void => {
     switch (ev.code) {
@@ -65,19 +65,12 @@ export function useWebSocketOnMessage(
   closePoll: (pollId: string, refresh: boolean) => void,
   messageListDivRef: React.RefObject<HTMLDivElement>,
   autoScrollRef: React.RefObject<HTMLDivElement>,
+  soundPanelRef: React.RefObject<HTMLIFrameElement>
 ): React.ComponentProps<typeof WebSocketClient>['onMessage'] {
   const counterRef = React.useRef<number>(0)
   return React.useCallback((message: Message): void => {
     log.debug('[onMessage]', message)
-    if (!isCommentMessage(message)
-      && !isPollStartMessage(message)
-      && !isPollFinishMessage(message)
-    ) {
-      log.warn('[onMessage] Unexpected message:', message)
-      return
-    }
 
-    const key = counterRef.current++
     const polls = state.polls
     const comments = state.comments
     if (isCommentMessage(message)) {
@@ -86,9 +79,11 @@ export function useWebSocketOnMessage(
       if (comments.length === maxMessageCount) {
         comments.shift()
       }
+      const key = counterRef.current++
       comments.push({ key, comment, pinned })
     } else if (isPollStartMessage(message)) {
       assertNotNullable(message.from, 'PollStartMessage.from')
+      const key = counterRef.current++
       polls.push({
         key,
         owner: message.from,
@@ -102,10 +97,26 @@ export function useWebSocketOnMessage(
       if (dropIndex > -1) {
         polls.splice(dropIndex, 1)
       }
+    } else if (isPlaySoundMessage(message)) {
+      if (soundPanelRef.current) {
+        const targetWindow = soundPanelRef.current.contentWindow
+        if (targetWindow) {
+          targetWindow.postMessage(message, window.location.origin)
+        } else {
+          log.debug('[onMessage] No contentWindow of soundPanel.')
+        }
+      } else {
+        log.info('[onMessage] iframe of soundPanel is not found.')
+      }
+      return
+    } else {
+      log.debug('[onMessage] Unexpected message:', message)
+      return
     }
+
     setState({...state, comments, polls})
     if (state.autoScroll && autoScrollRef.current && messageListDivRef.current) {
       messageListDivRef.current.scrollTo(0, autoScrollRef.current.offsetTop)
     }
-  }, [state, maxMessageCount, closePoll, autoScrollRef, messageListDivRef, setState])
+  }, [state, maxMessageCount, closePoll, autoScrollRef, messageListDivRef, setState, soundPanelRef])
 }

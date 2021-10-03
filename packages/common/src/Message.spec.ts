@@ -1,5 +1,7 @@
+import { isAcnOkMessage } from '.'
 import {
   AcnMessage,
+  AcnOkMessage,
   ApplicationMessage,
   CommentMessage,
   ErrorMessage,
@@ -31,6 +33,27 @@ test('isAcnMessage no acn', () => {
 
 test('isAcnMessage null', () => {
   expect(isAcnMessage(null)).toBeFalsy()
+})
+
+test('isAcnOkMessage', () => {
+  const msg: AcnOkMessage = {
+    type: 'acn',
+    attrs: {
+      sessionId: 'sid'
+    },
+  }
+
+  expect(isAcnOkMessage(msg)).toBe(true)
+})
+
+test('isAcnOkMessage no acnok', () => {
+  const msg: AcnMessage = {
+    type: 'acn',
+    room: 'room',
+    hash: 'hash',
+  }
+
+  expect(isAcnOkMessage(msg)).toBe(false)
 })
 
 test('isApplicationMessage', () => {

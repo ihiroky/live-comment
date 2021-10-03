@@ -6,7 +6,8 @@ import {
   Button,
   Grid
 } from '@material-ui/core'
-import { useAppCookies } from './useAppCookies'
+import { useNamedCookies } from './useNamedCookies'
+import { AppCookieNames } from './types'
 import {
   getLogger
 } from 'common'
@@ -41,7 +42,7 @@ const useStyles = makeStyles((theme: Theme) => (
 const log = getLogger('LoginForm')
 
 export const LoginForm: React.FC = (): JSX.Element => {
-  const [cookies, modCookies] = useAppCookies()
+  const [cookies, modCookies] = useNamedCookies(AppCookieNames)
   const [notification, setNotification] = React.useState<{ message: string }>({
     message: ''
   })

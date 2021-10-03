@@ -1,19 +1,6 @@
 import { sha512 } from 'js-sha512'
 
-export {
-  CloseCode,
-  Message,
-  CommentMessage,
-  AcnMessage,
-  AcnOkMessage,
-  ApplicationMessage,
-  ErrorMessage,
-  isCommentMessage,
-  isClientMessage,
-  isAcnMessage,
-  isErrorMessage,
-  isApplicationMessage,
-} from './Message'
+export * from './Message'
 
 export function createHash(s: string): string {
   return sha512(s)

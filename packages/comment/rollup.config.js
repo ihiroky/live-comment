@@ -3,14 +3,11 @@ import nodeResolve from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
 import { terser } from 'rollup-plugin-terser'
 import replace from '@rollup/plugin-replace'
-import postcss from 'rollup-plugin-postcss'
 
 const env = process.env.NODE_ENV || 'development'
 
 fs.mkdirSync('dist/bundle', { recursive: true }, err => { if (err) console.log(err) })
 fs.copyFileSync('public/index.html', 'dist/bundle/index.html')
-fs.copyFileSync('src/index.css', 'dist/index.css')
-fs.copyFileSync('src/App.css', 'dist/App.css')
 
 function plugins() {
   return  [
@@ -18,7 +15,6 @@ function plugins() {
       'process.env.NODE_ENV': `"${env}"`,
       'preventAssignment': true
     }),
-    postcss({ plugins: [] }),
     nodeResolve({
       browser: true,
       preferBuiltins: false,
@@ -34,6 +30,9 @@ export default [{
     file: 'dist/bundle/main.js',
     name: 'Screen',
     format: 'iife'
+  },
+  watch: {
+    buildDelay: 3333,
   },
   context: 'this',  // For react-cookie es6 module
   plugins: plugins(),

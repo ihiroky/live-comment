@@ -32,7 +32,9 @@ export interface AcnMessage extends Message {
 
 export interface AcnOkMessage extends Message {
   type: 'acn'
-  attrs: Record<string, unknown>
+  attrs: {
+    sessionId: string
+  }
 }
 
 export interface ErrorMessage extends Message {
@@ -57,7 +59,16 @@ export function isAcnMessage(m: unknown): m is AcnMessage {
   if (!isObject(m)) {
     return false
   }
-  return m.type === 'acn'
+  return m.type === 'acn' && typeof m.room === 'string' && typeof m.hash === 'string'
+}
+
+export function isAcnOkMessage(m: unknown): m is AcnOkMessage {
+  if (!isObject(m)) {
+    return false
+  }
+  return m.type === 'acn' &&
+    isObject(m.attrs) &&
+    typeof m.attrs.sessionId === 'string'
 }
 
 export function isErrorMessage(m: unknown): m is ErrorMessage {

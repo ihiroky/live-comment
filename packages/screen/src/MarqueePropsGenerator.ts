@@ -127,7 +127,7 @@ export class MarqueePropsGenerator {
   readonly onMessage = (message: Message): void => {
     const now = Date.now()
     if (!isCommentMessage(message)) {
-      log.warn('[onMessage] Unexpected message:', message)
+      log.debug('[onMessage] Unexpected message:', message)
       return
     }
 

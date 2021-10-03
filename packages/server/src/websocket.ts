@@ -55,7 +55,7 @@ function authenticate(client: ClientSession, m: AcnMessage, configuration: Confi
       client.room = m.room
       const ok: AcnOkMessage = {
         type: 'acn',
-        attrs: {},
+        attrs: { sessionId: client.id },
       }
       sendMessage(client, JSON.stringify(ok))
       return

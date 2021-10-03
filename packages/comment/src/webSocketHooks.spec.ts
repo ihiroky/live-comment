@@ -1,12 +1,12 @@
 import { renderHook } from '@testing-library/react-hooks'
 import '@testing-library/jest-dom'
 import { useWebSocketOnOpen, useWebSocketOnClose, useWebSocketOnMessage } from './webSocketHooks'
-import { useAppCookies } from './useAppCookies'
+import { CookieAccessor, CookieModifier } from './useNamedCookies'
 import {  ApplicationMessage, CloseCode, CommentMessage, createHash } from 'common'
 import { WebSocketControl } from 'wscomp'
 import React from 'react'
 import { goToLoginPage } from './utils'
-import { AppState } from './types'
+import { AppState, AppCookieName } from './types'
 import { PollFinishMessage, PollStartMessage } from 'poll'
 
 jest.mock('./utils')
@@ -59,6 +59,7 @@ function createAppState(autoScroll: boolean): AppState {
     }],
     autoScroll,
     sendWithCtrlEnter: true,
+    openSoundPanel: false,
   }
 }
 
@@ -72,9 +73,11 @@ test('onOpen does nothing if no room cookies', () => {
   }
   const wsc = createWebSocketControlMock()
 
-  const cookies: ReturnType<typeof useAppCookies>[0] = {
+  const cookies: CookieAccessor<AppCookieName> = {
     str: jest.fn().mockImplementation((a: string) => a === 'room' ? undefined : 'hoge'),
     bool: jest.fn(),
+    num: jest.fn(),
+    obj: jest.fn(),
   }
   const { result } = renderHook(() => useWebSocketOnOpen(wscRefMock, cookies))
   const onOpen = result.current
@@ -91,9 +94,11 @@ test('onOpen does nothing if no password cookies', () => {
   }
   const wsc = createWebSocketControlMock()
 
-  const cookies: ReturnType<typeof useAppCookies>[0] = {
+  const cookies: CookieAccessor<AppCookieName> = {
     str: jest.fn().mockImplementation((a: string) => a === 'password' ? undefined : 'hoge'),
     bool: jest.fn(),
+    num: jest.fn(),
+    obj: jest.fn(),
   }
   const { result } = renderHook(() => useWebSocketOnOpen(wscRefMock, cookies))
   const onOpen = result.current
@@ -110,9 +115,11 @@ test('onOpen sets wscRef and send an acn message', () => {
   }
   const wsc = createWebSocketControlMock()
 
-  const cookies: ReturnType<typeof useAppCookies>[0] = {
+  const cookies: CookieAccessor<AppCookieName> = {
     str: jest.fn().mockImplementation(() => 'hoge'),
     bool: jest.fn(),
+    num: jest.fn(),
+    obj: jest.fn(),
   }
   const { result } = renderHook(() => useWebSocketOnOpen(wscRefMock, cookies))
   const onOpen = result.current
@@ -131,9 +138,11 @@ test('onClose with ACN_FAILED goes to login page', () => {
   const wscRefMock: React.MutableRefObject<WebSocketControl | null> = {
     current: createWebSocketControlMock()
   }
-  const modCookieMock: ReturnType<typeof useAppCookies>[1] = {
+  const modCookieMock: CookieModifier<AppCookieName> = {
     str: jest.fn(),
     bool: jest.fn(),
+    num: jest.fn(),
+    obj: jest.fn(),
     remove: jest.fn(),
   }
 
@@ -156,9 +165,11 @@ test('onClose with no ACN_FAILED tries to reconnect', () => {
   const wscRefMock: React.MutableRefObject<WebSocketControl | null> = {
     current: createWebSocketControlMock()
   }
-  const modCookieMock: ReturnType<typeof useAppCookies>[1] = {
+  const modCookieMock: CookieModifier<AppCookieName> = {
     str: jest.fn(),
     bool: jest.fn(),
+    num: jest.fn(),
+    obj: jest.fn(),
     remove: jest.fn(),
   }
 
@@ -184,9 +195,12 @@ test('onMessage ignores non poll application message', () => {
   const autoScrollRef: React.RefObject<HTMLDivElement> = {
     current: document.createElement('div')
   }
+  const soundPanelRef: React.RefObject<HTMLIFrameElement> = {
+    current: document.createElement('iframe')
+  }
 
   const { result } = renderHook(() => {
-    return useWebSocketOnMessage(10, state, setState, onClosePoll, messageListDivRef, autoScrollRef)
+    return useWebSocketOnMessage(10, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef)
   })
   const onMessage = result.current
   const someAppMessage: ApplicationMessage = {
@@ -208,9 +222,12 @@ test('onMessage which receives comment message add a comment entry', () => {
   const autoScrollRef: React.RefObject<HTMLDivElement> = {
     current: document.createElement('div')
   }
+  const soundPanelRef: React.RefObject<HTMLIFrameElement> = {
+    current: document.createElement('iframe')
+  }
 
   const { result } = renderHook(() => {
-    return useWebSocketOnMessage(10, state, setState, onClosePoll, messageListDivRef, autoScrollRef)
+    return useWebSocketOnMessage(10, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef)
   })
   const onMessage = result.current
   const comment: CommentMessage = {
@@ -243,10 +260,15 @@ test('onMessage drop old comment if count of comments exceeds maxMessageCount', 
   const autoScrollRef: React.RefObject<HTMLDivElement> = {
     current: document.createElement('div')
   }
+  const soundPanelRef: React.RefObject<HTMLIFrameElement> = {
+    current: document.createElement('iframe')
+  }
 
   const { result } = renderHook(() => {
     const maxMessageCount = state.comments.length
-    return useWebSocketOnMessage(maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef)
+    return useWebSocketOnMessage(
+      maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef
+    )
   })
   const onMessage = result.current
   const comment: CommentMessage = {
@@ -279,10 +301,15 @@ test('onMessage which receives PollStartMessage add a poll entry', () => {
   const autoScrollRef: React.RefObject<HTMLDivElement> = {
     current: document.createElement('div')
   }
+  const soundPanelRef: React.RefObject<HTMLIFrameElement> = {
+    current: document.createElement('iframe')
+  }
 
   const { result } = renderHook(() => {
     const maxMessageCount = state.comments.length
-    return useWebSocketOnMessage(maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef)
+    return useWebSocketOnMessage(
+      maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef
+    )
   })
   const onMessage = result.current
   const message: PollStartMessage = {
@@ -324,10 +351,15 @@ test('onMessage which receives PollFinishMessage removes a poll entry', () => {
   const autoScrollRef: React.RefObject<HTMLDivElement> = {
     current: document.createElement('div')
   }
+  const soundPanelRef: React.RefObject<HTMLIFrameElement> = {
+    current: document.createElement('iframe')
+  }
 
   const { result } = renderHook(() => {
     const maxMessageCount = state.comments.length
-    return useWebSocketOnMessage(maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef)
+    return useWebSocketOnMessage(
+      maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef
+    )
   })
   const onMessage = result.current
   const message: PollFinishMessage = {
@@ -358,9 +390,12 @@ test('onMessage scrolls to autoScrollRef if autoScroll is true', () => {
       offsetTop: 123
     } as any  // eslint-disable-line @typescript-eslint/no-explicit-any
   }
+  const soundPanelRef: React.RefObject<HTMLIFrameElement> = {
+    current: document.createElement('iframe')
+  }
 
   const { result } = renderHook(() => {
-    return useWebSocketOnMessage(10, state, setState, onClosePoll, messageListDivRef, autoScrollRef)
+    return useWebSocketOnMessage(10, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef)
   })
   const onMessage = result.current
   const comment: CommentMessage = {

@@ -1,4 +1,4 @@
-import { AcnMessage, Deffered, getLogger, isAcnMessage, Message } from 'common'
+import { AcnMessage, Deffered, getLogger, isAcnOkMessage, Message } from 'common'
 import { WebSocketControl } from 'wscomp'
 import React from 'react'
 import { isPollMessage, PollEntry, PollFinishMessage, PollStartMessage, Progress, Update } from './types'
@@ -33,7 +33,7 @@ export function useOnMessage(
 ): (message: Message) => void {
   return React.useCallback((message: Message): void => {
     log.debug('[onMessage]', message)
-    if (isAcnMessage(message)) {
+    if (isAcnOkMessage(message)) {
       acnOk.resolve(entries)
       return
     }

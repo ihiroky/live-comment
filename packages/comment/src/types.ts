@@ -1,5 +1,5 @@
+import { ApplicationMessage, isObject } from 'common'
 import { PollStartMessage } from 'poll'
-import { WebSocketClient } from 'wscomp'
 
 export type AppState = {
   comments: {
@@ -16,6 +16,28 @@ export type AppState = {
   }[]
   autoScroll: boolean
   sendWithCtrlEnter: boolean
+  openSoundPanel: boolean
 }
 
-export type StreamingClient = typeof WebSocketClient
+export const AppCookieNames = [
+  'room',
+  'password',
+  'saveCred',
+  'autoScroll',
+  'sendWithCtrlEnter',
+  'openSoundPanel',
+] as const
+export type AppCookieName = typeof AppCookieNames[number]
+
+export type PlaySoundMessage = ApplicationMessage & {
+  cmd: 'sound/play'
+  id: string
+}
+
+export function isPlaySoundMessage(obj: unknown): obj is PlaySoundMessage {
+  // type: 'app', cmd: 'sound/play', id
+  return isObject(obj) &&
+    obj.type === 'app' &&
+    obj.cmd === 'sound/play' &&
+    typeof obj.id === 'string'
+}
