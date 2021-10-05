@@ -165,6 +165,8 @@ test('Stop all timers', () => {
     slotTimers[i] = {} as NodeJS.Timeout
     sut['slots'][i].timerId = slotTimers[i]
   }
+  global.clearTimeout = jest.fn()
+  global.clearInterval = jest.fn()
 
   sut.stop()
 

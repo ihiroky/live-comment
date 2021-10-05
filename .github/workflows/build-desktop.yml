@@ -29,9 +29,10 @@ jobs:
       - name: Run tests
         run: |
           yarn jest packages/common/
-          yarn jest --passWithNoTests packages/screen/
-          yarn jest --passWithNoTests packages/poll/
-          yarn jest --passWithNoTests packages/desktop/
+          yarn jest packages/screen/
+          yarn jest packages/poll/
+          yarn jest --env jsdom packages/desktop/src/*/*.spec.ts
+          yarn jest --env node packages/desktop/src/*.spec.ts
 
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1

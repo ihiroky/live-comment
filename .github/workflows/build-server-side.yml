@@ -27,7 +27,7 @@ jobs:
         run: |
           yarn jest packages/common/
           yarn jest packages/comment/
-          yarn jest --passWithNoTests packages/server/
+          yarn jest packages/server/
 
       - name: Create release directory tree
         run: |
