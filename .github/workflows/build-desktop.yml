@@ -33,6 +33,7 @@ jobs:
           yarn jest packages/poll/
           yarn jest --env jsdom packages/desktop/src/*/*.spec.ts
           yarn jest --env node packages/desktop/src/*.spec.ts
+        shell: bash
 
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
