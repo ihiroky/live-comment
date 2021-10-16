@@ -1,24 +1,25 @@
 import { ClientSession, createWebSocketServer } from './websocket'
 import WebSocket from 'ws'
-import { Configuration } from './Configuration'
+import { Configuration, loadConfigAsync } from './Configuration'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
 import http from 'http'
 import { mocked } from 'ts-jest/utils'
 import { Socket } from 'net'
-import { AcnMessage, AcnOkMessage, CloseCode, CommentMessage, ErrorMessage, getLogger, LogLevels } from 'common'
+import { AcnMessage, AcnOkMessage, AcnTokenMessage, assertNotNullable, CloseCode, CommentMessage, ErrorMessage, getLogger, LogLevels } from 'common'
 import { HealthCheck, countUpPending, countDownPending } from './HealthCheck'
+import { sign } from 'jsonwebtoken'
 
 jest.mock('http')
 jest.mock('ws')
 jest.mock('./HealthCheck')
-jest.useFakeTimers()
 
 let configuration: Configuration
 let configPath: string
+let sut: WebSocket.Server
 
-beforeEach(() => {
+beforeEach(async () => {
   // Remove jest option which overlaps Configuration
   const i = process.argv.findIndex(v => v === '-c')
   if (i > -1) {
@@ -35,18 +36,23 @@ beforeEach(() => {
       room: 'hoge',
       hash: 'dbb50237ad3fa5b818b8eeca9ca25a047e0f29517db2b25f4a8db5f717ff90bf0b7e94ef4f5c4e313dfb06e48fbd9a2e40795906a75c470cdb619cf9c2d4f6d9',
     }],
+    jwtPrivateKeyPath: './packages/server/config/jwt.key.sample',
+    jwtPublicKeyPath: './packages/server/config/jwt.key.pub.sample',
   }))
   const argv = {
     configPath,
     port: 8080,
     loglevel: LogLevels.INFO,
   }
-  configuration = new Configuration(argv)
+  const cache = await loadConfigAsync(configPath, 0)
+  assertNotNullable(cache.content, 'cache.content must be defined.')
+
+  configuration = new Configuration(argv, cache.content, cache.stat.mtimeMs)
 
   mocked(WebSocket.Server).mockImplementation(() => {
     return {
       on: jest.fn(),
-      emit: jest.fn()
+      emit: jest.fn(),
     } as any // eslint-disable-line @typescript-eslint/no-explicit-any
   })
   mocked(WebSocket).mockImplementation(() => {
@@ -72,14 +78,54 @@ beforeEach(() => {
       stop: jest.fn(),
     } as any // eslint-disable-line @typescript-eslint/no-explicit-any
   })
-  Date.now = () => 1234567890
 })
 
 afterEach(() => {
+  if (sut) {
+    try {
+      // WebSocket is mocked, so call onclose directly.
+      const onClose = mocked(sut.on).mock.calls[1][1]
+      onClose.bind(sut)()
+    } catch (e: unknown) {
+      // eslint-disable-next-line no-console
+      console.warn(e)
+    }
+  }
   if (configPath) {
     fs.rmSync(configPath)
   }
 })
+
+function waitFor(validateSync: () => void, timeout = 1000, checkInterval = 50): Promise<void> {
+  const start = Date.now()
+  let elapsed = 0
+  return new Promise<void>((resolve: () => void, reject: (reason: unknown) => void): void => {
+    const check = (): void => {
+      try {
+        validateSync()
+        resolve()
+        return
+      } catch (e: unknown) {
+        elapsed = Date.now() - start
+        if (elapsed >= timeout) {
+          reject(e)
+          return
+        }
+      }
+      setTimeout(check, checkInterval)
+    }
+    check()
+  })
+}
+
+function withFakeTimers(f: () => void) {
+  try {
+    jest.useFakeTimers()
+    f()
+  } finally {
+    jest.useRealTimers()
+  }
+}
 
 function callOnConnection() {
   const healthCheck = new HealthCheck()
@@ -88,20 +134,27 @@ function callOnConnection() {
   const session = new WebSocket('') as ClientSession
   const req = new http.IncomingMessage({} as Socket)
   onConnection.bind(server)(session, req)
+  sut = server
   return { server, session, req, healthCheck }
 }
 
 
 test('Session initial properties', () => {
-  const { session, healthCheck } = callOnConnection()
+  const now = Date.now
+  try {
+    Date.now = () => 1234567890
+    const { session, healthCheck } = callOnConnection()
 
-  expect(session.id.length).toBe(56)
-  expect(session.connectedTime).toBe(1234567890)
-  expect(session.blocked).toBe(false)
-  expect(healthCheck.add).toBeCalledWith(session)
+    expect(session.id.length).toBe(56)
+    expect(session.connectedTime).toBe(1234567890)
+    expect(session.blocked).toBe(false)
+    expect(healthCheck.add).toBeCalledWith(session)
+  } finally {
+    Date.now = now
+  }
 })
 
-test('Acn OK, and count up before sending and count down after sended', () => {
+test('Acn OK, and count up before sending and count down after sended', async () => {
   const { session } = callOnConnection()
   expect(session.on).toBeCalledWith('message', expect.any(Function))
   const onMessage = mocked(session.on).mock.calls[0][1]
@@ -116,10 +169,14 @@ test('Acn OK, and count up before sending and count down after sended', () => {
   onMessage.bind(session)(JSON.stringify(m0))
   const res: AcnOkMessage = {
     type: 'acn',
-    attrs: { sessionId: new Array(56).fill('0').join('') },
+    attrs: {
+      token: new Array(190).fill('0').join(''),
+    },
   }
   const charCount = JSON.stringify(res).length
-  expect(countUpPending).toBeCalledWith(session, charCount)
+  await waitFor(() => {
+    expect(countUpPending).toBeCalledWith(session, charCount)
+  })
 
   const cb0 = mocked(session.send).mock.calls[0][1] as (err?: Error) => void
   cb0()
@@ -144,6 +201,77 @@ test('Acn failed, then close the session', () => {
     message: 'Invalid room or hash.',
   }
   expect(session.close).toBeCalledWith(CloseCode.ACN_FAILED, JSON.stringify(expectedMessage))
+})
+
+test('Autorization with token and OK', async () => {
+  const { session } = callOnConnection()
+  expect(session.on).toBeCalledWith('message', expect.any(Function))
+  const onMessage = mocked(session.on).mock.calls[0][1]
+  const token = sign({ room: configuration.rooms[0].room }, configuration.jwtPrivateKey, { expiresIn: '1d', algorithm: 'ES256' })
+
+  const m0: AcnTokenMessage = {
+    type: 'acn',
+    token,
+  }
+  onMessage.bind(session)(JSON.stringify(m0))
+  const res: AcnOkMessage = {
+    type: 'acn',
+    attrs: {
+      token,
+    },
+  }
+  const charCount = JSON.stringify(res).length
+  await waitFor(() => {
+    expect(countUpPending).toBeCalledWith(session, charCount)
+  })
+
+  const cb0 = mocked(session.send).mock.calls[0][1] as (err?: Error) => void
+  cb0()
+  expect(countDownPending).toBeCalledWith(session, charCount)
+})
+
+test('Authorization with token and verification failed', async () => {
+  const { session } = callOnConnection()
+  expect(session.on).toBeCalledWith('message', expect.any(Function))
+  const onMessage = mocked(session.on).mock.calls[0][1]
+  const token = sign({ room: configuration.rooms[0].room }, configuration.jwtPrivateKey, { expiresIn: '0s', algorithm: 'ES256' })
+
+  const m0: AcnTokenMessage = {
+    type: 'acn',
+    token,
+  }
+  onMessage.bind(session)(JSON.stringify(m0))
+
+  const res: ErrorMessage = {
+    type: 'error',
+    error: 'ACN_FAILED',
+    message: 'TokenExpiredError: jwt expired',
+  }
+  await waitFor(() => {
+    expect(session.close).toBeCalledWith(CloseCode.ACN_FAILED, JSON.stringify(res))
+  })
+})
+
+test('Authorization with token which has no room', async () => {
+  const { session } = callOnConnection()
+  expect(session.on).toBeCalledWith('message', expect.any(Function))
+  const onMessage = mocked(session.on).mock.calls[0][1]
+  const token = sign({}, configuration.jwtPrivateKey, { expiresIn: '10s', algorithm: 'ES256' })
+
+  const m0: AcnTokenMessage = {
+    type: 'acn',
+    token,
+  }
+  onMessage.bind(session)(JSON.stringify(m0))
+
+  const res: ErrorMessage = {
+    type: 'error',
+    error: 'ACN_FAILED',
+    message: 'No permission',
+  }
+  await waitFor(() => {
+    expect(session.close).toBeCalledWith(CloseCode.ACN_FAILED, JSON.stringify(res))
+  })
 })
 
 test('An unauthenticated session is closed if exists on boardcasting', () => {
@@ -215,26 +343,28 @@ test('Write log and remove session from health check on close', () => {
 })
 
 test('Emit healthcheck event periodically', () => {
-  const healthCheck = new HealthCheck()
-  const server = createWebSocketServer(http.createServer(), healthCheck, configuration)
-  server.clients = new Set()
+  withFakeTimers(() => {
+    const healthCheck = new HealthCheck()
+    sut = createWebSocketServer(http.createServer(), healthCheck, configuration)
+    sut.clients = new Set()
 
-  expect(healthCheck.start).toBeCalled()
+    expect(healthCheck.start).toBeCalled()
 
-  jest.advanceTimersByTime(6999)
-  expect(server.emit).not.toBeCalled()
+    jest.advanceTimersByTime(6999)
+    expect(sut.emit).not.toBeCalled()
 
-  jest.advanceTimersByTime(1)
-  expect(server.emit).toBeCalledWith('healthcheck')
+    jest.advanceTimersByTime(1)
+    expect(sut.emit).toBeCalledWith('healthcheck')
+  })
 })
 
 test('Emit healthcheck event periodically', () => {
   const healthCheck = new HealthCheck()
-  const server = createWebSocketServer(http.createServer(), healthCheck, configuration)
+  sut = createWebSocketServer(http.createServer(), healthCheck, configuration)
 
-  expect(server.on).toBeCalledWith('close', expect.any(Function))
-  const onClose = mocked(server.on).mock.calls[1][1]
-  onClose.bind(server)()
+  expect(sut.on).toBeCalledWith('close', expect.any(Function))
+  const onClose = mocked(sut.on).mock.calls[1][1]
+  onClose.bind(sut)()
 
   expect(healthCheck.stop).toBeCalled()
 })

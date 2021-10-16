@@ -2,12 +2,15 @@ import WebSocket from 'ws'
 import http from 'http'
 import crypto from 'crypto'
 import { Configuration } from './Configuration'
+import { sign, verify } from './jwt'
 
 import {
   CloseCode,
   AcnMessage,
+  AcnTokenMessage,
   ErrorMessage,
   isAcnMessage,
+  isAcnTokenMessage,
   getLogger,
   CommentMessage,
   getRandomInteger,
@@ -47,17 +50,36 @@ function sendMessage(c: ClientSession, message: WebSocket.Data): void {
   })
 }
 
+function sendAuthResponse(client: ClientSession, err: Error | null, token: string | undefined): void {
+  if (err === null && token) {
+    const ok: AcnOkMessage = {
+      type: 'acn',
+      attrs: {
+        token,
+      },
+    }
+    sendMessage(client, JSON.stringify(ok))
+    return
+  }
+
+  const error: ErrorMessage = {
+    type: 'error',
+    error: 'ACN_FAILED',
+    message: (err !== null) ? err.toString() : 'Failed.'
+  }
+  sendMessage(client, JSON.stringify(error))
+  client.close(CloseCode.ACN_FAILED, JSON.stringify(error))
+}
+
 function authenticate(client: ClientSession, m: AcnMessage, configuration: Configuration): void {
   log.debug('[authenticate] From', client.id)
   for (const r of configuration.rooms) {
     if (r.room === m.room && r.hash === m.hash) {
       log.debug('[authenticate] Room:', m.room)
       client.room = m.room
-      const ok: AcnOkMessage = {
-        type: 'acn',
-        attrs: { sessionId: client.id },
-      }
-      sendMessage(client, JSON.stringify(ok))
+      sign({ room: m.room }, configuration.jwtPrivateKey, m.longLife)
+        .then(token => sendAuthResponse(client, null, token))
+        .catch(reason => sendAuthResponse(client, reason, undefined))
       return
     }
   }
@@ -68,6 +90,26 @@ function authenticate(client: ClientSession, m: AcnMessage, configuration: Confi
     message: 'Invalid room or hash.'
   }
   client.close(CloseCode.ACN_FAILED, JSON.stringify(message))
+}
+
+function authorize(client: ClientSession, m: AcnTokenMessage, configuration: Configuration): void {
+  verify(m.token, configuration.jwtPublicKey)
+    .then(payload => {
+      if (!payload?.room) {
+        const message: ErrorMessage = {
+          type: 'error',
+          error: 'ACN_FAILED',
+          message: 'No permission'
+        }
+        client.close(CloseCode.ACN_FAILED, JSON.stringify(message))
+        return
+      }
+      client.room = payload.room
+      sendAuthResponse(client, null, m.token)
+    })
+    .catch (reason => {
+      sendAuthResponse(client, reason, undefined)
+    })
 }
 
 function broadcast(
@@ -116,8 +158,11 @@ function onConnected(
       broadcast(server, client, m)
     } else if (isAcnMessage(m)) {
       authenticate(client, m, configuration)
+    } else if (isAcnTokenMessage(m)) {
+      authorize(client, m, configuration)
     } else {
       log.debug('[onMessage] Unexpected message:', m)
+      client.close(CloseCode.INVALID_MESSAGE)
     }
   })
   client.on('error', function (e: Error): void {

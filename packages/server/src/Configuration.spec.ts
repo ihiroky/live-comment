@@ -1,15 +1,17 @@
-import { Configuration,  } from './Configuration'
+import { Configuration, loadConfigAsync,  } from './Configuration'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
-import { LogLevels } from 'common'
+import { assertNotNullable, LogLevels } from 'common'
 import { Argv } from './argv'
 
-let configPath: string
+let testDataRoot: string
 let argv: Argv
 
-beforeAll(() => {
-  configPath = ''
+beforeEach(() => {
+  testDataRoot = path.join(os.tmpdir(), 'ConfigurationSpecTestData')
+  fs.mkdirSync(testDataRoot, { recursive: true })
+
   argv = {
     configPath: './server.config.json',
     port: 8080,
@@ -18,13 +20,10 @@ beforeAll(() => {
 })
 
 afterEach(() => {
-  if (configPath) {
-    fs.rmSync(configPath, { recursive: true })
-    configPath = ''
-  }
+  fs.rmSync(testDataRoot, { recursive: true, force: true })
 })
 
-function writeConfig(path: string, cfg?: Record<string, unknown>): void {
+function writeConfig(filePath: string, cfg?: Record<string, unknown>): void {
   const config = cfg ?? {
     rooms: [
       {
@@ -36,80 +35,300 @@ function writeConfig(path: string, cfg?: Record<string, unknown>): void {
         hash: 'dbb50237ad3fa5b818b8eeca9ca25a047e0f29517db2b25f4a8db5f717ff90bf0b7e94ef4f5c4e313dfb06e48fbd9a2e40795906a75c470cdb619cf9c2d4f6d9',
       },
     ],
+    jwtPrivateKeyPath: path.join(testDataRoot, 'jwt.key'),
+    jwtPublicKeyPath: path.join(testDataRoot, 'jwt.key.pub'),
   }
-  fs.writeFileSync(path, JSON.stringify(config))
+  fs.writeFileSync(filePath, JSON.stringify(config))
+  if (!cfg) {
+    createFile(config.jwtPrivateKeyPath as string)
+    createFile(config.jwtPublicKeyPath as string)
+  }
 }
 
-test('Error if configuration file does not have any room definition', () => {
-  configPath = path.join(os.tmpdir(), 'test.json')
+function createFile(path: string): void {
+  fs.closeSync(fs.openSync(path, 'w'))
+}
+
+test('Error if configuration file does not have any room definition', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
   writeConfig(configPath, {})
-  argv.configPath = configPath
 
-  expect(() => new Configuration(argv)).toThrow('Room definition does not exist.')
+  await expect(loadConfigAsync(configPath, 0))
+    .rejects
+    .toThrow('Room definition does not exist.')
 })
 
-test('Error if configuration file have empty rooms', () => {
-  configPath = path.join(os.tmpdir(), 'test.json')
+test('Error if configuration file have empty rooms', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
   writeConfig(configPath, { rooms: [] })
-  argv.configPath = configPath
 
-  expect(() => new Configuration(argv)).toThrow('Room definition does not exist.')
+  await expect(loadConfigAsync(configPath, 0))
+    .rejects
+    .toThrow('Room definition does not exist.')
 })
 
-test('Error if a room has no name', () => {
-  configPath = path.join(os.tmpdir(), 'test.json')
+test('Error if a room has no name', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
   writeConfig(configPath, { rooms: [{ hash: 'hash' }] })
-  argv.configPath = configPath
 
-  expect(() => new Configuration(argv)).toThrow('Unexpected room definition: {"hash":"hash"}')
+  await expect(loadConfigAsync(configPath, 0))
+    .rejects
+    .toThrow('Unexpected room definition: {"hash":"hash"}')
 })
 
-test('Error if a room has no hash', () => {
-  configPath = path.join(os.tmpdir(), 'test.json')
+test('Error if a room has no hash', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
   writeConfig(configPath, { rooms: [{ room: 'room' }] })
-  argv.configPath = configPath
 
-  expect(() => new Configuration(argv)).toThrow('Unexpected room definition: {"room":"room"}')
+  await expect(loadConfigAsync(configPath, 0))
+    .rejects
+    .toThrow('Unexpected room definition: {"room":"room"}')
 })
 
-test('Default port is 8080', () => {
-  configPath = path.join(os.tmpdir(), 'test.json')
+test('soundFilePath is set, but no file exists', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
+  writeConfig(configPath, {
+    rooms: [{ room: 'room', hash: 'hash' }],
+    soundFilePath: 'hoge',
+  })
+
+  await expect(loadConfigAsync(configPath, 0))
+    .rejects
+    .toThrow('ENOENT: no such file or directory, stat \'hoge\'')
+})
+
+test('soundFilePath is set and exists but not a regular file.', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
+  const soundFilePath = path.join(testDataRoot, 'soundFile.zip')
+  writeConfig(configPath, {
+    rooms: [{ room: 'room', hash: 'hash' }],
+    soundFilePath,
+  })
+  fs.mkdirSync(soundFilePath, { recursive: true })
+
+  await expect(loadConfigAsync(configPath, 0))
+    .rejects
+    .toThrow(`${soundFilePath} is not a file.`)
+})
+
+test('The checksum file of soundFile does not exist', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
+  const soundFilePath = path.join(testDataRoot, 'soundFile.zip')
+  writeConfig(configPath, {
+    rooms: [{ room: ' room', hash: 'hash' }],
+    soundFilePath,
+  })
+  createFile(soundFilePath)
+
+  await expect(loadConfigAsync(configPath, 0))
+    .rejects
+    .toThrow(`ENOENT: no such file or directory, stat '${soundFilePath}.md5'`)
+})
+
+test('The checksum file of soundFile is not a file', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
+  const soundFilePath = path.join(testDataRoot, 'soundFile.zip')
+  const checksumPath = path.join(testDataRoot, 'soundFile.zip.md5')
+  writeConfig(configPath, {
+    rooms: [{ room: ' room', hash: 'hash' }],
+    soundFilePath,
+  })
+  createFile(soundFilePath)
+  fs.mkdirSync(checksumPath)
+
+  await expect(loadConfigAsync(configPath, 0))
+    .rejects
+    .toThrow(`${checksumPath} is not a file.`)
+})
+
+test('No jwtPrivateKeyPath', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
+  const soundFilePath = path.join(testDataRoot, 'soundFile.zip')
+  const checksumPath = path.join(testDataRoot, 'soundFile.zip.md5')
+  writeConfig(configPath, {
+    rooms: [{ room: ' room', hash: 'hash' }],
+    soundFilePath,
+  })
+  createFile(soundFilePath)
+  createFile(checksumPath)
+
+  await expect(loadConfigAsync(configPath, 0))
+    .rejects
+    .toThrow('jwtPrivateKeyPath is not defined.')
+})
+
+test('jwtPrivateKeyPath does not exist', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
+  const soundFilePath = path.join(testDataRoot, 'soundFile.zip')
+  const checksumPath = path.join(testDataRoot, 'soundFile.zip.md5')
+  const jwtPrivateKeyPath = path.join(testDataRoot, 'jwt.key')
+  writeConfig(configPath, {
+    rooms: [{ room: ' room', hash: 'hash' }],
+    soundFilePath,
+    jwtPrivateKeyPath,
+  })
+  createFile(soundFilePath)
+  createFile(checksumPath)
+
+  await expect(loadConfigAsync(configPath, 0))
+    .rejects
+    .toThrow(`ENOENT: no such file or directory, stat '${jwtPrivateKeyPath}'`)
+})
+
+test('jwtPrivateKeyPath is not a file.', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
+  const soundFilePath = path.join(testDataRoot, 'soundFile.zip')
+  const checksumPath = path.join(testDataRoot, 'soundFile.zip.md5')
+  const jwtPrivateKeyPath = path.join(testDataRoot, 'jwt.key')
+  writeConfig(configPath, {
+    rooms: [{ room: ' room', hash: 'hash' }],
+    soundFilePath,
+    jwtPrivateKeyPath,
+  })
+  createFile(soundFilePath)
+  createFile(checksumPath)
+  fs.mkdirSync(jwtPrivateKeyPath)
+
+  await expect(loadConfigAsync(configPath, 0))
+    .rejects
+    .toThrow(`${jwtPrivateKeyPath} is not a file.`)
+})
+
+test('No jwtPublicKeyPath', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
+  const soundFilePath = path.join(testDataRoot, 'soundFile.zip')
+  const checksumPath = path.join(testDataRoot, 'soundFile.zip.md5')
+  const jwtPrivateKeyPath = path.join(testDataRoot, 'jwt.key')
+  writeConfig(configPath, {
+    rooms: [{ room: ' room', hash: 'hash' }],
+    soundFilePath,
+    jwtPrivateKeyPath,
+  })
+  createFile(soundFilePath)
+  createFile(checksumPath)
+  createFile(jwtPrivateKeyPath)
+
+  await expect(loadConfigAsync(configPath, 0))
+    .rejects
+    .toThrow('jwtPublicKeyPath is not defined.')
+})
+
+test('jwtPublicKeyPath does not exist', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
+  const soundFilePath = path.join(testDataRoot, 'soundFile.zip')
+  const checksumPath = path.join(testDataRoot, 'soundFile.zip.md5')
+  const jwtPrivateKeyPath = path.join(testDataRoot, 'jwt.key')
+  const jwtPublicKeyPath = path.join(testDataRoot, 'jwt.key.pub')
+  writeConfig(configPath, {
+    rooms: [{ room: ' room', hash: 'hash' }],
+    soundFilePath,
+    jwtPrivateKeyPath,
+    jwtPublicKeyPath,
+  })
+  createFile(soundFilePath)
+  createFile(checksumPath)
+  createFile(jwtPrivateKeyPath)
+
+  await expect(loadConfigAsync(configPath, 0))
+    .rejects
+    .toThrow(`ENOENT: no such file or directory, stat '${jwtPublicKeyPath}'`)
+})
+
+test('jwtPublicKeyPath is not a file.', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
+  const soundFilePath = path.join(testDataRoot, 'soundFile.zip')
+  const checksumPath = path.join(testDataRoot, 'soundFile.zip.md5')
+  const jwtPrivateKeyPath = path.join(testDataRoot, 'jwt.key')
+  const jwtPublicKeyPath = path.join(testDataRoot, 'jwt.key.pub')
+  writeConfig(configPath, {
+    rooms: [{ room: ' room', hash: 'hash' }],
+    soundFilePath,
+    jwtPrivateKeyPath,
+    jwtPublicKeyPath
+  })
+  createFile(soundFilePath)
+  createFile(checksumPath)
+  createFile(jwtPrivateKeyPath)
+  fs.mkdirSync(jwtPublicKeyPath)
+
+  await expect(loadConfigAsync(configPath, 0))
+    .rejects
+    .toThrow(`${jwtPublicKeyPath} is not a file.`)
+})
+
+test('Default port is 8080', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
   writeConfig(configPath)
   argv.configPath = configPath
+  const cache = await loadConfigAsync(configPath, 0)
+  assertNotNullable(cache.content, 'cache.content must be defined.')
 
-  const sut = new Configuration(argv)
+  const sut = new Configuration(argv, cache.content, cache.stat.mtimeMs)
 
   expect(sut.port).toBe(8080)
 })
 
-test('Get port specified at command line', () => {
-  configPath = path.join(os.tmpdir(), 'test.json')
+test('Get port specified at command line', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
   writeConfig(configPath)
   argv.configPath = configPath
   argv.port = 8888
+  const cache = await loadConfigAsync(configPath, 0)
+  assertNotNullable(cache.content, 'cache.content must be defined.')
 
-  const sut = new Configuration(argv)
+  const sut = new Configuration(argv, cache.content, cache.stat.mtimeMs)
 
   expect(sut.port).toBe(8888)
 })
 
-test('Default loglevel is INFO', () => {
-  configPath = path.join(os.tmpdir(), 'test.json')
+test('Default loglevel is INFO', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
   writeConfig(configPath)
   argv.configPath = configPath
+  const cache = await loadConfigAsync(configPath, 0)
+  assertNotNullable(cache.content, 'cache.content must be defined.')
 
-  const sut = new Configuration(argv)
+  const sut = new Configuration(argv, cache.content, cache.stat.mtimeMs)
 
   expect(sut.logLevel).toBe(LogLevels.INFO)
 })
 
-test('Get loglevel specified at command line', () => {
-  configPath = path.join(os.tmpdir(), 'test.json')
+test('Get loglevel specified at command line', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
   writeConfig(configPath)
   argv.configPath = configPath
   argv.loglevel = LogLevels.DEBUG
+  const cache = await loadConfigAsync(configPath, 0)
+  assertNotNullable(cache.content, 'cache.content must be defined.')
 
-  const sut = new Configuration(argv)
+  const sut = new Configuration(argv, cache.content, cache.stat.mtimeMs)
 
   expect(sut.logLevel).toBe(LogLevels.DEBUG)
+})
+
+test('Not reload when timestamp is not changed.', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
+  writeConfig(configPath)
+  argv.configPath = configPath
+
+  const cache = await loadConfigAsync(configPath, 0)
+  assertNotNullable(cache.content, 'cache.content must be defined.')
+  const sut = new Configuration(argv, cache.content, cache.stat.mtimeMs)
+  await sut.reloadIfUpdatedAsync()
+
+  expect(sut['cache']).toBe(cache.content)
+})
+
+test('Reload when timestamp gets newer', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
+  writeConfig(configPath)
+  argv.configPath = configPath
+
+  const cache = await loadConfigAsync(configPath, 0)
+  assertNotNullable(cache.content, 'cache.content must be defined.')
+  const sut = new Configuration(argv, cache.content, cache.stat.mtimeMs)
+  fs.utimesSync(configPath, cache.stat.atimeMs + 1000, cache.stat.mtimeMs + 1000)
+  await sut.reloadIfUpdatedAsync()
+
+  expect(sut['cache']).not.toBe(cache.content)
 })

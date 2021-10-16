@@ -2,15 +2,32 @@
 
 cd $(dirname $0)
 
-mkdir -p log
-test -f log/pid \
-  && kill $(cat log/pid) 2>/dev/null \
-  && echo Stop running process $(cat log/pid).
-while read f
-do
-  rm -f $f
-done < <(ls -t log/nohup*.out | tail +3)
+function clean_pid_file() {
+  local pid="${1}.pid"
+  test -f log/${pid} \
+    && kill $(cat log/${pid}) 2>/dev/null \
+    && echo Stop running process $(cat log/${pid}).
+}
 
-nohup node dist/bundled/index.js >log/nohup-$(date +%Y%m%d-%H%M%S).out 2>&1 &
-echo $! >log/pid
-echo Start new process $!
+function clean_old_log() {
+  while read f
+  do
+    rm -f $f
+  done < <(ls -t log/nohup*.out | tail +3)
+}
+
+function start_process() {
+  local type="${1}"
+  nohup node dist/bundled/${type}.js >log/nohup-${type}-$(date +%Y%m%d-%H%M%S).out 2>&1 &
+  echo $! >log/${type}.pid
+  echo Start new ${type} process $!
+}
+
+mkdir -p log
+clean_pid_file streaming
+clean_pid_file api
+
+clean_old_log
+
+start_process streaming -p 8080
+start_process api -p 9080
