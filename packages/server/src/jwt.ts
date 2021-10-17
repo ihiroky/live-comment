@@ -12,7 +12,7 @@ export function sign(
   return new Promise<string>((resolve: (token: string) => void, reject: (reason: unknown) => void): void => {
     jwtSign(payload, privateKey,
       {
-        expiresIn: longLife ? '30d' : '1d',
+        expiresIn: longLife ? '30d' : '12h',
         algorithm: JWT_ALG,
       },
       (err: Error | null, encoded: string | undefined): void => {
