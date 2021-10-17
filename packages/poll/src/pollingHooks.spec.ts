@@ -77,7 +77,7 @@ test('useOnMessage resolves acnOk if message is AcnMessage', () => {
   const onMessage = result.current
   const message: AcnOkMessage = {
     type: 'acn',
-    attrs: { sessionId: 'sessionId' },
+    attrs: { token: 'token' },
   }
   onMessage(message)
 

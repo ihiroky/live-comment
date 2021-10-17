@@ -2,7 +2,7 @@ import React from 'react'
 import { SoundPlayer } from './SoundPlayer'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { usePlaySound, useRoomHash, useSoundMetadata } from './hooks'
+import { usePlaySound, useSoundMetadata } from './hooks'
 import { mocked } from 'ts-jest/utils'
 import { PlaySoundMessage } from '../types'
 
@@ -15,9 +15,13 @@ function waitAsync(ms: number): Promise<void> {
   })
 }
 
+afterEach(() => {
+  window.localStorage.clear()
+})
+
 test('Page title', () => {
+  window.localStorage.setItem('token', 'token')
   mocked(usePlaySound).mockReturnValue(jest.fn())
-  mocked(useRoomHash).mockReturnValue(['r', 'h'])
   mocked(useSoundMetadata).mockReturnValue([])
 
   render(<SoundPlayer url="https://localhost" />)
@@ -29,7 +33,7 @@ test('Page title', () => {
 test('Volume is changed if move slider', async () => {
   const playSoundMock = jest.fn()
   mocked(usePlaySound).mockReturnValue(playSoundMock)
-  mocked(useRoomHash).mockReturnValue(['r', 'h'])
+  window.localStorage.setItem('token', 'token')
   mocked(useSoundMetadata).mockReturnValue([
     { id0: { id: 'id0', displayName: 'dn0', command: [] }},
     {}
@@ -57,7 +61,7 @@ test('Volume is changed if move slider', async () => {
 test('Change max number of sound being played concurrently', async () => {
   const playSoundMock = jest.fn()
   mocked(usePlaySound).mockReturnValue(playSoundMock)
-  mocked(useRoomHash).mockReturnValue(['r', 'h'])
+  window.localStorage.setItem('token', 'token')
   mocked(useSoundMetadata).mockReturnValue([
     { id0: { id: 'id0', displayName: 'dn0', command: [] }},
     {}
@@ -92,7 +96,7 @@ test('Change max number of sound being played concurrently', async () => {
 
 test('Send message to play sound if icon is clicked', async () => {
   mocked(usePlaySound).mockReturnValue(jest.fn())
-  mocked(useRoomHash).mockReturnValue(['r', 'h'])
+  window.localStorage.setItem('token', 'token')
   mocked(useSoundMetadata).mockReturnValue([
     { id0: { id: 'id0', displayName: 'dn0', command: [] }},
     {}

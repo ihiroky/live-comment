@@ -16,20 +16,8 @@ describe('useExistsSounds', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     global.TextEncoder = require('util').TextEncoder
   })
-  test('Do nothing if room is null', async () => {
-    const { result } = renderHook(() => useExistsSounds('url', null, 'hash'))
-    const actual = result.current
-    await new Promise<void>((resolve: () => void): void => {
-      setTimeout(resolve, 50)
-    })
-    const actualAfterWait = result.current
-
-    expect(actual).toBe(false)
-    expect(actualAfterWait).toBe(false)
-  })
-
-  test('Do nothing if hash is null', async () => {
-    const { result } = renderHook(() => useExistsSounds('url', 'room', null))
+  test('Do nothing if no token', async () => {
+    const { result } = renderHook(() => useExistsSounds('url', ''))
     const actual = result.current
     await new Promise<void>((resolve: () => void): void => {
       setTimeout(resolve, 50)
@@ -47,16 +35,19 @@ describe('useExistsSounds', () => {
       text: () => Promise.resolve('')
     } as Response)
 
-    const { result } = renderHook(() => useExistsSounds('https://host/', 'r', 'h'))
+    const { result } = renderHook(() => useExistsSounds('https://host/', 'token'))
     await new Promise<void>((resolve: () => void): void => {
       setTimeout(resolve, 50)
     })
 
     expect(result.current).toBe(false)
     expect(get).not.toBeCalled()
-    expect(window.fetch).toBeCalledWith('https://host/sound/checksum?room=r&hash=h',{
+    expect(window.fetch).toBeCalledWith('https://host/sound/checksum',{
       cache: 'no-store',
-      headers: { Accept: 'text/plain' },
+      headers: {
+        Accept: 'text/plain',
+        Authorization: 'Bearer token'
+      },
       method: 'GET',
       mode: 'cors',
       signal: expect.any(AbortSignal)
@@ -71,14 +62,17 @@ describe('useExistsSounds', () => {
       text: () => Promise.resolve('cs')
     })
 
-    const { result, waitFor } = renderHook(() => useExistsSounds('https://host/', 'r', 'h'))
+    const { result, waitFor } = renderHook(() => useExistsSounds('https://host/', 'token'))
 
     await waitFor(() => expect(result.current).toBe(true))
     expect(result.current).toBe(true)
     expect(get).toBeCalledWith('soundMetadata', 'checksum')
-    expect(window.fetch).toBeCalledWith('https://host/sound/checksum?room=r&hash=h',{
+    expect(window.fetch).toBeCalledWith('https://host/sound/checksum',{
       cache: 'no-store',
-      headers: { Accept: 'text/plain' },
+      headers: {
+        Accept: 'text/plain',
+        Authorization: 'Bearer token',
+      },
       method: 'GET',
       mode: 'cors',
       signal: expect.any(AbortSignal)
@@ -98,23 +92,29 @@ describe('useExistsSounds', () => {
         text: () => Promise.resolve(''),
       })
 
-    const { result } = renderHook(() => useExistsSounds('https://host/', 'r', 'h'))
+    const { result } = renderHook(() => useExistsSounds('https://host/', 'token'))
     await new Promise<void>((resolve: () => void): void => {
       setTimeout(resolve, 50)
     })
 
     expect(result.current).toBe(false)
     expect(get).toBeCalledWith('soundMetadata', 'checksum')
-    expect(window.fetch).toHaveBeenNthCalledWith(1, 'https://host/sound/checksum?room=r&hash=h',{
+    expect(window.fetch).toHaveBeenNthCalledWith(1, 'https://host/sound/checksum',{
       cache: 'no-store',
-      headers: { Accept: 'text/plain' },
+      headers: {
+        Accept: 'text/plain',
+        Authorization: 'Bearer token',
+      },
       method: 'GET',
       mode: 'cors',
       signal: expect.any(AbortSignal)
     })
-    expect(window.fetch).toHaveBeenNthCalledWith(2, 'https://host/sound/file?room=r&hash=h',{
+    expect(window.fetch).toHaveBeenNthCalledWith(2, 'https://host/sound/file',{
       cache: 'no-store',
-      headers: { Accept: 'application/zip' },
+      headers: {
+        Accept: 'application/zip',
+        Authorization: 'Bearer token',
+      },
       method: 'GET',
       mode: 'cors',
       signal: expect.any(AbortSignal)
@@ -186,7 +186,7 @@ describe('useExistsSounds', () => {
       return Promise.resolve()
     })
 
-    const { result } = renderHook(() => useExistsSounds('https://host/', 'r', 'h'))
+    const { result } = renderHook(() => useExistsSounds('https://host/', 'token'))
     await new Promise<void>((resolve: () => void): void => {
       setTimeout(resolve, 50)
     })

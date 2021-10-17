@@ -1,4 +1,4 @@
-import { isAcnOkMessage } from '.'
+import { AcnTokenMessage, isAcnOkMessage, isAcnTokenMessage } from '.'
 import {
   AcnMessage,
   AcnOkMessage,
@@ -39,7 +39,7 @@ test('isAcnOkMessage', () => {
   const msg: AcnOkMessage = {
     type: 'acn',
     attrs: {
-      sessionId: 'sid'
+      token: 'token',
     },
   }
 
@@ -54,6 +54,25 @@ test('isAcnOkMessage no acnok', () => {
   }
 
   expect(isAcnOkMessage(msg)).toBe(false)
+})
+
+test('isAcnTokenMessage', () => {
+  const msg: AcnTokenMessage = {
+    type: 'acn',
+    token: 'aaa'
+  }
+
+  expect(isAcnTokenMessage(msg)).toBe(true)
+})
+
+test('isAcnTokenMessage false', () => {
+  const msg: AcnMessage = {
+    type: 'acn',
+    room: 'room',
+    hash: 'hash',
+  }
+
+  expect(isAcnTokenMessage(msg)).toBe(false)
 })
 
 test('isApplicationMessage', () => {

@@ -1,22 +1,21 @@
 import React from 'react'
-import { Message, createHash, getLogger } from 'common'
+import { Message, getLogger } from 'common'
 import { WebSocketClient, WebSocketControl } from 'wscomp'
 import { SendCommentForm } from './SendCommentForm'
-import { AppState, isPlaySoundMessage, PlaySoundMessage, AppCookieNames } from './types'
+import { AppState, isPlaySoundMessage, PlaySoundMessage } from './types'
 import { PollControl } from './PollControl'
 import { LabeledCheckbox } from './LabeledCheckbox'
 import { FormGroup, Link, makeStyles } from '@material-ui/core'
-import { useNamedCookies, FAR_ENOUGH } from './useNamedCookies'
 import { useWebSocketOnOpen, useWebSocketOnClose, useWebSocketOnMessage } from './webSocketHooks'
 import { useOnPoll, useOnClosePoll } from './pollHooks'
 import { goToLoginPage } from './utils'
+import jwtDecode, { JwtPayload } from 'jwt-decode'
+
 
 type AppProps = {
   url: string
   maxMessageCount: number
 }
-
-type CheckboxStateName = 'autoScroll' | 'sendWithCtrlEnter' | 'openSoundPanel'
 
 // TODO User should be able to restart poll if the poll entry is closed by mistake.
 
@@ -114,12 +113,36 @@ const useStyles = makeStyles({
 
 const log = getLogger('App')
 
+type OptionKey = 'autoScroll' | 'sendWithCtrlEnter' | 'openSoundPanel'
+
+function getBooleanOptionValue(key: OptionKey, defalutValue: boolean): boolean {
+  const s = window.localStorage.getItem(key)
+  return s !== null ? !!s : defalutValue
+}
+
+function setBooleanOptionValue(key: OptionKey, value: boolean): void {
+  window.localStorage.setItem(key, value ? 't' : '')
+}
+
 export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
-  const [cookies, modCookies] = useNamedCookies(AppCookieNames)
   // TODO Divide state
-  const autoScroll = cookies.bool('autoScroll')
-  const sendWithCtrlEnter = cookies.bool('sendWithCtrlEnter')
-  const openSoundPanel = cookies.bool('openSoundPanel')
+  const autoScroll = getBooleanOptionValue('autoScroll', true)
+  const sendWithCtrlEnter = getBooleanOptionValue('sendWithCtrlEnter', true)
+  const openSoundPanel = getBooleanOptionValue('openSoundPanel', false)
+  const token = React.useMemo((): { value: string, payload: { room: string }} => {
+    const token = window.localStorage.getItem('token')
+    if (!token) {
+      return { value: '', payload: { room: '' } }
+    }
+    const payload = jwtDecode<JwtPayload & { room: string }>(token)
+    if (!payload || typeof payload === 'string') {
+      return { value: '', payload: { room: '' } }
+    }
+    return {
+      value: token,
+      payload: { room: payload.room }
+    }
+  }, [])
   const [state, setState] = React.useState<AppState>({
     comments: [],
     polls: [],
@@ -132,8 +155,8 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
   const wscRef = React.useRef<WebSocketControl | null>(null)
   const soundPanelRef = React.useRef<HTMLIFrameElement>(null)
 
-  const onOpen = useWebSocketOnOpen(wscRef, cookies)
-  const onClose = useWebSocketOnClose(wscRef, modCookies)
+  const onOpen = useWebSocketOnOpen(wscRef)
+  const onClose = useWebSocketOnClose(wscRef)
   const onPoll = useOnPoll(wscRef)
   const onClosePoll = useOnClosePoll(state, setState)
   const onMessage = useWebSocketOnMessage(
@@ -142,15 +165,20 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
   const onSubmit = React.useCallback((message: Message): void => {
     wscRef.current?.send(message)
   }, [])
-  const onCheckChangeBox = React.useCallback((name: CheckboxStateName, value: boolean): void => {
-    modCookies.bool(name, value, FAR_ENOUGH)
+  const onCheckChangeBox = React.useCallback((name: OptionKey, value: boolean): void => {
+    setBooleanOptionValue(name, value)
     setState({
       ...state,
       [name]: value
     })
-  }, [state, modCookies])
+  }, [state])
 
   React.useEffect((): (() => void) => {
+    const token = window.localStorage.getItem('token')
+    if (!token) {
+      goToLoginPage()
+    }
+
     return (): void => {
       if (wscRef.current) {
         wscRef.current.close()
@@ -158,11 +186,6 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
       }
     }
   }, [])
-  React.useEffect((): void => {
-    if (!cookies.str('room') || !cookies.str('password')) {
-      goToLoginPage()
-    }
-  }, [cookies])
   React.useEffect((): (() => void)=> {
     const messageListener = (e: MessageEvent<PlaySoundMessage>): void => {
       if (e.origin !== window.location.origin) {
@@ -183,9 +206,7 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
 
   const style = useStyles()
 
-  const room = cookies.str('room')
-  const password = cookies.str('password')
-  const checkBoxMeta: Array<{ label: string, name: string, key: CheckboxStateName}> = [
+  const checkBoxMeta: Array<{ label: string, name: string, key: OptionKey}> = [
     { label: 'Auto scroll', name: 'auto_scroll', key: 'autoScroll' },
     { label: 'Send with Ctrl+Enter', name: 'send_with_ctrl_enter', key: 'sendWithCtrlEnter' },
     { label: 'Open DDR', name: 'open_ddr', key: 'openSoundPanel' },
@@ -193,21 +214,17 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
   return (
     <div className={style.App}>
       <div className={style.nav}>
-        <div style={{ padding: '0px 12px' }}>Room: {cookies.str('room')}</div>
+        <div style={{ padding: '0px 12px' }}>Room: {token.payload.room}</div>
         <Link href="#" onClick={goToLoginPage}>Back to login</Link>
       </div>
       <div className={style.box}>
         <div>
-          { room && password ? (
+          { token.value ? (
             <>
               <WebSocketClient url={props.url} onOpen={onOpen} onClose={onClose} onMessage={onMessage} />
               { state.openSoundPanel ? (
                 <div className={style.sound}>
-                  <iframe
-                    ref={soundPanelRef}
-                    src={`/sound?room=${room}&hash=${createHash(password)}`} // Use cookie??
-                    allow="autoplay 'src'"
-                  />
+                  <iframe ref={soundPanelRef} src="/sound" allow="autoplay 'src'" />
                 </div>
               ) : null }
             </>) : null }

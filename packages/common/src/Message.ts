@@ -3,13 +3,15 @@ import { isObject } from './utils'
 const Errors = [
   'ACN_FAILED',
   'TOO_MANY_PENDING_MESSAGES',
+  'ERROR',
 ] as const
 
 type Error = typeof Errors[number]
 
 export const CloseCode = {
   ACN_FAILED: 4000,
-  TOO_MANY_PENDING_MESSAGES: 4001
+  TOO_MANY_PENDING_MESSAGES: 4001,
+  INVALID_MESSAGE: 4002,
 }
 
 export interface Message {
@@ -28,12 +30,18 @@ export interface AcnMessage extends Message {
   type: 'acn'
   room: string
   hash: string
+  longLife?: boolean
+}
+
+export interface AcnTokenMessage extends Message {
+  type: 'acn'
+  token: string
 }
 
 export interface AcnOkMessage extends Message {
   type: 'acn'
   attrs: {
-    sessionId: string
+    token: string
   }
 }
 
@@ -49,45 +57,32 @@ export interface ApplicationMessage extends Message {
 }
 
 export function isCommentMessage(m: unknown): m is CommentMessage {
-  if (!isObject(m)) {
-    return false
-  }
-  return m.type === 'comment'
+  return isObject(m) && m.type === 'comment'
 }
 
 export function isAcnMessage(m: unknown): m is AcnMessage {
-  if (!isObject(m)) {
-    return false
-  }
-  return m.type === 'acn' && typeof m.room === 'string' && typeof m.hash === 'string'
+  return isObject(m) && m.type === 'acn' && typeof m.room === 'string' && typeof m.hash === 'string'
+}
+
+export function isAcnTokenMessage(m: unknown): m is AcnTokenMessage {
+  return isObject(m) && m.type === 'acn' && typeof m.token === 'string'
 }
 
 export function isAcnOkMessage(m: unknown): m is AcnOkMessage {
-  if (!isObject(m)) {
-    return false
-  }
-  return m.type === 'acn' &&
+  return isObject(m) &&
+    m.type === 'acn' &&
     isObject(m.attrs) &&
-    typeof m.attrs.sessionId === 'string'
+    typeof m.attrs.token === 'string'
 }
 
 export function isErrorMessage(m: unknown): m is ErrorMessage {
-  if (!isObject(m)) {
-    return false
-  }
-  return m.type === 'error'
+  return isObject(m) && m.type === 'error'
 }
 
 export function isApplicationMessage(m: unknown): m is ApplicationMessage {
-  if (!isObject(m)) {
-    return false
-  }
-  return m.type === 'app'
+  return isObject(m) && m.type === 'app'
 }
 
 export function isClientMessage(m: unknown): m is CommentMessage | ApplicationMessage {
-  if (!isObject(m)) {
-    return false
-  }
-  return m.type === 'comment' || m.type === 'app'
+  return isObject(m) && (m.type === 'comment' || m.type === 'app')
 }

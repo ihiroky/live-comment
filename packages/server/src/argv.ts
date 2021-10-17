@@ -39,7 +39,7 @@ function findConfigPath(v?: string): string {
     return homeConfigPath
   }
   // Repository default.
-  const pathInRepository = './server.config.json'
+  const pathInRepository = './config/server.config.json'
   if (isFile(pathInRepository)) {
     return pathInRepository
   }
