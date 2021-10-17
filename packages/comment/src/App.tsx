@@ -9,7 +9,8 @@ import { FormGroup, Link, makeStyles } from '@material-ui/core'
 import { useWebSocketOnOpen, useWebSocketOnClose, useWebSocketOnMessage } from './webSocketHooks'
 import { useOnPoll, useOnClosePoll } from './pollHooks'
 import { goToLoginPage } from './utils'
-import { decode } from 'jsonwebtoken'
+import jwtDecode, { JwtPayload } from 'jwt-decode'
+
 
 type AppProps = {
   url: string
@@ -112,21 +113,15 @@ const useStyles = makeStyles({
 
 const log = getLogger('App')
 
-/*
-  const autoScroll = cookies.bool('autoScroll')
-  const sendWithCtrlEnter = cookies.bool('sendWithCtrlEnter')
-  const openSoundPanel = cookies.bool('openSoundPanel')
-*/
-
 type OptionKey = 'autoScroll' | 'sendWithCtrlEnter' | 'openSoundPanel'
 
 function getBooleanOptionValue(key: OptionKey, defalutValue: boolean): boolean {
-  const s = localStorage.get(key)
+  const s = window.localStorage.getItem(key)
   return s !== null ? !!s : defalutValue
 }
 
 function setBooleanOptionValue(key: OptionKey, value: boolean): void {
-  localStorage.setItem(key, value ? 't' : '')
+  window.localStorage.setItem(key, value ? 't' : '')
 }
 
 export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
@@ -135,11 +130,11 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
   const sendWithCtrlEnter = getBooleanOptionValue('sendWithCtrlEnter', true)
   const openSoundPanel = getBooleanOptionValue('openSoundPanel', false)
   const token = React.useMemo((): { value: string, payload: { room: string }} => {
-    const token = localStorage.getItem('token')
+    const token = window.localStorage.getItem('token')
     if (!token) {
       return { value: '', payload: { room: '' } }
     }
-    const payload = decode(token, { json: true })
+    const payload = jwtDecode<JwtPayload & { room: string }>(token)
     if (!payload || typeof payload === 'string') {
       return { value: '', payload: { room: '' } }
     }
@@ -179,7 +174,7 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
   }, [state])
 
   React.useEffect((): (() => void) => {
-    const token = localStorage.getItem('token')
+    const token = window.localStorage.getItem('token')
     if (!token) {
       goToLoginPage()
     }

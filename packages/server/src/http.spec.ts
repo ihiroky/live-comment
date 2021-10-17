@@ -220,7 +220,7 @@ test('No checksum file', async () => {
 
 test('Get checksum of sound file', async () => {
   const jwt = sign({ room: 'test' }, config.jwtPrivateKey, { expiresIn: '10s', algorithm: 'ES256' })
-  const soundFilePath = path.join(soundDirPath, 'test.md5')
+  const soundFilePath = path.join(soundDirPath, 'test.zip.md5')
   fs.writeFileSync(soundFilePath, 'content')
   const res = await request(app)
     .get('/sound/checksum')

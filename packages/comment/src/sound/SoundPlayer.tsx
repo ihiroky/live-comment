@@ -4,7 +4,6 @@ import React from 'react'
 import { isPlaySoundMessage, PlaySoundMessage } from '../types'
 import { useExistsSounds, useSoundMetadata, usePlaySound } from './hooks'
 import { NoteBlack } from './NoteBlack'
-import { FAR_ENOUGH, useNamedCookies } from '../useNamedCookies'
 
 type Props = {
   url: string
@@ -47,13 +46,23 @@ const useStyles = makeStyles({
 
 const log = getLogger('sound/SoundPlayer')
 
+type OptionKey = 'volume' | 'concurrentPlays'
+
+function getNumberOptionValue(key: OptionKey, defalutValue: number): number {
+  const s = window.localStorage.getItem(key)
+  return s !== null ? Number(s) : defalutValue
+}
+
+function setNumberOptionValue(key: OptionKey, value: number): void {
+  window.localStorage.setItem(key, value.toString())
+}
+
 export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
-  const [cookies, modCookies] = useNamedCookies(CookieNames)
-  const token = React.useMemo(() => localStorage.getItem('token') || '', [])
+  const token = React.useMemo(() => window.localStorage.getItem('token') || '', [])
   const existsSounds = useExistsSounds(url, token)
   const [width, setWidth] = React.useState(window.innerWidth)
-  const [volume, setVolume] = React.useState(Number(cookies.str('volume')) | 33)
-  const [maxPlays, setMaxPlays] = React.useState(Number(cookies.str('maxPlays')) | 3)
+  const [volume, setVolume] = React.useState(getNumberOptionValue('volume', 33))
+  const [concurrentPlays, setConcurrentPlays] = React.useState(getNumberOptionValue('concurrentPlays', 3))
   const nowPlaysRef = React.useRef(0)
   const [sounds] = useSoundMetadata(existsSounds)
   const playSound = usePlaySound()
@@ -82,7 +91,7 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
         log.warn('[messageListener] Receive an unexpected message:', e.data)
         return
       }
-      if (nowPlaysRef.current < maxPlays) {
+      if (nowPlaysRef.current < concurrentPlays) {
         nowPlaysRef.current++
         playSound(e.data.id, volume, () => { nowPlaysRef.current-- })
       }
@@ -92,17 +101,17 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
     return (): void => {
       window.removeEventListener('message', messageListener)
     }
-  }, [volume, playSound, maxPlays])
+  }, [volume, playSound, concurrentPlays])
   const onVolumeChanged = React.useCallback((_: React.ChangeEvent<unknown>, value: number | number[]): void => {
     const v = Array.isArray(value) ? value[0] : value
     setVolume(v)
-    modCookies.num('volume', v, FAR_ENOUGH)
-  }, [modCookies])
-  const onMaxPlaysChanged = React.useCallback((e: React.ChangeEvent<{ value: unknown }>): void => {
+    setNumberOptionValue('volume', v)
+  }, [])
+  const onConcurrentPlaysChanged = React.useCallback((e: React.ChangeEvent<{ value: unknown }>): void => {
     const v = Number(e.target.value)
-    setMaxPlays(v)
-    modCookies.num('maxPlays', v, FAR_ENOUGH)
-  }, [modCookies])
+    setConcurrentPlays(v)
+    setNumberOptionValue('concurrentPlays', v)
+  }, [])
 
   const xs = React.useMemo((): 12 | 6 | 4 | 3 | 2 => {
     const cols = width <= 250 ? 1
@@ -133,9 +142,9 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
           <Select
             labelId="max-sounds-label"
             id="max-sounds"
-            value={maxPlays}
-            label="Max plays"
-            onChange={onMaxPlaysChanged}
+            value={concurrentPlays}
+            label="Concurrent plays"
+            onChange={onConcurrentPlaysChanged}
           >
             { [0, 1, 2, 3, 5, 8, 13, Infinity].map(n => <MenuItem key={`numOfSound-${n}`} value={n}>{n}</MenuItem> ) }
           </Select>

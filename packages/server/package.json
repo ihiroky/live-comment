@@ -7,10 +7,10 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "self-signed-cert": "bash ./create_pem.sh",
     "lint": "eslint --ext ts,tsx --max-warnings 0 src",
-    "start": "node dist/index.js",
-    "build": "tsc -b && ncc build dist/streaming.js  -s -o dist/bundled/streaming && ncc build dist/api.js  -s -o dist/bundled/api"
+    "start-streaming": "tsc -b && node dist/streaming.js -l DEBUG -p 8080",
+    "start-api": "tsc -b && node dist/api.js -l DEBUG -p 9080",
+    "build": "tsc -b && ncc build dist/streaming.js -s -o dist/bundled/streaming && ncc build dist/api.js -s -o dist/bundled/api"
   },
   "devDependencies": {
     "@types/cors": "^2.8.12",

@@ -113,7 +113,7 @@ test('onClose with ACN_FAILED goes to login page', () => {
   }
   onClose(ev)
 
-  expect(localStorage.getItem('token')).toBeNull()
+  expect(window.localStorage.getItem('token')).toBeNull()
   expect(
     window.localStorage.getItem('App.notification')
   ).toBe(

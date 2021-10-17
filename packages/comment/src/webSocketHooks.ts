@@ -20,7 +20,7 @@ export function useWebSocketOnOpen(
   return React.useCallback((wsc: WebSocketControl): void => {
     log.debug('[onOpen]', wsc)
 
-    const token = localStorage.getItem('token')
+    const token = window.localStorage.getItem('token')
     if (!token) {
       return
     }
@@ -40,7 +40,7 @@ export function useWebSocketOnClose(
   return React.useCallback((ev: CloseEvent): void => {
     switch (ev.code) {
       case CloseCode.ACN_FAILED:
-        localStorage.removeItem('token')
+        window.localStorage.removeItem('token')
         window.localStorage.setItem('App.notification', JSON.stringify({ message: 'Streaming authentication failed.' }))
         goToLoginPage()
         break

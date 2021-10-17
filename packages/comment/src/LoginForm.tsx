@@ -83,11 +83,14 @@ export const LoginForm: React.FC<{ apiUrl: string}> = ({ apiUrl } : { apiUrl: st
       hash: createHash(password.value)
     }
     fetchWithTimeout(
-      `${apiUrl}/login`,
+      `${apiUrl.replace(/\/+$/, '')}/login`,
       {
         method: 'POST',
         cache: 'no-store',
         mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(message)
       },
       3000
@@ -97,7 +100,7 @@ export const LoginForm: React.FC<{ apiUrl: string}> = ({ apiUrl } : { apiUrl: st
         : Promise.resolve({ type: 'error', error: 'ERROR', message: 'Fetch failed' })
     ).then((m: Message): void => {
       if (isAcnOkMessage(m)) {
-        localStorage.setItem('token', m.attrs.token)
+        window.localStorage.setItem('token', m.attrs.token)
         gotoCommentPage()
         return
       }

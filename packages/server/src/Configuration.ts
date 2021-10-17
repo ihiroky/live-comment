@@ -44,21 +44,6 @@ async function buildConfig(json: string): Promise<ServerConfig> {
     }
   }
 
-  if (c.soundFilePath) {
-    const stat = await fsp.stat(c.soundFilePath)
-    if (!stat.isFile()) {
-      throw new Error(`${c.soundFilePath} is not a file.`)
-    }
-    const csPath = c.soundFilePath + '.md5'
-    const csStat = await fsp.stat(csPath)
-    if (!csStat.isFile()) {
-      throw new Error(`${csPath} is not a file.`)
-    }
-    c.soundFileChecksumPath = csPath
-  } else {
-    c.soundFilePath = ''
-  }
-
   if (!c.jwtPrivateKeyPath) {
     throw new Error('jwtPrivateKeyPath is not defined.')
   }

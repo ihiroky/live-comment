@@ -85,62 +85,6 @@ test('Error if a room has no hash', async () => {
     .toThrow('Unexpected room definition: {"room":"room"}')
 })
 
-test('soundFilePath is set, but no file exists', async () => {
-  const configPath = path.join(testDataRoot, 'test.json')
-  writeConfig(configPath, {
-    rooms: [{ room: 'room', hash: 'hash' }],
-    soundFilePath: 'hoge',
-  })
-
-  await expect(loadConfigAsync(configPath, 0))
-    .rejects
-    .toThrow('ENOENT: no such file or directory, stat \'hoge\'')
-})
-
-test('soundFilePath is set and exists but not a regular file.', async () => {
-  const configPath = path.join(testDataRoot, 'test.json')
-  const soundFilePath = path.join(testDataRoot, 'soundFile.zip')
-  writeConfig(configPath, {
-    rooms: [{ room: 'room', hash: 'hash' }],
-    soundFilePath,
-  })
-  fs.mkdirSync(soundFilePath, { recursive: true })
-
-  await expect(loadConfigAsync(configPath, 0))
-    .rejects
-    .toThrow(`${soundFilePath} is not a file.`)
-})
-
-test('The checksum file of soundFile does not exist', async () => {
-  const configPath = path.join(testDataRoot, 'test.json')
-  const soundFilePath = path.join(testDataRoot, 'soundFile.zip')
-  writeConfig(configPath, {
-    rooms: [{ room: ' room', hash: 'hash' }],
-    soundFilePath,
-  })
-  createFile(soundFilePath)
-
-  await expect(loadConfigAsync(configPath, 0))
-    .rejects
-    .toThrow(`ENOENT: no such file or directory, stat '${soundFilePath}.md5'`)
-})
-
-test('The checksum file of soundFile is not a file', async () => {
-  const configPath = path.join(testDataRoot, 'test.json')
-  const soundFilePath = path.join(testDataRoot, 'soundFile.zip')
-  const checksumPath = path.join(testDataRoot, 'soundFile.zip.md5')
-  writeConfig(configPath, {
-    rooms: [{ room: ' room', hash: 'hash' }],
-    soundFilePath,
-  })
-  createFile(soundFilePath)
-  fs.mkdirSync(checksumPath)
-
-  await expect(loadConfigAsync(configPath, 0))
-    .rejects
-    .toThrow(`${checksumPath} is not a file.`)
-})
-
 test('No jwtPrivateKeyPath', async () => {
   const configPath = path.join(testDataRoot, 'test.json')
   const soundFilePath = path.join(testDataRoot, 'soundFile.zip')

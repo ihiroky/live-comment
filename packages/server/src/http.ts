@@ -39,6 +39,7 @@ function login(
 ): void {
   const acn = req.body
   if (!isAcnMessage(acn)) {
+    log.debug('[login]', req.body)
     const err: ErrorMessage = {
       type: 'error',
       error: 'ACN_FAILED',
@@ -85,6 +86,7 @@ async function logout(_: Request, res: Response): Promise<void> {
 }
 
 async function ensureFile(res: Response, c: Configuration, ext: string): Promise<string | null> {
+  log.debug('[ensureFile]', c.soundDirPath, res.locals.jwtPayload.room, ext)
   if (!c.soundDirPath) {
     return null
   }
@@ -114,7 +116,8 @@ async function sendSoundFile(res: Response, c: Configuration): Promise<void> {
 }
 
 async function sendSoundFileChecksum(res: Response, c: Configuration): Promise<void> {
-  const filePath = await ensureFile(res, c, 'md5')
+  log.debug('[sendSoundFileChecksum]')
+  const filePath = await ensureFile(res, c, 'zip.md5')
   if (!filePath) {
     res.status(404).json({})
     return
@@ -133,9 +136,11 @@ function createRouter(configuration: Configuration): Router {
     logout(req, res)
   })
   router.get('/sound/file', function(req: Request, res: Response): void {
+    log.debug('GET /sound/file')
     sendSoundFile(res, configuration)
   })
   router.get('/sound/checksum', function(req: Request, res: Response): void {
+    log.debug('GET /sound/checksum')
     sendSoundFileChecksum(res, configuration)
   })
   return router
@@ -181,13 +186,15 @@ async function acnAznMiddlewareBase(c: Configuration, req: Request, res: Respons
 export function createApp(configuration: Configuration): Express {
   const app = express()
   const acnAznMiddleware = acnAznMiddlewareBase.bind(null, configuration)
+  const corsMiddleware = cors({
+    origin: [/http:\/\/\w+\.live-comment.ga$/, 'http://localhost:18080']
+  })
 
   app.use(express.json())
-  app.use(cors({
-    origin: [/\.live-comment.ga$/, 'localhost:8080']
-  }))
+  app.use(corsMiddleware)
   app.use(acnAznMiddleware)
   const router = createRouter(configuration)
+  app.options('*', corsMiddleware) // include before other routes
   app.use(router)
   return app
 }
