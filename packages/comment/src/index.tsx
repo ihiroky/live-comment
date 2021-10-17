@@ -3,37 +3,24 @@ import ReactDOM from 'react-dom'
 import { BrowserRouter, Route } from 'react-router-dom'
 import { App } from './App'
 import { LoginForm } from './LoginForm'
-import { CookiesProvider } from 'react-cookie'
 import * as serviceWorker from './serviceWorker'
 import { SoundPlayer } from './sound/SoundPlayer'
 
 const wsUrl = process.env.NODE_ENV === 'production'
   ? `wss://${window.location.hostname}/app`
   : `ws://localhost:8080/`
-const httpUrl = process.env.NODE_ENV === 'production'
-  ? `https://${window.location.hostname}/app`
-  : `http://localhost:8080/`
+const apiUrl = process.env.NODE_ENV === 'production'
+  ? `https://${window.location.hostname}/api`
+  : `http://localhost:9080/`
 
 // Too rich to render SoundPlayer here, should be independent?
 ReactDOM.render(
   <React.StrictMode>
     <BrowserRouter>
-      <Route path="/" exact component={LoginForm} />
-      <Route path="/login" exact component={LoginForm} />
-      <Route path="/comment" exact render={(): React.ReactNode => {
-        return (
-          <CookiesProvider>
-            <App url={wsUrl} maxMessageCount={1024} />
-          </CookiesProvider>
-        )
-      }}/>
-      <Route path="/sound" exact render={(): React.ReactNode => {
-        return (
-          <CookiesProvider>
-            <SoundPlayer url={httpUrl} />
-          </CookiesProvider>
-        )
-      }}/>
+      <Route path="/" exact render={() =>  <LoginForm apiUrl={apiUrl} />} />
+      <Route path="/login" exact render={() =>  <LoginForm apiUrl={apiUrl} />} />
+      <Route path="/comment" exact render={() => <App url={wsUrl} maxMessageCount={1024} />} />
+      <Route path="/sound" exact render={() => <SoundPlayer url={apiUrl} />} />
     </BrowserRouter>
   </React.StrictMode>,
   document.getElementById('root')

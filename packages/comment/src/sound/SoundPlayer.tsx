@@ -2,7 +2,7 @@ import { Grid, IconButton, InputLabel, makeStyles, MenuItem, Select, Slider } fr
 import { getLogger } from 'common'
 import React from 'react'
 import { isPlaySoundMessage, PlaySoundMessage } from '../types'
-import { useExistsSounds, useSoundMetadata, usePlaySound, useRoomHash } from './hooks'
+import { useExistsSounds, useSoundMetadata, usePlaySound } from './hooks'
 import { NoteBlack } from './NoteBlack'
 import { FAR_ENOUGH, useNamedCookies } from '../useNamedCookies'
 
@@ -49,8 +49,8 @@ const log = getLogger('sound/SoundPlayer')
 
 export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
   const [cookies, modCookies] = useNamedCookies(CookieNames)
-  const [room, hash] = useRoomHash()
-  const existsSounds = useExistsSounds(url, room, hash)
+  const token = React.useMemo(() => localStorage.getItem('token') || '', [])
+  const existsSounds = useExistsSounds(url, token)
   const [width, setWidth] = React.useState(window.innerWidth)
   const [volume, setVolume] = React.useState(Number(cookies.str('volume')) | 33)
   const [maxPlays, setMaxPlays] = React.useState(Number(cookies.str('maxPlays')) | 3)

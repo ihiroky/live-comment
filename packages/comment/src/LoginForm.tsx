@@ -6,11 +6,16 @@ import {
   Button,
   Grid
 } from '@material-ui/core'
-import { useNamedCookies } from './useNamedCookies'
-import { AppCookieNames } from './types'
 import {
-  getLogger
+  AcnMessage,
+  createHash,
+  fetchWithTimeout,
+  getLogger,
+  isAcnOkMessage,
+  isErrorMessage,
+  Message
 } from 'common'
+import { gotoCommentPage } from './utils'
 
 interface TextFieldState {
   value: string
@@ -41,21 +46,25 @@ const useStyles = makeStyles((theme: Theme) => (
 
 const log = getLogger('LoginForm')
 
-export const LoginForm: React.FC = (): JSX.Element => {
-  const [cookies, modCookies] = useNamedCookies(AppCookieNames)
+export const LoginForm: React.FC<{ apiUrl: string}> = ({ apiUrl } : { apiUrl: string }): JSX.Element => {
   const [notification, setNotification] = React.useState<{ message: string }>({
     message: ''
   })
   const [room, setRoom] = React.useState<TextFieldState>({
-    value: cookies.str('room') || '',
-    helperText: cookies.str('room') ? '' : 'Input room name',
+    value: '',
+    helperText: 'Input room name',
   })
   const [password, setPassword] = React.useState<TextFieldState>({
-    value: cookies.str('password') || '',
-    helperText: cookies.str('password') ? '' : 'Input password of the room',
+    value: '',
+    helperText: 'Input password of the room',
   })
 
   React.useEffect((): void => {
+    const token = window.localStorage.getItem('token')
+    if (token) {
+      gotoCommentPage()
+      return
+    }
     const json = window.localStorage.getItem('App.notification')
     if (!json) {
       setNotification({ message: '' })
@@ -68,10 +77,33 @@ export const LoginForm: React.FC = (): JSX.Element => {
 
   const onSubmit = React.useCallback((e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
-    modCookies.str('room', room.value)
-    modCookies.str('password', password.value)
-    window.location.href = './comment'
-  }, [room, password, modCookies])
+    const message: AcnMessage = {
+      type: 'acn',
+      room: room.value,
+      hash: createHash(password.value)
+    }
+    fetchWithTimeout(
+      `${apiUrl}/login`,
+      {
+        method: 'POST',
+        cache: 'no-store',
+        mode: 'cors',
+        body: JSON.stringify(message)
+      },
+      3000
+    ).then((res: Response): Promise<Message> =>
+      res.ok
+        ? res.json()
+        : Promise.resolve({ type: 'error', error: 'ERROR', message: 'Fetch failed' })
+    ).then((m: Message): void => {
+      if (isAcnOkMessage(m)) {
+        localStorage.setItem('token', m.attrs.token)
+        gotoCommentPage()
+        return
+      }
+      setNotification({ message: `Login failed (${ isErrorMessage(m) ? m.message : JSON.stringify(m)})` })
+    })
+  }, [apiUrl, room.value, password.value])
 
   const onTextFieldChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>): void => {
     log.debug('[onTextFieldChanged]', e.target.name, e.target.value)

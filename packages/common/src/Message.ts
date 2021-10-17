@@ -3,6 +3,7 @@ import { isObject } from './utils'
 const Errors = [
   'ACN_FAILED',
   'TOO_MANY_PENDING_MESSAGES',
+  'ERROR',
 ] as const
 
 type Error = typeof Errors[number]

@@ -1,12 +1,11 @@
 import { renderHook } from '@testing-library/react-hooks'
 import '@testing-library/jest-dom'
 import { useWebSocketOnOpen, useWebSocketOnClose, useWebSocketOnMessage } from './webSocketHooks'
-import { CookieAccessor, CookieModifier } from './useNamedCookies'
-import {  ApplicationMessage, CloseCode, CommentMessage, createHash } from 'common'
+import {  ApplicationMessage, CloseCode, CommentMessage } from 'common'
 import { WebSocketControl } from 'wscomp'
 import React from 'react'
 import { goToLoginPage } from './utils'
-import { AppState, AppCookieName } from './types'
+import { AppState } from './types'
 import { PollFinishMessage, PollStartMessage } from 'poll'
 
 jest.mock('./utils')
@@ -63,50 +62,22 @@ function createAppState(autoScroll: boolean): AppState {
   }
 }
 
-beforeEach(() => {
+afterEach(() => {
   window.localStorage.clear()
 })
 
-test('onOpen does nothing if no room cookies', () => {
+test('onOpen does nothing if no token', () => {
   const wscRefMock: React.MutableRefObject<WebSocketControl | null> = {
     current: null
   }
   const wsc = createWebSocketControlMock()
 
-  const cookies: CookieAccessor<AppCookieName> = {
-    str: jest.fn().mockImplementation((a: string) => a === 'room' ? undefined : 'hoge'),
-    bool: jest.fn(),
-    num: jest.fn(),
-    obj: jest.fn(),
-  }
-  const { result } = renderHook(() => useWebSocketOnOpen(wscRefMock, cookies))
+  const { result } = renderHook(() => useWebSocketOnOpen(wscRefMock))
   const onOpen = result.current
   onOpen(wsc)
 
   expect(wscRefMock.current).toBeNull()
-  expect(cookies.str).toHaveBeenCalledWith('room')
-  expect(cookies.str).toHaveBeenCalledWith('password')
-})
-
-test('onOpen does nothing if no password cookies', () => {
-  const wscRefMock: React.MutableRefObject<WebSocketControl | null> = {
-    current: null
-  }
-  const wsc = createWebSocketControlMock()
-
-  const cookies: CookieAccessor<AppCookieName> = {
-    str: jest.fn().mockImplementation((a: string) => a === 'password' ? undefined : 'hoge'),
-    bool: jest.fn(),
-    num: jest.fn(),
-    obj: jest.fn(),
-  }
-  const { result } = renderHook(() => useWebSocketOnOpen(wscRefMock, cookies))
-  const onOpen = result.current
-  onOpen(wsc)
-
-  expect(wscRefMock.current).toBeNull()
-  expect(cookies.str).toHaveBeenCalledWith('room')
-  expect(cookies.str).toHaveBeenCalledWith('password')
+  expect(wsc.send).not.toBeCalled()
 })
 
 test('onOpen sets wscRef and send an acn message', () => {
@@ -114,23 +85,16 @@ test('onOpen sets wscRef and send an acn message', () => {
     current: null
   }
   const wsc = createWebSocketControlMock()
+  const token = 'token'
+  window.localStorage.setItem('token', token)
 
-  const cookies: CookieAccessor<AppCookieName> = {
-    str: jest.fn().mockImplementation(() => 'hoge'),
-    bool: jest.fn(),
-    num: jest.fn(),
-    obj: jest.fn(),
-  }
-  const { result } = renderHook(() => useWebSocketOnOpen(wscRefMock, cookies))
+  const { result } = renderHook(() => useWebSocketOnOpen(wscRefMock))
   const onOpen = result.current
   onOpen(wsc)
 
-  expect(cookies.str).toHaveBeenCalledWith('room')
-  expect(cookies.str).toHaveBeenCalledWith('password')
   expect(wscRefMock.current?.send).toBeCalledWith({
     type: 'acn',
-    room: 'hoge',
-    hash: createHash('hoge'),
+    token,
   })
 })
 
@@ -138,15 +102,9 @@ test('onClose with ACN_FAILED goes to login page', () => {
   const wscRefMock: React.MutableRefObject<WebSocketControl | null> = {
     current: createWebSocketControlMock()
   }
-  const modCookieMock: CookieModifier<AppCookieName> = {
-    str: jest.fn(),
-    bool: jest.fn(),
-    num: jest.fn(),
-    obj: jest.fn(),
-    remove: jest.fn(),
-  }
+  window.localStorage.setItem('token', 'token')
 
-  const { result } = renderHook(() => useWebSocketOnClose(wscRefMock, modCookieMock))
+  const { result } = renderHook(() => useWebSocketOnClose(wscRefMock))
   const onClose = result.current
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ev: any = {
@@ -155,9 +113,12 @@ test('onClose with ACN_FAILED goes to login page', () => {
   }
   onClose(ev)
 
-  expect(modCookieMock.remove).toHaveBeenCalledWith('room')
-  expect(modCookieMock.remove).toHaveBeenCalledWith('password')
-  expect(window.localStorage.getItem('App.notification')).toBe(JSON.stringify({ message: 'Authentication failed.' }))
+  expect(localStorage.getItem('token')).toBeNull()
+  expect(
+    window.localStorage.getItem('App.notification')
+  ).toBe(
+    JSON.stringify({ message: 'Streaming authentication failed.' })
+  )
   expect(goToLoginPage).toBeCalled()
 })
 
@@ -165,15 +126,8 @@ test('onClose with no ACN_FAILED tries to reconnect', () => {
   const wscRefMock: React.MutableRefObject<WebSocketControl | null> = {
     current: createWebSocketControlMock()
   }
-  const modCookieMock: CookieModifier<AppCookieName> = {
-    str: jest.fn(),
-    bool: jest.fn(),
-    num: jest.fn(),
-    obj: jest.fn(),
-    remove: jest.fn(),
-  }
 
-  const { result } = renderHook(() => useWebSocketOnClose(wscRefMock, modCookieMock))
+  const { result } = renderHook(() => useWebSocketOnClose(wscRefMock))
   const onClose = result.current
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ev: any = {

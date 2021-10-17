@@ -1,4 +1,4 @@
-import { isObject, getLogger } from 'common'
+import { isObject, getLogger, fetchWithTimeout } from 'common'
 import { get, getAll, update, StoreOperation } from './db'
 import { Zlib } from 'unzip'
 import React from 'react'
@@ -79,42 +79,22 @@ function trimAcceptableSuffix(fileName: string): string | null {
   return null
 }
 
-function fetchWithTimeout(
-  input: RequestInfo,
-  init: RequestInit | undefined,
-  timeoutMillis: number
-): Promise<Response> {
-  const abort = new AbortController()
-  const timeout = window.setTimeout(() => abort.abort(), timeoutMillis)
-  try {
-    return fetch(input, init
-      ? {
-        ...init,
-        signal: abort.signal
-      }
-      : {
-        signal: abort.signal
-      }
-    )
-  } finally {
-    clearTimeout(timeout)
-  }
-}
-
 async function isSoundsAvailable(
   url: string,
-  room: string,
-  hash: string
+  token: string
 ): Promise<{ available: boolean, update: boolean, checksum: string }> {
-  log.debug('[getNewChecksum]', url, room, hash)
+  log.debug('[getNewChecksum]', url, token)
 
   const checksum = await fetchWithTimeout(
-    `${url}${CHECKSUM_FILE_PATH}?room=${room}&hash=${hash}`,
+    `${url}${CHECKSUM_FILE_PATH}`,
     {
       method: 'GET',
       cache: 'no-store',
       mode: 'cors',
-      headers: { 'Accept': 'text/plain' },
+      headers: {
+        'Accept': 'text/plain',
+        'Authorization': `Bearer ${token}`,
+      },
     },
     3000
   ).then((response: Response): Promise<string> | null => {
@@ -135,14 +115,17 @@ async function isSoundsAvailable(
   }
 }
 
-async function storeSounds(url: string, room: string, hash: string, checksum: string): Promise<void> {
+async function storeSounds(url: string, token: string, checksum: string): Promise<void> {
   const zipBlob = await fetchWithTimeout(
-    `${url}${SOUND_FILE_PATH}?room=${room}&hash=${hash}`,
+    `${url}${SOUND_FILE_PATH}`,
     {
       method: 'GET',
       cache: 'no-store',
       mode: 'cors',
-      headers: { 'Accept': 'application/zip' }
+      headers: {
+        'Accept': 'application/zip',
+        'Authorization': `Bearer ${token}`,
+      },
     },
     10000
   ).then((response: Response): Promise<Blob> | null => {
@@ -186,22 +169,22 @@ async function storeSounds(url: string, room: string, hash: string, checksum: st
   })
 }
 
-export function useExistsSounds(url: string, room: string | null, hash: string | null): boolean {
+export function useExistsSounds(url: string, token: string): boolean {
   const [existsSounds, setExistsSounds] = React.useState(false)
 
   React.useEffect((): void => {
     setExistsSounds(false)
-    if (room === null || hash === null) {
+    if (!token) {
       return
     }
 
     const urlEndNoSlash = url.replace(/\/+$/, '')
-    isSoundsAvailable(urlEndNoSlash, room, hash).then(({ available, update, checksum }) => {
+    isSoundsAvailable(urlEndNoSlash, token).then(({ available, update, checksum }) => {
       if (!available) {
         return false
       }
       return update
-        ? storeSounds(urlEndNoSlash, room, hash, checksum).then(() => true)
+        ? storeSounds(urlEndNoSlash, token, checksum).then(() => true)
         : true
     }).then((available: boolean): void => {
       if (available) {
@@ -210,7 +193,7 @@ export function useExistsSounds(url: string, room: string | null, hash: string |
     }).catch(e => {
       log.error(e)
     })
-  }, [url, room, hash])
+  }, [url, token])
 
   return existsSounds
 }
@@ -304,12 +287,5 @@ export function usePlaySound(): (id: string, volume: number, onFinsih?: (e?: Err
       const buffer = Uint8Array.from(data.data)
       context.decodeAudioData(buffer.buffer, decodeSuccess, decodeError)
     })
-  }, [])
-}
-
-export function useRoomHash(): [string | null, string | null] {
-  return React.useMemo((): [string | null, string | null] => {
-    const params = new URLSearchParams(window.location.search)
-    return [params.get('room'), params.get('hash')]
   }, [])
 }

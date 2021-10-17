@@ -1,61 +1,54 @@
 import React from 'react'
 import {
-  AcnMessage,
+  AcnTokenMessage,
   assertNotNullable,
   CloseCode,
-  createHash,
   getLogger,
   isCommentMessage,
   Message,
 } from 'common'
 import { WebSocketClient, WebSocketControl } from 'wscomp'
-import { CookieAccessor, CookieModifier } from './useNamedCookies'
 import { goToLoginPage } from './utils'
-import { AppState, isPlaySoundMessage, AppCookieName } from './types'
+import { AppState, isPlaySoundMessage } from './types'
 import { isPollFinishMessage, isPollStartMessage } from 'poll'
 
 const log = getLogger('webSocketHooks')
 
 export function useWebSocketOnOpen(
   wscRef: React.MutableRefObject<WebSocketControl | null>,
-  cookies: CookieAccessor<AppCookieName>,
 ): NonNullable<React.ComponentProps<typeof WebSocketClient>['onOpen']> {
   return React.useCallback((wsc: WebSocketControl): void => {
     log.debug('[onOpen]', wsc)
-    const room = cookies.str('room')
-    const password = cookies.str('password')
-    if (!room || !password) {
+
+    const token = localStorage.getItem('token')
+    if (!token) {
       return
     }
-
     wscRef.current = wsc
-    const acn: AcnMessage = {
+    const acn: AcnTokenMessage = {
       type: 'acn',
-      room: room,
-      hash: createHash(password),
+      token
     }
     wsc.send(acn)
-  }, [cookies, wscRef])
+  }, [wscRef])
 }
 
 
 export function useWebSocketOnClose(
-  wscRef: React.MutableRefObject<WebSocketControl | null>,
-  modCookies: CookieModifier<AppCookieName>,
+  wscRef: React.MutableRefObject<WebSocketControl | null>
 ): NonNullable<React.ComponentProps<typeof WebSocketClient>['onClose']> {
   return React.useCallback((ev: CloseEvent): void => {
     switch (ev.code) {
       case CloseCode.ACN_FAILED:
-        modCookies.remove('room')
-        modCookies.remove('password')
-        window.localStorage.setItem('App.notification', JSON.stringify({ message: 'Authentication failed.' }))
+        localStorage.removeItem('token')
+        window.localStorage.setItem('App.notification', JSON.stringify({ message: 'Streaming authentication failed.' }))
         goToLoginPage()
         break
       default:
         wscRef.current?.reconnectWithBackoff()
         break
     }
-  }, [modCookies, wscRef])
+  }, [wscRef])
 }
 
 export function useWebSocketOnMessage(
