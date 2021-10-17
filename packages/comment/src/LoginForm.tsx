@@ -16,6 +16,7 @@ import {
   Message
 } from 'common'
 import { gotoCommentPage } from './utils'
+import { LabeledCheckbox } from './LabeledCheckbox'
 
 interface TextFieldState {
   value: string
@@ -38,6 +39,9 @@ const useStyles = makeStyles((theme: Theme) => (
     texts: {
       padding: theme.spacing(1)
     },
+    options: {
+      padding: theme.spacing(1)
+    },
     buttons: {
       padding: theme.spacing(1)
     },
@@ -58,6 +62,7 @@ export const LoginForm: React.FC<{ apiUrl: string}> = ({ apiUrl } : { apiUrl: st
     value: '',
     helperText: 'Input password of the room',
   })
+  const [keepLogin, setKeepLogin] = React.useState<boolean>(false)
 
   React.useEffect((): void => {
     const token = window.localStorage.getItem('token')
@@ -80,6 +85,7 @@ export const LoginForm: React.FC<{ apiUrl: string}> = ({ apiUrl } : { apiUrl: st
     const message: AcnMessage = {
       type: 'acn',
       room: room.value,
+      longLife: keepLogin,
       hash: createHash(password.value)
     }
     fetchWithTimeout(
@@ -106,7 +112,7 @@ export const LoginForm: React.FC<{ apiUrl: string}> = ({ apiUrl } : { apiUrl: st
       }
       setNotification({ message: `Login failed (${ isErrorMessage(m) ? m.message : JSON.stringify(m)})` })
     })
-  }, [apiUrl, room.value, password.value])
+  }, [apiUrl, room.value, password.value, keepLogin])
 
   const onTextFieldChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>): void => {
     log.debug('[onTextFieldChanged]', e.target.name, e.target.value)
@@ -161,6 +167,12 @@ export const LoginForm: React.FC<{ apiUrl: string}> = ({ apiUrl } : { apiUrl: st
         helperText={password.helperText}
         margin="normal"
         onChange={onTextFieldChange}
+      />
+    </div>
+    <div className={classes.options}>
+      <LabeledCheckbox
+        label="Login enabled for 30 days" name="login_30_days" checked={keepLogin}
+        onChange={checked => { setKeepLogin(checked) }}
       />
     </div>
     <div className={classes.buttons}>

@@ -3,8 +3,9 @@ import { getByRole, queryByText, render, screen, waitFor } from '@testing-librar
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
 import { LoginForm } from './LoginForm'
-import { assertNotNullable } from 'common'
+import { assertNotNullable, createHash } from 'common'
 import { gotoCommentPage } from './utils'
+import { mocked } from 'ts-jest/utils'
 
 jest.mock('./utils')
 
@@ -181,5 +182,35 @@ test('Submit credential and unexpected message', async () => {
   await waitFor(() => {
     const status = screen.getByRole('status')
     expect(status).toHaveTextContent(`Login failed (${JSON.stringify(unexpected)})`)
+  })
+})
+
+test('Keep login', async () => {
+  const unexpected = { type: 'hoge' }
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: true,
+    json: jest.fn().mockResolvedValue(unexpected)
+  })
+  render(<LoginForm apiUrl="" />)
+
+  const roomInput = getRoomInput()
+  const passwordInput = getPasswordInput()
+  const checkbox = screen.getByRole('checkbox')
+  const button = screen.getByRole('button')
+  userEvent.click(checkbox)
+  userEvent.type(roomInput, 'r')
+  userEvent.type(passwordInput, 'p')
+  await waitFor(() => { expect(button).toBeEnabled() })
+
+  userEvent.click(button)
+  await waitFor(() => {
+    expect(global.fetch).toBeCalled()
+    const init = mocked(global.fetch).mock.calls[0][1]
+    expect(init?.body).toBe(JSON.stringify({
+      type: 'acn',
+      room: 'r',
+      longLife: true,
+      hash: createHash('p')
+    }))
   })
 })
