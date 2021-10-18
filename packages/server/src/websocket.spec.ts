@@ -36,8 +36,8 @@ beforeEach(async () => {
       room: 'hoge',
       hash: 'dbb50237ad3fa5b818b8eeca9ca25a047e0f29517db2b25f4a8db5f717ff90bf0b7e94ef4f5c4e313dfb06e48fbd9a2e40795906a75c470cdb619cf9c2d4f6d9',
     }],
-    jwtPrivateKeyPath: './packages/server/config/jwt.key.sample',
-    jwtPublicKeyPath: './packages/server/config/jwt.key.pub.sample',
+    jwtPrivateKeyPath: './packages/server/config/DO_NOT_USE-jwt.key.sample',
+    jwtPublicKeyPath: './packages/server/config/DO_NOT_USE-jwt.key.pub.sample',
   }))
   const argv = {
     configPath,
