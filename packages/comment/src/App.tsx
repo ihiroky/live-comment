@@ -172,6 +172,10 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
       [name]: value
     })
   }, [state])
+  const backToLogin = React.useCallback((): void => {
+    window.localStorage.removeItem('token')
+    goToLoginPage()
+  }, [])
 
   React.useEffect((): (() => void) => {
     const token = window.localStorage.getItem('token')
@@ -215,7 +219,7 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
     <div className={style.App}>
       <div className={style.nav}>
         <div style={{ padding: '0px 12px' }}>Room: {token.payload.room}</div>
-        <Link href="#" onClick={goToLoginPage}>Back to login</Link>
+        <Link href="#" onClick={backToLogin}>Back to login</Link>
       </div>
       <div className={style.box}>
         <div>
