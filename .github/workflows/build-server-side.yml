@@ -25,6 +25,7 @@ jobs:
 
       - name: Run tests
         run: |
+          yarn eslint packages/common/src/ packages/comment/src/ packages/server/src/ packages/wscomp/src/
           yarn jest packages/common/
           yarn jest packages/comment/
           yarn jest packages/server/

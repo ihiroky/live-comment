@@ -28,6 +28,7 @@ jobs:
 
       - name: Run tests
         run: |
+          yarn eslint packages/common/src/ packages/screen/src/ packages/poll/src/ packages/desktop/src/
           yarn jest packages/common/
           yarn jest packages/screen/
           yarn jest packages/poll/
