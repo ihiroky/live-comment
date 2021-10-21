@@ -15,7 +15,7 @@ import {
   isErrorMessage,
   Message
 } from 'common'
-import { gotoCommentPage } from './utils'
+import { gotoCommentPage } from './utils/pages'
 import { LabeledCheckbox } from './LabeledCheckbox'
 
 interface TextFieldState {

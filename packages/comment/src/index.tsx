@@ -14,11 +14,11 @@ const apiUrl = process.env.NODE_ENV === 'production'
   : `http://localhost:9080/`
 
 if (navigator.cookieEnabled) {
-  document.cookie = 'room=; max-age=0'
-  document.cookie = 'password=; max-age=0'
-  document.cookie = 'autoScroll=; max-age=0'
-  document.cookie = 'sendWithCtrlEnter=; max-age=0'
-  document.cookie = 'openSoundPanel=; max-age=0'
+  document.cookie = 'room=; max-age=0; Secure'
+  document.cookie = 'password=; max-age=0; Secure'
+  document.cookie = 'autoScroll=; max-age=0; Secure'
+  document.cookie = 'sendWithCtrlEnter=; max-age=0; Secure'
+  document.cookie = 'openSoundPanel=; max-age=0; Secure'
 }
 
 // Too rich to render SoundPlayer here, should be independent?
