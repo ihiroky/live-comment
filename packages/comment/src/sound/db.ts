@@ -1,5 +1,5 @@
 import { getLogger } from 'common'
-const DB_NAME = 'live-comment'
+const DB_NAME_PREFIX = 'live-comment/'
 const DB_VERSION = 1
 const StoreNames = [
   'soundMetadata',
@@ -9,10 +9,11 @@ export type StoreName = typeof StoreNames[number]
 
 const log = getLogger('sound/db')
 
-function open(): Promise<IDBDatabase> {
+function open(name: string): Promise<IDBDatabase> {
   return new Promise<IDBDatabase>(
     (resolve: (req: IDBDatabase) => void, reject: (e: Error) => void): void => {
-      const req = indexedDB.open(DB_NAME, DB_VERSION)
+      const dbName = DB_NAME_PREFIX + name
+      const req = indexedDB.open(dbName, DB_VERSION)
       req.addEventListener('upgradeneeded', function(this: IDBOpenDBRequest, e: IDBVersionChangeEvent): void {
         log.debug(this.result.version, e.oldVersion, e.newVersion)
         for (const name of StoreNames) {
@@ -23,14 +24,14 @@ function open(): Promise<IDBDatabase> {
         resolve(this.result)
       })
       req.addEventListener('error', function(): void {
-        reject(new Error(`Failed to open database: ${DB_NAME}`))
+        reject(new Error(`Failed to open database: ${dbName}`))
       })
     }
   )
 }
 
-export async function get<T>(storeName: StoreName, id: string): Promise<T | null> {
-  const db = await open()
+export async function get<T>(dbName: string, storeName: StoreName, id: string): Promise<T | null> {
+  const db = await open(dbName)
   return new Promise<T | null>((resolve: (checksum: T | null) => void, reject: (e: Error) => void): void => {
     const req = db.transaction([storeName], 'readonly').objectStore(storeName).get(id)
     if (!req) {
@@ -49,10 +50,11 @@ export async function get<T>(storeName: StoreName, id: string): Promise<T | null
 }
 
 export async function getAll<T>(
+  dbName: string,
   storeName: StoreName,
   receiver: (id: string, value: unknown) => T | undefined
 ): Promise<T[]> {
-  const db = await open()
+  const db = await open(dbName)
   return new Promise<T[]>((resolve: (values: T[]) => void, reject: (e: unknown) => void): void => {
     const req = db.transaction([storeName], 'readonly').objectStore(storeName).openCursor()
     if (!req) {
@@ -94,8 +96,12 @@ export type StoreOperation = {
   }
 }
 
-export async function update(storeNames: StoreName[], updater: (op: StoreOperation) => void): Promise<void> {
-  const db = await open()
+export async function update(
+  dbName: string,
+  storeNames: StoreName[],
+  updater: (op: StoreOperation) => void
+): Promise<void> {
+  const db = await open(dbName)
   const tx = db.transaction(storeNames, 'readwrite')
   const stores: Map<StoreName, IDBObjectStore> = new Map()
   for (const name of storeNames) {

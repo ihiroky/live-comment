@@ -4,10 +4,10 @@ import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
 import { LoginForm } from './LoginForm'
 import { assertNotNullable, createHash } from 'common'
-import { gotoCommentPage } from './utils'
+import { gotoCommentPage } from './utils/pages'
 import { mocked } from 'ts-jest/utils'
 
-jest.mock('./utils')
+jest.mock('./utils/pages')
 
 afterEach(() => {
   window.localStorage.clear()
