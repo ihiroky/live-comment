@@ -139,10 +139,10 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
           <Slider aria-label="Volume" id="volume" value={volume} onChange={onVolumeChanged} max={100} />
         </div>
         <div className={style.controlItem}>
-          <InputLabel id="max-sounds-label" style={{ paddingLeft: 6, paddingRight: 6, margin: 'auto 0px' }}>Max plays:</InputLabel>
+          <InputLabel id="conc-sounds-label" style={{ paddingLeft: 6, paddingRight: 6, margin: 'auto 0px' }}>Concurrent plays:</InputLabel>
           <Select
-            labelId="max-sounds-label"
-            id="max-sounds"
+            labelId="conc-sounds-label"
+            id="conc-sounds"
             value={concurrentPlays}
             label="Concurrent plays"
             onChange={onConcurrentPlaysChanged}
