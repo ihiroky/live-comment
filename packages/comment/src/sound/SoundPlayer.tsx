@@ -2,6 +2,7 @@ import { Grid, IconButton, InputLabel, makeStyles, MenuItem, Select, Slider } fr
 import { getLogger } from 'common'
 import React from 'react'
 import { isPlaySoundMessage, PlaySoundMessage } from '../types'
+import { useToken } from '../utils/token'
 import { useExistsSounds, useSoundMetadata, usePlaySound } from './hooks'
 import { NoteBlack } from './NoteBlack'
 
@@ -58,14 +59,14 @@ function setNumberOptionValue(key: OptionKey, value: number): void {
 }
 
 export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
-  const token = React.useMemo(() => window.localStorage.getItem('token') || '', [])
-  const existsSounds = useExistsSounds(url, token)
+  const token = useToken()
+  const existsSounds = useExistsSounds(url, token.value, token.payload.room)
   const [width, setWidth] = React.useState(window.innerWidth)
   const [volume, setVolume] = React.useState(getNumberOptionValue('volume', 33))
   const [concurrentPlays, setConcurrentPlays] = React.useState(getNumberOptionValue('concurrentPlays', 3))
   const nowPlaysRef = React.useRef(0)
-  const [sounds] = useSoundMetadata(existsSounds)
-  const playSound = usePlaySound()
+  const [sounds] = useSoundMetadata(token.payload.room, existsSounds)
+  const playSound = usePlaySound(token.payload.room)
   const style = useStyles()
   const onIconClick = React.useCallback((ev: React.MouseEvent<HTMLButtonElement>, id: string): void => {
     const message: PlaySoundMessage = { type: 'app', cmd: 'sound/play', id }

@@ -8,7 +8,7 @@ import {
   Message,
 } from 'common'
 import { WebSocketClient, WebSocketControl } from 'wscomp'
-import { goToLoginPage } from './utils'
+import { goToLoginPage } from './utils/pages'
 import { AppState, isPlaySoundMessage } from './types'
 import { isPollFinishMessage, isPollStartMessage } from 'poll'
 

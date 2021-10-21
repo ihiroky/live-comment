@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event'
 import { usePlaySound, useSoundMetadata } from './hooks'
 import { mocked } from 'ts-jest/utils'
 import { PlaySoundMessage } from '../types'
-
+import { sign } from 'jsonwebtoken'
 
 jest.mock('./hooks')
 
@@ -20,7 +20,8 @@ afterEach(() => {
 })
 
 test('Page title', () => {
-  window.localStorage.setItem('token', 'token')
+  const token = sign({ room: 'room' }, 'hoge')
+  window.localStorage.setItem('token', token)
   mocked(usePlaySound).mockReturnValue(jest.fn())
   mocked(useSoundMetadata).mockReturnValue([])
 
@@ -33,7 +34,8 @@ test('Page title', () => {
 test('Volume is changed if move slider', async () => {
   const playSoundMock = jest.fn()
   mocked(usePlaySound).mockReturnValue(playSoundMock)
-  window.localStorage.setItem('token', 'token')
+  const token = sign({ room: 'room' }, 'hoge')
+  window.localStorage.setItem('token', token)
   mocked(useSoundMetadata).mockReturnValue([
     { id0: { id: 'id0', displayName: 'dn0', command: [] }},
     {}
@@ -61,7 +63,8 @@ test('Volume is changed if move slider', async () => {
 test('Change max number of sound being played concurrently', async () => {
   const playSoundMock = jest.fn()
   mocked(usePlaySound).mockReturnValue(playSoundMock)
-  window.localStorage.setItem('token', 'token')
+  const token = sign({ room: 'room' }, 'hoge')
+  window.localStorage.setItem('token', token)
   mocked(useSoundMetadata).mockReturnValue([
     { id0: { id: 'id0', displayName: 'dn0', command: [] }},
     {}
@@ -96,7 +99,8 @@ test('Change max number of sound being played concurrently', async () => {
 
 test('Send message to play sound if icon is clicked', async () => {
   mocked(usePlaySound).mockReturnValue(jest.fn())
-  window.localStorage.setItem('token', 'token')
+  const token = sign({ room: 'room' }, 'hoge')
+  window.localStorage.setItem('token', token)
   mocked(useSoundMetadata).mockReturnValue([
     { id0: { id: 'id0', displayName: 'dn0', command: [] }},
     {}

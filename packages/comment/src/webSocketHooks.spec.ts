@@ -4,11 +4,11 @@ import { useWebSocketOnOpen, useWebSocketOnClose, useWebSocketOnMessage } from '
 import {  ApplicationMessage, CloseCode, CommentMessage } from 'common'
 import { WebSocketControl } from 'wscomp'
 import React from 'react'
-import { goToLoginPage } from './utils'
+import { goToLoginPage } from './utils/pages'
 import { AppState } from './types'
 import { PollFinishMessage, PollStartMessage } from 'poll'
 
-jest.mock('./utils')
+jest.mock('./utils/pages')
 
 function createWebSocketControlMock(): WebSocketControl {
   return {

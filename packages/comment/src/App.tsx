@@ -8,8 +8,8 @@ import { LabeledCheckbox } from './LabeledCheckbox'
 import { FormGroup, Link, makeStyles } from '@material-ui/core'
 import { useWebSocketOnOpen, useWebSocketOnClose, useWebSocketOnMessage } from './webSocketHooks'
 import { useOnPoll, useOnClosePoll } from './pollHooks'
-import { goToLoginPage } from './utils'
-import jwtDecode, { JwtPayload } from 'jwt-decode'
+import { useToken } from './utils/token'
+import { goToLoginPage } from './utils/pages'
 
 
 type AppProps = {
@@ -129,20 +129,7 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
   const autoScroll = getBooleanOptionValue('autoScroll', true)
   const sendWithCtrlEnter = getBooleanOptionValue('sendWithCtrlEnter', true)
   const openSoundPanel = getBooleanOptionValue('openSoundPanel', false)
-  const token = React.useMemo((): { value: string, payload: { room: string }} => {
-    const token = window.localStorage.getItem('token')
-    if (!token) {
-      return { value: '', payload: { room: '' } }
-    }
-    const payload = jwtDecode<JwtPayload & { room: string }>(token)
-    if (!payload || typeof payload === 'string') {
-      return { value: '', payload: { room: '' } }
-    }
-    return {
-      value: token,
-      payload: { room: payload.room }
-    }
-  }, [])
+  const token = useToken()
   const [state, setState] = React.useState<AppState>({
     comments: [],
     polls: [],
@@ -172,6 +159,10 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
       [name]: value
     })
   }, [state])
+  const backToLogin = React.useCallback((): void => {
+    window.localStorage.removeItem('token')
+    goToLoginPage()
+  }, [])
 
   React.useEffect((): (() => void) => {
     const token = window.localStorage.getItem('token')
@@ -215,7 +206,7 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
     <div className={style.App}>
       <div className={style.nav}>
         <div style={{ padding: '0px 12px' }}>Room: {token.payload.room}</div>
-        <Link href="#" onClick={goToLoginPage}>Back to login</Link>
+        <Link href="#" onClick={backToLogin}>Back to login</Link>
       </div>
       <div className={style.box}>
         <div>
