@@ -54,6 +54,10 @@ export function getLogger(scope: string): Logger {
   return JsLogger.get(scope)
 }
 
+export function setDefaultLogLevel(level: LogLevel): void {
+  JsLogger.setLevel(level)
+}
+
 export const LogLevels = {
   OFF: JsLogger.OFF,
   ERROR: JsLogger.ERROR,

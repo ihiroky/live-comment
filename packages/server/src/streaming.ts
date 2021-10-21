@@ -4,7 +4,8 @@ import { Configuration, loadConfigAsync } from './Configuration'
 import {
   assertNotNullable,
   getLogger,
-  LogLevels
+  setDefaultLogLevel,
+  LogLevels,
 } from 'common'
 import 'tslib'
 import { HealthCheck } from './HealthCheck'
@@ -12,11 +13,11 @@ import { parseArgv } from './argv'
 
 (async function(): Promise<void> {
   const argv = parseArgv()
+  setDefaultLogLevel(argv.loglevel)
   const config = await loadConfigAsync(argv.configPath, 0)
   assertNotNullable(config.content, 'config must be object.')
   const configuration = new Configuration(argv, config.content, config.stat.mtimeMs)
   const log = getLogger('streaming')
-  log.setLevel(configuration.logLevel)
   if (log.enabledFor(LogLevels.DEBUG)) {
     log.debug('Configuration', JSON.stringify(configuration))
   }
