@@ -73,7 +73,7 @@ test('Change max number of sound being played concurrently', async () => {
   render(<SoundPlayer url="https://localhost/" />)
 
   // Select '1' in MUI Select
-  const select = screen.getByLabelText('Max plays:')
+  const select = screen.getByLabelText('Concurrent plays:')
   userEvent.type(select, '{selectall}{enter}')
   userEvent.click(screen.getByText('1'))
   await waitAsync(50)
