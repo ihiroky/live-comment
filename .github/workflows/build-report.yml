@@ -1,7 +1,9 @@
-name: 'Build Report'
+name: Test reports
 on:
   workflow_run:
-    workflows: ['CI']
+    workflows:
+      - Build and release desktop app
+      - Build and release server-side apps
     types:
       - completed
 jobs:
