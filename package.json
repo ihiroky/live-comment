@@ -35,5 +35,11 @@
   },
   "pre-commit": [
     "lint"
-  ]
+  ],
+  "jest-junit": {
+    "outputFile": "reports/jest-junit.xml",
+    "classNameTemplate": "{classname}",
+    "titleTemplate": "{title}",
+    "suiteNameTemplate": "{filepath}"
+  }
 }

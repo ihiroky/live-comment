@@ -7,14 +7,4 @@ module.exports = {
     "packages/screen",
     "packages/server",
   ],
-  "reporters": [
-    "default",
-    ["jest-junit", {
-      "outputFile": "reports/jest-junit.xml",
-      "classNameTemplate": "{classname}",
-      "titleTemplate": "{title}",
-      "suiteNameTemplate": "{filepath}",
-    }],
-  ]
-
 }
