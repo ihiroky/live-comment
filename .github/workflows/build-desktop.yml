@@ -28,7 +28,7 @@ jobs:
 
       - name: Run tests
         run: |
-          yarn lint
+          yarn eslint --ext ts,tsx --max-warnings 0 packages/*/src
           yarn jest --reporters=default --reporters=jest-junit
         shell: bash
 
