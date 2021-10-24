@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import { renderHook } from '@testing-library/react-hooks'
 import { useOnGeneralSettingsUpdate, useOnSubmit, useOnWatermarkSettingsUpdate, useSettingsState } from './hooks'
 import { GeneralSettingsState, Settings, SettingsState, WatermarkSettingsState } from './types'
