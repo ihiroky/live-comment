@@ -6,6 +6,7 @@ import {
 } from './MarqueePropsGenerator'
 import { MarqueeList } from './MarqueeList'
 import { Watermark, WatermarkProps } from './Watermark'
+import { getLogger } from 'common'
 
 // TODO data flow should be server -> comment -> screen. A presentater may want to show comment list.
 
@@ -19,6 +20,8 @@ type ScreenProps = {
   watermark?: WatermarkProps
 }
 
+const log = getLogger('Screen')
+
 export const Screen: React.FC<ScreenProps> = (props: React.PropsWithChildren<ScreenProps>): JSX.Element => {
 
   const [marqueePropsList, setMarqueePropsList] = React.useState<MarqueePropsList>([])
@@ -27,6 +30,9 @@ export const Screen: React.FC<ScreenProps> = (props: React.PropsWithChildren<Scr
       setMarqueePropsList(mpl)
     }), [props]
   )
+  const onError = React.useCallback((e: Event): void => {
+    log.error('[onError]', e)
+  }, [])
 
   // TODO Need to work with css class screen
   const marqueeHeight = 64 + 8
@@ -50,6 +56,7 @@ export const Screen: React.FC<ScreenProps> = (props: React.PropsWithChildren<Scr
         noComments={props.watermark?.noComments}
         onOpen={marqueeGenerator.onOpen}
         onClose={marqueeGenerator.onClose}
+        onError={onError}
         onMessage={marqueeGenerator.onMessage}
       />
     </div>

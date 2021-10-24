@@ -10,22 +10,26 @@ export interface WebSocketControl {
 }
 
 export type WebSocketClientPropsType = {
-  onOpen?: (control: WebSocketControl) => void
-  onClose?: (ev: CloseEvent) => void
-  onError?: (ev: Event) => void
+  onOpen: (control: WebSocketControl) => void
+  onClose: (ev: CloseEvent) => void
+  onError: (ev: Event) => void
   onMessage: (message: Message) => void
   url: string
   noComments?: boolean
+}
+
+type Callbacks = {
+  onOpen: WebSocketClientPropsType['onOpen']
+  onClose: WebSocketClientPropsType['onClose']
+  onError: WebSocketClientPropsType['onError']
+  onMessage: WebSocketClientPropsType['onMessage']
 }
 
 const log = getLogger('WebSocketClient')
 
 function createWebSocket(
   url: WebSocketClientPropsType['url'],
-  onOpen: WebSocketClientPropsType['onOpen'],
-  onClose: WebSocketClientPropsType['onClose'],
-  onError: WebSocketClientPropsType['onError'],
-  onMessage: WebSocketClientPropsType['onMessage'],
+  callbacksRef: React.MutableRefObject<Callbacks>,
   webSocketRef: React.MutableRefObject<WebSocket | null>
 ): void {
   if (!/^wss?:\/\/./.test(url)) {
@@ -36,50 +40,48 @@ function createWebSocket(
   const webSocket = new WebSocket(url)
   webSocket.addEventListener('open', (ev: Event): void => {
     log.debug('[onopen]', ev)
-    if (onOpen) {
-      const control: WebSocketControl = {
-        _reconnectTimer: 0,
-        send: (message: Message): void => {
-          const ws = webSocketRef.current
-          if (ws) {
-            const json = JSON.stringify(message)
-            ws.send(json)
-            log.debug('[send]', message)
-          }
-        },
-        reconnect: (): void => {
-          log.debug('[WebSocketControl.reconnect] Start.')
-          webSocketRef.current?.close()
-          createWebSocket(url, onOpen, onClose, onError, onMessage, webSocketRef)
-          log.debug('[WebSocketControl.reconnect] End.')
-        },
-        reconnectWithBackoff: (): void => {
-          if (control._reconnectTimer !== 0) {
-            log.warn('[reconnectWithBackoff] Already timered:', control._reconnectTimer)
-            return
-          }
-          const waitMillis = 7000 + 13000 * Math.random()
-          control._reconnectTimer = window.setTimeout((): void => {
-            control._reconnectTimer = 0
-            log.info('[reconnectWithBackoff] Try to reconnect.')
-            control.reconnect()
-          }, waitMillis)
-          log.info(`[reconnectWithBackoff] Reconnect after ${waitMillis}ms.`)
-        },
-        close: (): void => {
-          log.debug('[WebSocketControl.close]')
-          if (control._reconnectTimer) {
-            window.clearTimeout(control._reconnectTimer)
-            control._reconnectTimer = 0
-          }
-          if (webSocketRef.current) {
-            webSocketRef.current.close()
-            webSocketRef.current = null
-          }
+    const control: WebSocketControl = {
+      _reconnectTimer: 0,
+      send: (message: Message): void => {
+        const ws = webSocketRef.current
+        if (ws) {
+          const json = JSON.stringify(message)
+          ws.send(json)
+          log.debug('[send]', message)
+        }
+      },
+      reconnect: (): void => {
+        log.debug('[WebSocketControl.reconnect] Start.')
+        webSocketRef.current?.close()
+        createWebSocket(url, callbacksRef, webSocketRef)
+        log.debug('[WebSocketControl.reconnect] End.')
+      },
+      reconnectWithBackoff: (): void => {
+        if (control._reconnectTimer !== 0) {
+          log.warn('[reconnectWithBackoff] Already timered:', control._reconnectTimer)
+          return
+        }
+        const waitMillis = 7000 + 13000 * Math.random()
+        control._reconnectTimer = window.setTimeout((): void => {
+          control._reconnectTimer = 0
+          log.info('[reconnectWithBackoff] Try to reconnect.')
+          control.reconnect()
+        }, waitMillis)
+        log.info(`[reconnectWithBackoff] Reconnect after ${waitMillis}ms.`)
+      },
+      close: (): void => {
+        log.debug('[WebSocketControl.close]')
+        if (control._reconnectTimer) {
+          window.clearTimeout(control._reconnectTimer)
+          control._reconnectTimer = 0
+        }
+        if (webSocketRef.current) {
+          webSocketRef.current.close()
+          webSocketRef.current = null
         }
       }
-      onOpen(control)
     }
+    callbacksRef.current.onOpen(control)
   })
   webSocket.addEventListener('close', (ev: CloseEvent): void => {
     log.debug('[onclose]', ev)
@@ -87,20 +89,16 @@ function createWebSocket(
       webSocketRef.current.close()
       webSocketRef.current = null
     }
-    if (onClose) {
-      onClose(ev)
-    }
+    callbacksRef.current.onClose(ev)
   })
   webSocket.addEventListener('error', (ev: Event): void => {
     log.debug('[onerror]', ev)
-    if (onError) {
-      onError(ev)
-    }
+    callbacksRef.current.onError(ev)
   })
   webSocket.addEventListener('message', (ev: MessageEvent<string>): void => {
     log.trace('[onmessage]', ev)
     const message: Message = JSON.parse(ev.data)
-    onMessage(message)
+    callbacksRef.current.onMessage(message)
   })
 
   log.info('[createWebSocket] Websocket created.', url)
@@ -111,6 +109,16 @@ export function WebSocketClient(
   { url, noComments, onOpen, onClose, onError, onMessage }: WebSocketClientPropsType
 ): JSX.Element {
   const webSocketRef = React.useRef<WebSocket | null>(null)
+  const callbacksRef = React.useRef<Callbacks>({
+    onOpen: () => undefined,
+    onClose: () => undefined,
+    onError: () => undefined,
+    onMessage: () => undefined,
+  })
+
+  React.useEffect(() => {
+    callbacksRef.current = { onOpen, onClose, onError, onMessage }
+  }, [onOpen, onClose, onError, onMessage])
 
   React.useEffect((): (() => void) => {
     if (noComments) {
@@ -119,9 +127,9 @@ export function WebSocketClient(
         type: 'comment',
         comment: 'Entering no comments mode.'
       }
-      onMessage(comment)
+      callbacksRef.current.onMessage(comment)
     }
-    createWebSocket(url, onOpen, onClose, onError, onMessage, webSocketRef)
+    createWebSocket(url, callbacksRef, webSocketRef)
 
     return (): void => {
       if (webSocketRef.current) {
@@ -130,7 +138,7 @@ export function WebSocketClient(
         log.debug('[componentWillUnmount] Websocket closed.')
       }
     }
-  }, [url, noComments, onOpen, onClose, onError, onMessage])
+  }, [url, noComments])
 
   return <div />
 }

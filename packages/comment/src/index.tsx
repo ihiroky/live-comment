@@ -5,6 +5,7 @@ import { App } from './App'
 import { LoginForm } from './LoginForm'
 import * as serviceWorker from './serviceWorker'
 import { SoundPlayer } from './sound/SoundPlayer'
+import { LogLevels, setDefaultLogLevel } from 'common'
 
 const wsUrl = process.env.NODE_ENV === 'production'
   ? `wss://${window.location.hostname}/app`
@@ -12,7 +13,9 @@ const wsUrl = process.env.NODE_ENV === 'production'
 const apiUrl = process.env.NODE_ENV === 'production'
   ? `https://${window.location.hostname}/api`
   : `http://localhost:9080/`
-
+if (process.env.NODE_ENV !== 'production') {
+  setDefaultLogLevel(LogLevels.DEBUG)
+}
 if (navigator.cookieEnabled) {
   document.cookie = 'room=; max-age=0; Secure'
   document.cookie = 'password=; max-age=0; Secure'
