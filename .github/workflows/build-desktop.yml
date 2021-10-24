@@ -41,7 +41,7 @@ jobs:
           reporter: jest-junit
 
       - name: Coverage report
-      - uses: romeovs/lcov-reporter-action@v0.2.16
+        uses: romeovs/lcov-reporter-action@v0.2.16
         with:
           lcov-file: reports/coverage/lcov.info
 
