@@ -1,0 +1,19 @@
+name: 'Build Report'
+on:
+  workflow_run:
+    workflows: ['CI']
+    types:
+      - completed
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: dorny/test-reporter@v1
+      with:
+        artifact: test-results
+        name: JEST Tests
+        path: 'reports/jest-*.xml'
+        reporter: jest-junit
+    - uses: romeovs/lcov-reporter-action@v0.2.16
+      with:
+        lcov-file: reports/coverage/lcov.info

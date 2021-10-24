@@ -29,11 +29,7 @@ jobs:
       - name: Run tests
         run: |
           yarn eslint packages/common/src/ packages/screen/src/ packages/poll/src/ packages/desktop/src/
-          yarn jest packages/common/
-          yarn jest packages/screen/
-          yarn jest packages/poll/
-          yarn jest --env jsdom packages/desktop/src/*/*.spec.ts
-          yarn jest --env node packages/desktop/src/*.spec.ts
+          yarn jest --reporters=default --reporters=jest-junit --coverage --coverageDirectory reports/coverage packages/common/ packages/screen/ packages/poll/ packages/desktop/
         shell: bash
 
       - name: Build/release Electron app
