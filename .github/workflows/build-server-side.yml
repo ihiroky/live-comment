@@ -25,8 +25,8 @@ jobs:
 
       - name: Run tests
         run: |
-          yarn eslint packages/common/src/ packages/comment/src/ packages/server/src/ packages/wscomp/src/
-          yarn jest --reporters=default --reporters=jest-junit --coverage --coverageDirectory reports/coverage packages/common/ packages/comment/ packages/server/
+          yarn lint
+          yarn jest --reporters=default --reporters=jest-junit --coverage --coverageDirectory reports/coverage
 
       - name: Test report
         uses: dorny/test-reporter@v1
