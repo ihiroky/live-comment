@@ -29,7 +29,7 @@ jobs:
       - name: Run tests
         run: |
           yarn lint
-          yarn jest --reporters=default --reporters=jest-junit --coverage --coverageDirectory reports/coverage
+          yarn jest --reporters=default --reporters=jest-junit
         shell: bash
 
       - name: Test report
@@ -39,11 +39,6 @@ jobs:
           name: Jest Tests
           path: reports/jest-*.xml
           reporter: jest-junit
-
-      - name: Coverage report
-        uses: romeovs/lcov-reporter-action@v0.2.21
-        with:
-          lcov-file: reports/coverage/lcov.info
 
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1

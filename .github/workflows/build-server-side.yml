@@ -26,7 +26,7 @@ jobs:
       - name: Run tests
         run: |
           yarn lint
-          yarn jest --reporters=default --reporters=jest-junit --coverage --coverageDirectory reports/coverage
+          yarn jest --reporters=default --reporters=jest-junit
 
       - name: Test report
         uses: dorny/test-reporter@v1
@@ -35,11 +35,6 @@ jobs:
           name: Jest Tests
           path: reports/jest-*.xml
           reporter: jest-junit
-
-      - name: Coverage report
-        uses: romeovs/lcov-reporter-action@v0.2.21
-        with:
-          lcov-file: reports/coverage/lcov.info
 
       - name: Create release directory tree
         run: |
