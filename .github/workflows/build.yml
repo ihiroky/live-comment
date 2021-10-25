@@ -1,0 +1,133 @@
+name: Check
+
+on: push
+
+jobs:
+#
+# Run tests and code checkers
+#
+  check:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          cache: 'yarn'
+      - run: yarn install --frozen-lockfile --network-timeout 180000
+
+      - name: Run checks
+        run: |
+          yarn eslint --ext ts,tsx --max-warnings 0 packages/*/src
+          yarn --cwd packages/comment/ tsc -b
+          yarn --cwd packages/desktop/ tsc -b
+          yarn --cwd packages/server/ tsc -b
+          yarn jest --reporters=default --reporters=jest-junit
+        shell: bash
+
+      - name: Test report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: Test report on ${{ matrix.os }}
+          path: reports/jest-*.xml
+          reporter: jest-junit
+#
+# Build desktop app
+#
+  desktop:
+    needs: check
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          cache: 'yarn'
+      - run: yarn install --frozen-lockfile --network-timeout 180000
+
+      - name: Build apps
+        run: |
+          yarn --cwd packages/desktop/ build
+
+      - name: Build/release Electron app
+        uses: samuelmeuli/action-electron-builder@v1
+        with:
+          github_token: ${{ secrets.github_token }}
+          release: ${{ startsWith(github.ref, 'refs/tags/v') }}
+          skip_build: true
+          package_root: packages/desktop/
+          args: -c electron-builder-config.json
+
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: live-comment-for-${{ matrix.os }}-${{ github.run_number }}
+          path: packages/desktop/dist/live-comment*
+#
+# Build server side apps
+#
+  server-side:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          cache: 'yarn'
+      - run: yarn install --frozen-lockfile --network-timeout 180000
+
+      - name: Build apps
+        run: |
+          yarn --cwd packages/comment build
+          yarn --cwd packages/server  build
+
+      - name: Create release directory tree
+        run: |
+          mkdir -p build/apps
+          cp -a packages/comment/build       build/apps/comment
+          mkdir -p build/apps/server
+          cp -a packages/server/dist         build/apps/server
+          cp -a packages/server/src/start.sh build/apps/server
+        shell: bash
+
+      - name: Archive apps
+        uses: ihiroky/archive-action@v1
+        with:
+          file_path: build/server-apps.zip
+          root_dir: build/apps/
+
+      - name: Gets latest created release info
+        id: latest_release_info
+        uses: ihiroky/action-latest-release-info@master
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - run: |
+          echo draft:${{ steps.latest_release_info.outputs.draft }}
+          echo upload_url:${{ steps.latest_release_info.outputs.upload_url }}
+        shell: bash
+
+      - name: Upload asset to github release if draft release exists.
+        id: upload-release-asset
+        if: ${{ steps.latest_release_info.outputs.draft == true }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.latest_release_info.outputs.upload_url }}
+          asset_path: build/server-apps.zip
+          asset_name: server-apps.zip
+          asset_content_type: application/zip
+
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: server-apps-${{ github.run_number }}
+          path: build/apps/
