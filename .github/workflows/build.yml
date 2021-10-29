@@ -92,10 +92,10 @@ jobs:
       - name: Create release directory tree
         run: |
           mkdir -p build/apps
-          cp -a packages/comment/build       build/apps/comment
+          cp -a packages/comment/build        build/apps/comment
           mkdir -p build/apps/server
-          cp -a packages/server/dist         build/apps/server
-          cp -a packages/server/src/start.sh build/apps/server
+          cp -a packages/server/dist          build/apps/server
+          cp -a packages/server/src/scripts/* build/apps/server
         shell: bash
 
       - name: Archive apps
