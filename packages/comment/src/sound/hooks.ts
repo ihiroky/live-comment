@@ -158,10 +158,13 @@ async function storeSounds(url: string, token: string, room: string, checksum: s
       if (id === null) {
         continue
       }
+      const soundDefinition = manifestMap.get(fileName)
+      if (!soundDefinition) {
+        continue
+      }
       const data = unzip.decompress(fileName)
-      const manifestForFile = manifestMap.get(fileName)
-      const displayName = manifestForFile?.displayName ?? id
-      const command = manifestForFile?.command ?? null
+      const displayName = soundDefinition.displayName ?? id
+      const command = soundDefinition.command ?? null
       // TODO add index to sort by stored order
       const metadataValue: StoredSoundMetadata = { displayName, command }
       op.put('soundMetadata', id, metadataValue)

@@ -203,7 +203,7 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
   const checkBoxMeta: Array<{ label: string, name: string, key: OptionKey}> = [
     { label: 'Auto scroll', name: 'auto_scroll', key: 'autoScroll' },
     { label: 'Send with Ctrl+Enter', name: 'send_with_ctrl_enter', key: 'sendWithCtrlEnter' },
-    { label: 'Open DDR', name: 'open_ddr', key: 'openSoundPanel' },
+    { label: 'Open DDD', name: 'open_ddd', key: 'openSoundPanel' },
   ]
   return (
     <div className={style.App}>
