@@ -28,7 +28,7 @@ test('Page title', () => {
   render(<SoundPlayer url="https://localhost" />)
 
   const title = screen.getByRole('heading')
-  expect(title.textContent).toBe('Ding Dong Ring! 🔔')
+  expect(title.textContent).toBe('Ding Dong Ding! 🔔')
 })
 
 test('Volume is changed if move slider', async () => {
@@ -93,7 +93,7 @@ test('Change max number of sound being played concurrently', async () => {
 
   // But playSound is called once.
   await waitAsync(50)
-  expect(playSoundMock).toBeCalledWith('id', 33, expect.any(Function))
+  expect(playSoundMock).toBeCalledWith('id', 10, expect.any(Function))
   expect(playSoundMock).toBeCalledTimes(1)
 })
 
