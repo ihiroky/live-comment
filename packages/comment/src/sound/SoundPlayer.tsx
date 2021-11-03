@@ -62,7 +62,7 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
   const token = useToken()
   const existsSounds = useExistsSounds(url, token.value, token.payload.room)
   const [width, setWidth] = React.useState(window.innerWidth)
-  const [volume, setVolume] = React.useState(getNumberOptionValue('volume', 33))
+  const [volume, setVolume] = React.useState(getNumberOptionValue('volume', 10))
   const [concurrentPlays, setConcurrentPlays] = React.useState(getNumberOptionValue('concurrentPlays', 3))
   const nowPlaysRef = React.useRef(0)
   const [sounds] = useSoundMetadata(token.payload.room, existsSounds)
@@ -131,7 +131,7 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
   return (
     <div style={{ width, height: '100%' }}>
       <div className={style.title}>
-        <h3>Ding Dong Ring! 🔔</h3>
+        <h3>Ding Dong Ding! 🔔</h3>
       </div>
       <div className={style.controls}>
         <div className={style.controlItem}>
@@ -139,10 +139,10 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
           <Slider aria-label="Volume" id="volume" value={volume} onChange={onVolumeChanged} max={100} />
         </div>
         <div className={style.controlItem}>
-          <InputLabel id="max-sounds-label" style={{ paddingLeft: 6, paddingRight: 6, margin: 'auto 0px' }}>Max plays:</InputLabel>
+          <InputLabel id="conc-sounds-label" style={{ paddingLeft: 6, paddingRight: 6, margin: 'auto 0px' }}>Concurrent plays:</InputLabel>
           <Select
-            labelId="max-sounds-label"
-            id="max-sounds"
+            labelId="conc-sounds-label"
+            id="conc-sounds"
             value={concurrentPlays}
             label="Concurrent plays"
             onChange={onConcurrentPlaysChanged}

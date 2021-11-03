@@ -6,5 +6,5 @@ module.exports = {
     "packages/poll",
     "packages/screen",
     "packages/server",
-  ]
+  ],
 }

@@ -25,8 +25,8 @@ beforeEach(async () => {
       },
     ],
     soundDirPath,
-    jwtPrivateKeyPath: `${__dirname}/../config/jwt.key.sample`,
-    jwtPublicKeyPath:  `${__dirname}/../config/jwt.key.pub.sample`,
+    jwtPrivateKeyPath: `${__dirname}/../config/DO_NOT_USE-jwt.key.sample`,
+    jwtPublicKeyPath:  `${__dirname}/../config/DO_NOT_USE-jwt.key.pub.sample`,
   }
   configPath = path.join(os.tmpdir(), 'http.spec.json')
   fs.writeFileSync(configPath, JSON.stringify(configJson))

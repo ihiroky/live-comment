@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import React from 'react'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import '@testing-library/jest-dom'

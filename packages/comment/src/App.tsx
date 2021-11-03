@@ -149,6 +149,9 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
   const onMessage = useWebSocketOnMessage(
     props.maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef
   )
+  const onError = React.useCallback((e: Event): void => {
+    log.error('[onError]', e)
+  }, [])
   const onSubmit = React.useCallback((message: Message): void => {
     wscRef.current?.send(message)
   }, [])
@@ -200,7 +203,7 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
   const checkBoxMeta: Array<{ label: string, name: string, key: OptionKey}> = [
     { label: 'Auto scroll', name: 'auto_scroll', key: 'autoScroll' },
     { label: 'Send with Ctrl+Enter', name: 'send_with_ctrl_enter', key: 'sendWithCtrlEnter' },
-    { label: 'Open DDR', name: 'open_ddr', key: 'openSoundPanel' },
+    { label: 'Open DDD', name: 'open_ddd', key: 'openSoundPanel' },
   ]
   return (
     <div className={style.App}>
@@ -212,7 +215,13 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
         <div>
           { token.value ? (
             <>
-              <WebSocketClient url={props.url} onOpen={onOpen} onClose={onClose} onMessage={onMessage} />
+              <WebSocketClient
+                url={props.url}
+                onOpen={onOpen}
+                onClose={onClose}
+                onError={onError}
+                onMessage={onMessage}
+              />
               { state.openSoundPanel ? (
                 <div className={style.sound}>
                   <iframe ref={soundPanelRef} src="/sound" allow="autoplay 'src'" />

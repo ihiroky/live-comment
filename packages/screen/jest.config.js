@@ -11,5 +11,4 @@ module.exports = {
     "^.+\\.(ts|tsx)$": "ts-jest"
   },
   "displayName": "screen",
-  "coverageDirectory": "/tmp/live-comment/coverage/screen",
 }

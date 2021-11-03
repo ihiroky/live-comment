@@ -18,7 +18,8 @@ function clean_old_log() {
 
 function start_process() {
   local type="${1}"
-  nohup node dist/bundled/${type}.js >log/nohup-${type}-$(date +%Y%m%d-%H%M%S).out 2>&1 &
+  shift 1
+  nohup node dist/bundled/${type}/index.js "$@" >log/nohup-${type}-$(date +%Y%m%d-%H%M%S).out 2>&1 &
   echo $! >log/${type}.pid
   echo Start new ${type} process $!
 }

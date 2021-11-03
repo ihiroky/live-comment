@@ -271,7 +271,10 @@ test('Reload when timestamp gets newer', async () => {
   const cache = await loadConfigAsync(configPath, 0)
   assertNotNullable(cache.content, 'cache.content must be defined.')
   const sut = new Configuration(argv, cache.content, cache.stat.mtimeMs)
-  fs.utimesSync(configPath, cache.stat.atimeMs + 1000, cache.stat.mtimeMs + 1000)
+  // Windows requires Date object for atime, utime
+  const atime = new Date(cache.stat.atimeMs + 1000)
+  const utime = new Date(cache.stat.mtimeMs + 1000)
+  fs.utimesSync(configPath, atime, utime)
   await sut.reloadIfUpdatedAsync()
 
   expect(sut['cache']).not.toBe(cache.content)

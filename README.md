@@ -8,9 +8,9 @@ Show audiences' comments on your screen.
 
 - node
 - yarn
-- Http server
+- Http server you like
 
-### Server
+### Server side
 
 - Clone and build
 
@@ -28,8 +28,7 @@ e.g. Nginx
 ```
 server {
 
-  # Your server name
-  server_name your-server-name;
+  # ...
 
   location / {
     root /path/to/live-comment/packages/comment/build/;
@@ -41,16 +40,29 @@ server {
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
   }
+  location /api/ {
+    proxy_pass http://localhost:9080/;
+  }
+  proxy_set_header X-Forwarded-Host $host;
+  proxy_set_header X-Forwarded-For $remote_addr;
+
+  # ...
+
 }
 ```
 
 If you don't use reverse proxy, /path/to/live-comment/packages/comment/build must be served and expose 8080 port used by the server.
 
-- Start websocket server
+- Start websocket and api server
+
 ```bash
+# Generate jwt keys, then move generated keys into a secure directory and write their path in server.config.json
+./script/genjwtkey.sh
+
 cd /path/to/live-comment/packages/server
-vi server.config.json  # Add room name and password :(
-node dist/js/index.js
+vi server.config.json  # Add room name and password :(, and above jwt key path.
+node dist/bundle/streaming/index.js -p 8080
+node dist/bundle/api/index.js -p 9080
 ```
 
 ### Client
@@ -66,9 +78,9 @@ cd live-comment
 yarn install
 cd packages/desktop
 yarn build
-yarn electron-builder -c electron-builder-config.json -l # for Linux
-yarn electron-builder -c electron-builder-config.json -w # for Windows
-yarn electron-builder -c electron-builder-config.json -m # for Mac
+yarn electron-builder -c electron-builder-config.json -l # Build install package for Linux
+yarn electron-builder -c electron-builder-config.json -w # Build install package for Windows
+yarn electron-builder -c electron-builder-config.json -m # Build install package for Mac
 ```
 
 Then, install generated package in live-comment/packages/desktop/dist directory.
@@ -89,8 +101,15 @@ Access to comment/index.html served on your http server. e.g. `https://<your-ser
 ### Start streaming server
 ```bash
 cd packages/server
-yarn start --debug # Starts http/ws server on port 8080
+yarn start-streaming # Starts http/ws server on port 8080, no watch :(
 ```
+
+### Start api server
+```bash
+cd packages/server
+yarn start-api # Starts http server on port 9080, no watch :(
+```
+
 ### Serve comment from on development server
 ```bash
 cd packages/comment

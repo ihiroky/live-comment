@@ -12,6 +12,7 @@ export { Deffered } from './Deffered'
 
 export {
   getLogger,
+  setDefaultLogLevel,
   LogLevel,
   LogLevels,
   parseLogLevel
