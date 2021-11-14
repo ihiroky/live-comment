@@ -25,7 +25,7 @@ jobs:
           yarn --cwd packages/comment/ tsc -b
           yarn --cwd packages/desktop/ tsc -b
           yarn --cwd packages/server/ tsc -b
-          yarn jest --reporters=default --reporters=jest-junit
+          yarn jest --reporters=default --reporters=jest-junit --coverage --coverageDirectory reports/coverage
         shell: bash
 
       - name: Test report
@@ -35,6 +35,13 @@ jobs:
           name: Test report on ${{ matrix.os }}
           path: reports/jest-*.xml
           reporter: jest-junit
+
+      - name: Coverage report
+        uses: ihiroky/lcov-reporter-action@master
+        with:
+          name: Coverage report on ${{ matrix.os }}
+          github-token: ${{ secrets.github_token }}
+          lcov-file: reports/coverage/lcov.info
 #
 # Build desktop app
 #
