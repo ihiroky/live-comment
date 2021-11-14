@@ -40,7 +40,7 @@ jobs:
         uses: ihiroky/lcov-reporter-action@master
         with:
           name: Coverage report on ${{ matrix.os }}
-          lcov-file: reports/coverage/lcov.info
+          lcov_file: reports/coverage/lcov.info
 #
 # Build desktop app
 #
