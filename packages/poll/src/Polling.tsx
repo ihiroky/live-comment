@@ -2,7 +2,7 @@ import React from 'react'
 import {
   Grid,
   Button,
-} from '@material-ui/core'
+} from '@mui/material'
 import {
   getLogger,
   getRandomInteger,

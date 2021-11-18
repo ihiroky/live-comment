@@ -1,6 +1,5 @@
 import React from 'react'
 import {
-  makeStyles,
   Theme,
   Select,
   InputLabel,
@@ -8,8 +7,9 @@ import {
   FormControlLabel,
   Input,
   FormHelperText,
-  MenuItem
-} from '@material-ui/core'
+  MenuItem,
+} from '@mui/material'
+import makeStyles from '@mui/styles/makeStyles'
 import { WatermarkSettings, WatermarkPositions } from './types'
 import {
   TextFieldMetadata,

@@ -2,7 +2,7 @@ import React from 'react'
 import {
   FormControlLabel,
   Checkbox
-} from '@material-ui/core'
+} from '@mui/material'
 
 type Props = {
   label: string

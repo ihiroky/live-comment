@@ -4,8 +4,8 @@
   "private": true,
   "homepage": "./",
   "devDependencies": {
-    "@material-ui/core": "4.11.3",
-    "@material-ui/icons": "4.11.2",
+    "@mui/material": "^5.1.1",
+    "@mui/styles": "^5.1.1",
     "@rollup/plugin-commonjs": "^20.0.0",
     "@rollup/plugin-node-resolve": "^13.0.4",
     "@rollup/plugin-replace": "^3.0.0",

@@ -1,4 +1,5 @@
-import { Grid, IconButton, InputLabel, makeStyles, MenuItem, Select, Slider } from '@material-ui/core'
+import { Grid, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, Slider } from '@mui/material'
+import makeStyles from '@mui/styles/makeStyles'
 import { getLogger } from 'common'
 import React from 'react'
 import { isPlaySoundMessage, PlaySoundMessage } from '../types'
@@ -103,12 +104,12 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
       window.removeEventListener('message', messageListener)
     }
   }, [volume, playSound, concurrentPlays])
-  const onVolumeChanged = React.useCallback((_: React.ChangeEvent<unknown>, value: number | number[]): void => {
+  const onVolumeChanged = React.useCallback((_: Event, value: number | number[]): void => {
     const v = Array.isArray(value) ? value[0] : value
     setVolume(v)
     setNumberOptionValue('volume', v)
   }, [])
-  const onConcurrentPlaysChanged = React.useCallback((e: React.ChangeEvent<{ value: unknown }>): void => {
+  const onConcurrentPlaysChanged = React.useCallback((e: SelectChangeEvent): void => {
     const v = Number(e.target.value)
     setConcurrentPlays(v)
     setNumberOptionValue('concurrentPlays', v)
@@ -143,7 +144,7 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
           <Select
             labelId="conc-sounds-label"
             id="conc-sounds"
-            value={concurrentPlays}
+            value={String(concurrentPlays)}
             label="Concurrent plays"
             onChange={onConcurrentPlaysChanged}
           >
@@ -157,7 +158,10 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
             sounds && Object.values(sounds).map((sound) => (
               <Grid key={sound.id} item xs={xs}>
                 <div className={style.item}>
-                  <IconButton data-testid={`play-${sound.id}`} onClick={e => onIconClick(e, sound.id)}>
+                  <IconButton
+                    data-testid={`play-${sound.id}`}
+                    onClick={e => onIconClick(e, sound.id)}
+                    size="large">
                     <NoteBlack />
                   </IconButton>
                   <div>

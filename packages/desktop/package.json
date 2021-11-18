@@ -23,8 +23,8 @@
     "common": "0.1.1"
   },
   "devDependencies": {
-    "@material-ui/core": "4.11.3",
-    "@material-ui/icons": "4.11.2",
+    "@mui/material": "^5.1.1",
+    "@mui/styles": "^5.1.1",
     "@rollup/plugin-commonjs": "^18.0.0",
     "@rollup/plugin-node-resolve": "^11.2.1",
     "@rollup/plugin-replace": "^2.4.2",

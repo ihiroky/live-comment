@@ -1,11 +1,6 @@
 import React from 'react'
-import {
-  makeStyles,
-  Theme,
-  TextField,
-  Button,
-  Grid
-} from '@material-ui/core'
+import { Theme, TextField, Button, Grid } from '@mui/material'
+import makeStyles from '@mui/styles/makeStyles'
 import {
   AcnMessage,
   createHash,
@@ -105,6 +100,7 @@ export const LoginForm: React.FC<{ apiUrl: string}> = ({ apiUrl } : { apiUrl: st
         ? res.json()
         : Promise.resolve({ type: 'error', error: 'ERROR', message: 'Fetch failed' })
     ).then((m: Message): void => {
+      // TODO stay login if token is invalid
       if (isAcnOkMessage(m)) {
         window.localStorage.setItem('token', m.attrs.token)
         gotoCommentPage()
@@ -144,43 +140,45 @@ export const LoginForm: React.FC<{ apiUrl: string}> = ({ apiUrl } : { apiUrl: st
   }, [room.helperText, password.helperText])
 
   const classes = useStyles()
-  return <form className={classes.root} onSubmit={onSubmit}>
-    <div className={classes.texts}>
-      <div role="status" className={classes.notification}>{notification.message}</div>
-      <TextField
-        fullWidth
-        label="Room"
-        name="room"
-        value={room.value}
-        error={room.value.length === 0}
-        helperText={room.helperText}
-        margin="normal"
-        onChange={onTextFieldChange}
-      />
-      <TextField
-        fullWidth
-        label="Password"
-        type="password"
-        name="password"
-        value={password.value}
-        error={password.value.length === 0}
-        helperText={password.helperText}
-        margin="normal"
-        onChange={onTextFieldChange}
-      />
-    </div>
-    <div className={classes.options}>
-      <LabeledCheckbox
-        label="Login enabled for 30 days" name="login_30_days" checked={keepLogin}
-        onChange={checked => { setKeepLogin(checked) }}
-      />
-    </div>
-    <div className={classes.buttons}>
-      <Grid container alignItems="center" justify="center">
-        <Grid item>
-          <Button variant="outlined" type="submit" disabled={hasError()}>Enter</Button>
+  return (
+    <form className={classes.root} onSubmit={onSubmit}>
+      <div className={classes.texts}>
+        <div role="status" className={classes.notification}>{notification.message}</div>
+        <TextField
+          fullWidth
+          label="Room"
+          name="room"
+          value={room.value}
+          error={room.value.length === 0}
+          helperText={room.helperText}
+          margin="normal"
+          onChange={onTextFieldChange}
+        />
+        <TextField
+          fullWidth
+          label="Password"
+          type="password"
+          name="password"
+          value={password.value}
+          error={password.value.length === 0}
+          helperText={password.helperText}
+          margin="normal"
+          onChange={onTextFieldChange}
+        />
+      </div>
+      <div className={classes.options}>
+        <LabeledCheckbox
+          label="Login enabled for 30 days" name="login_30_days" checked={keepLogin}
+          onChange={checked => { setKeepLogin(checked) }}
+        />
+      </div>
+      <div className={classes.buttons}>
+        <Grid container alignItems="center" justifyContent="center">
+          <Grid item>
+            <Button variant="outlined" type="submit" disabled={hasError()}>Enter</Button>
+          </Grid>
         </Grid>
-      </Grid>
-    </div>
-  </form>
+      </div>
+    </form>
+  )
 }

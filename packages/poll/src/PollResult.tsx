@@ -5,7 +5,7 @@ import {
   Grid,
   Radio,
   RadioGroup,
-} from '@material-ui/core'
+} from '@mui/material'
 import { Bar } from 'react-chartjs-2'
 import { Mode } from './types'
 
