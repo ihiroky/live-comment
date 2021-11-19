@@ -3,7 +3,7 @@ import {
   Button,
   Grid,
   TextField,
-} from '@material-ui/core'
+} from '@mui/material'
 import { Mode } from './types'
 
 export function PollEdit({ mode, descClass, entryCount, onEntryAdded, onOk, onCanceled }: {

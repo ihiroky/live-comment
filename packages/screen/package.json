@@ -4,7 +4,8 @@
   "main": "./dist/index.js",
   "private": true,
   "devDependencies": {
-    "@material-ui/core": "4.11.3",
+    "@mui/material": "^5.1.1",
+    "@mui/styles": "^5.1.1",
     "@types/dompurify": "^2.2.1",
     "@types/react": "^17.0.3",
     "@types/react-dom": "^17.0.3",

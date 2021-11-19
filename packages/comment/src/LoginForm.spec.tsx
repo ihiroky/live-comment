@@ -1,5 +1,5 @@
 import React from 'react'
-import { getByRole, queryByText, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
 import { LoginForm } from './LoginForm'
@@ -13,18 +13,8 @@ afterEach(() => {
   window.localStorage.clear()
 })
 
-function getRoomInput(): Element {
-  const roomLabel = screen.getByText('Room')
-  const room = roomLabel.parentElement
-  assertNotNullable(room, 'room')
-  return getByRole(room, 'textbox')
-}
-
 function getPasswordInput(): Element {
-  const passwordLabel = screen.getByText('Password')
-  const password = passwordLabel.parentElement
-  assertNotNullable(password, 'password')
-  const passwordInput = password.querySelector('input[name=\'password\']')
+  const passwordInput = document.querySelector('input[name=\'password\']')
   assertNotNullable(passwordInput, 'passwordInput')
   return passwordInput
 }
@@ -33,39 +23,35 @@ test('Room text field and its helper text', async () => {
   render(<LoginForm apiUrl="" />)
   const noInputHelperText = 'Input room name'
 
-  const roomLabel = screen.getByText('Room')
-  const room = roomLabel.parentElement
-  assertNotNullable(room, 'room')
-  expect(() => queryByText(room, noInputHelperText)).not.toBeNull()
+  const helperText = screen.getByText(noInputHelperText)
+  expect(helperText).toBeVisible()
 
-  const input = getByRole(room, 'textbox')
+  const input = screen.getByRole('textbox')
   userEvent.type(input, 'r')
   await waitFor(() => {
-    expect(queryByText(room, noInputHelperText)).toBeNull()
+    expect(helperText).not.toBeVisible()
   })
 })
 
 test('Password field and its helper text', async () => {
   render(<LoginForm apiUrl="" />)
-  const noInputHelperText = 'Input password'
+  const noInputHelperText = 'Input password of the room'
 
-  const passwordLabel = screen.getByText('Password')
-  const password = passwordLabel.parentElement
-  assertNotNullable(password, 'password')
-  expect(() => queryByText(password, noInputHelperText)).not.toBeNull()
+  const helperText = screen.getByText(noInputHelperText)
+  expect(helperText).toBeVisible()
 
-  const input = password.querySelector('input[name=\'password\']')
+  const input = document.querySelector('input[name=\'password\']')
   assertNotNullable(input, 'input')
   userEvent.type(input, 'p')
   await waitFor(() => {
-    expect(queryByText(password, noInputHelperText)).toBeNull()
+    expect(helperText).not.toBeVisible()
   })
 })
 
 test('Login button is disabled if room is empty', async () => {
   render(<LoginForm apiUrl="" />)
 
-  const roomInput = getRoomInput()
+  const roomInput = screen.getByRole('textbox')
   const passwordInput = getPasswordInput()
   const button = screen.getByRole('button')
 
@@ -80,7 +66,7 @@ test('Login button is disabled if room is empty', async () => {
 test('Login button is disabled if password is empty', async () => {
   render(<LoginForm apiUrl="" />)
 
-  const roomInput = getRoomInput()
+  const roomInput = screen.getByRole('textbox')
   const passwordInput = getPasswordInput()
   const button = screen.getByRole('button')
 
@@ -124,7 +110,7 @@ test('Submit crednetail then OK', async () => {
   })
   render(<LoginForm apiUrl="" />)
 
-  const roomInput = getRoomInput()
+  const roomInput = screen.getByRole('textbox')
   const passwordInput = getPasswordInput()
   const button = screen.getByRole('button')
   userEvent.type(roomInput, 'r')
@@ -149,7 +135,7 @@ test('Submit credential then failed', async () => {
   })
   render(<LoginForm apiUrl="" />)
 
-  const roomInput = getRoomInput()
+  const roomInput = screen.getByRole('textbox')
   const passwordInput = getPasswordInput()
   const button = screen.getByRole('button')
   userEvent.type(roomInput, 'r')
@@ -171,7 +157,7 @@ test('Submit credential and unexpected message', async () => {
   })
   render(<LoginForm apiUrl="" />)
 
-  const roomInput = getRoomInput()
+  const roomInput = screen.getByRole('textbox')
   const passwordInput = getPasswordInput()
   const button = screen.getByRole('button')
   userEvent.type(roomInput, 'r')
@@ -193,7 +179,7 @@ test('Keep login', async () => {
   })
   render(<LoginForm apiUrl="" />)
 
-  const roomInput = getRoomInput()
+  const roomInput = screen.getByRole('textbox')
   const passwordInput = getPasswordInput()
   const checkbox = screen.getByRole('checkbox')
   const button = screen.getByRole('button')

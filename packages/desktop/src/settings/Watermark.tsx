@@ -1,15 +1,15 @@
 import React from 'react'
 import {
-  makeStyles,
-  Theme,
   Select,
   InputLabel,
   Checkbox,
   FormControlLabel,
   Input,
   FormHelperText,
-  MenuItem
-} from '@material-ui/core'
+  MenuItem,
+  SelectChangeEvent,
+} from '@mui/material'
+import makeStyles from '@mui/styles/makeStyles'
 import { WatermarkSettings, WatermarkPositions } from './types'
 import {
   TextFieldMetadata,
@@ -17,17 +17,17 @@ import {
 } from './createTextFieldMetadata'
 import { getLogger } from 'common'
 
-const useStyles = makeStyles((theme: Theme) => ({
+const useStyles = makeStyles({
   root: {
     width: '80vw',
     margin: 'auto',
-    paddingTop: theme.spacing(3),
-    paddingBottom: theme.spacing(3)
+    paddingTop: '24px',
+    paddingBottom: '24px',
   },
   buttons: {
-    marginTop: theme.spacing(3),
+    marginTop: '24px',
   },
-}))
+})
 
 const log = getLogger('settings/Watermark')
 
@@ -71,7 +71,7 @@ export const Watermark: React.FC<React.PropsWithChildren<WatermarkProps>> = (pro
     props.onUpdate(field.name, e.target.value, error)
   }
 
-  function onSelectChange(e: React.ChangeEvent<{ name?: string, value: unknown }>): void {
+  function onSelectChange(e: SelectChangeEvent<string>): void {
     log.debug('[onSelectChange]', e.target.name, '-', e.target.value)
     props.onUpdate('position', String(e.target.value), false)
   }
@@ -95,8 +95,8 @@ export const Watermark: React.FC<React.PropsWithChildren<WatermarkProps>> = (pro
               <Input
                 fullWidth
                 id={id}
-                multiline={f.rowsMax > 1}
-                rowsMax={f.rowsMax}
+                multiline={f.maxRows > 1}
+                maxRows={f.maxRows}
                 key={f.name}
                 name={f.name}
                 value={f.value.data}

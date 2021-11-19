@@ -1,7 +1,5 @@
 import React from 'react'
 import {
-  makeStyles,
-  Theme,
   InputLabel,
   Select,
   FormControlLabel,
@@ -10,7 +8,9 @@ import {
   Input,
   FormHelperText,
   MenuItem,
-} from '@material-ui/core'
+  SelectChangeEvent,
+} from '@mui/material'
+import makeStyles from '@mui/styles/makeStyles'
 import { GeneralSettings } from './types'
 import {
   TextFieldMetadata,
@@ -25,27 +25,25 @@ type ScreenProps = {
 
 const log = getLogger('settings/General')
 
-const useStyles = makeStyles((theme: Theme) => (
-  {
-    root: {
-      width: '80vw',
-      margin: 'auto',
-      paddingTop: theme.spacing(3),
-      paddingBottom: theme.spacing(3)
-    },
-    fields: {
-      marginTop: theme.spacing(1),
-      marginBottom: theme.spacing(1)
-    },
-    screen: {
-      marginTop: theme.spacing(1),
-      marginBottom: theme.spacing(1),
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between'
-    }
+const useStyles = makeStyles({
+  root: {
+    width: '80vw',
+    margin: 'auto',
+    paddingTop: '24px',
+    paddingBottom: '24px',
+  },
+  fields: {
+    marginTop: '8px',
+    marginBottom: '8px',
+  },
+  screen: {
+    marginTop: '8px',
+    marginBottom: '8px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between'
   }
-))
+})
 
 
 type GeneralProps = GeneralSettings & {
@@ -135,7 +133,7 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
     props.onUpdate(field.name, e.target.value, error)
   }
 
-  function onSelectChange(e: React.ChangeEvent<{ name?: string, value: unknown }>): void {
+  function onSelectChange(e: SelectChangeEvent<number>): void {
     log.debug('[onSelectChanged]', e.target.name, e.target.value)
     const strValue = String(e.target.value)
     const numValue = Number(e.target.value)

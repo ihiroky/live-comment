@@ -1,10 +1,6 @@
 import React from 'react'
-import {
-  Grid,
-  Paper,
-  InputBase,
-  makeStyles,
-} from '@material-ui/core'
+import { Grid, Paper, InputBase } from '@mui/material'
+import makeStyles from '@mui/styles/makeStyles'
 import { getLogger, getRandomInteger } from 'common'
 import { Mode, Update, PollEntry } from './types'
 import { Choice } from './Choice'

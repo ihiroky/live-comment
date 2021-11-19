@@ -1,14 +1,6 @@
 import React from 'react'
-import {
-  makeStyles,
-  Theme,
-  AppBar,
-  Tabs,
-  Tab,
-  Box,
-  Grid,
-  Button
-} from '@material-ui/core'
+import { Theme, AppBar, Tabs, Tab, Box, Grid, Button } from '@mui/material'
+import makeStyles from '@mui/styles/makeStyles'
 import { General } from './General'
 import { Watermark } from './Watermark'
 import {
@@ -128,7 +120,7 @@ export const SettingsForm: React.FC = (): JSX.Element => {
         <Watermark onUpdate={onWatermarkSettingsUpdate} { ...toWatermarkSettings(settingsState.watermark) } />
       </TabPanel>
       <div>
-        <Grid container alignItems="center" justify="center" spacing={3}>
+        <Grid container alignItems="center" justifyContent="center" spacing={3}>
           <Grid item>
             <Button variant="outlined" type="submit" disabled={hasError()}>OK</Button>
           </Grid>

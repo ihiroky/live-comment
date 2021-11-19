@@ -1,7 +1,7 @@
 
 import React from 'react'
 import { PollEntry } from 'poll'
-import { Button } from '@material-ui/core'
+import { Button } from '@mui/material'
 import { AppState } from './types'
 
 type PollControlProps = {

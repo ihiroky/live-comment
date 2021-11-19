@@ -4,8 +4,8 @@
   "private": true,
   "homepage": "./",
   "devDependencies": {
-    "@material-ui/core": "4.11.3",
-    "@material-ui/icons": "4.11.2",
+    "@mui/material": "^5.1.1",
+    "@mui/styles": "^5.1.1",
     "@rollup/plugin-commonjs": "^20.0.0",
     "@rollup/plugin-node-resolve": "^13.0.4",
     "@rollup/plugin-replace": "^3.0.0",
@@ -36,5 +36,9 @@
     "start": "concurrently \"tsc -b -w\" \"rollup -c -w\" \"node scripts/dev.js\"",
     "build": "yarn clean && tsc -b && NODE_ENV=production rollup -c && cp -a dist/bundle build",
     "lint": "eslint --ext ts,tsx --max-warnings 0 src"
+  },
+  "optionalDependencies": {
+    "@emotion/react": "^11.6.0",
+    "@emotion/styled": "^11.6.0"
   }
 }

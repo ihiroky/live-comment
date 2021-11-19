@@ -1,9 +1,6 @@
 import React from 'react'
-import {
-  Button,
-  Grid,
-  makeStyles,
-} from '@material-ui/core'
+import { Button, Grid } from '@mui/material'
+import makeStyles from '@mui/styles/makeStyles'
 import { Mode, PollEntry } from './types'
 
 const blinkDurationMillis = 1000
