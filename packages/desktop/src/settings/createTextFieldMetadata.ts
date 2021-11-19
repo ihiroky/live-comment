@@ -3,7 +3,7 @@ import { Value } from './types'
 export type TextFieldMetadata<T, V> = {
   name: keyof T
   label: string
-  rowsMax: number
+  maxRows: number
   validate: (value: string) => boolean
   errorMessage: string
   value: Value<V>
@@ -20,7 +20,7 @@ export function createTextFieldMetadata<T, V>(
   return {
     name,
     label,
-    rowsMax,
+    maxRows: rowsMax,
     validate,
     errorMessage,
     value

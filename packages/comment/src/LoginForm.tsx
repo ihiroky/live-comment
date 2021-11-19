@@ -1,5 +1,5 @@
 import React from 'react'
-import { Theme, TextField, Button, Grid } from '@mui/material'
+import { TextField, Button, Grid } from '@mui/material'
 import makeStyles from '@mui/styles/makeStyles'
 import {
   AcnMessage,
@@ -18,30 +18,28 @@ interface TextFieldState {
   helperText: string
 }
 
-const useStyles = makeStyles((theme: Theme) => (
-  {
-    root: {
-      minWidth: '300px',
-      maxWidth: '600px',
-      minHeight: '300px',
-      height: '600px',
-      margin: 'auto',
-      padding: theme.spacing(1)
-    },
-    notification: {
-      color: theme.palette.warning.main
-    },
-    texts: {
-      padding: theme.spacing(1)
-    },
-    options: {
-      padding: theme.spacing(1)
-    },
-    buttons: {
-      padding: theme.spacing(1)
-    },
-  }
-))
+const useStyles = makeStyles({
+  root: {
+    minWidth: '300px',
+    maxWidth: '600px',
+    minHeight: '300px',
+    height: '600px',
+    margin: 'auto',
+    padding: '8px'
+  },
+  notification: {
+    color: 'red'
+  },
+  texts: {
+    padding: '8px'
+  },
+  options: {
+    padding: '8px'
+  },
+  buttons: {
+    padding: '8px'
+  },
+})
 
 const log = getLogger('LoginForm')
 

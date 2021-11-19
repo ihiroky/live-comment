@@ -109,7 +109,7 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
     setVolume(v)
     setNumberOptionValue('volume', v)
   }, [])
-  const onConcurrentPlaysChanged = React.useCallback((e: SelectChangeEvent): void => {
+  const onConcurrentPlaysChanged = React.useCallback((e: SelectChangeEvent<number>): void => {
     const v = Number(e.target.value)
     setConcurrentPlays(v)
     setNumberOptionValue('concurrentPlays', v)
@@ -144,7 +144,7 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
           <Select
             labelId="conc-sounds-label"
             id="conc-sounds"
-            value={String(concurrentPlays)}
+            value={concurrentPlays}
             label="Concurrent plays"
             onChange={onConcurrentPlaysChanged}
           >

@@ -41,5 +41,9 @@
     "rollup-plugin-terser": "^7.0.2",
     "screen": "0.1.1",
     "typescript": "^4.2.3"
+  },
+  "optionalDependencies": {
+    "@emotion/react": "^11.6.0",
+    "@emotion/styled": "^11.6.0"
   }
 }
