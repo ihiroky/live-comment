@@ -1,4 +1,4 @@
-import React from 'react'
+import { MutableRefObject, useEffect, useRef } from 'react'
 import { getLogger, CommentMessage, Message } from 'common'
 
 export interface WebSocketControl {
@@ -29,8 +29,8 @@ const log = getLogger('WebSocketClient')
 
 function createWebSocket(
   url: WebSocketClientPropsType['url'],
-  callbacksRef: React.MutableRefObject<Callbacks>,
-  webSocketRef: React.MutableRefObject<WebSocket | null>
+  callbacksRef: MutableRefObject<Callbacks>,
+  webSocketRef: MutableRefObject<WebSocket | null>
 ): void {
   if (!/^wss?:\/\/./.test(url)) {
     webSocketRef.current = null
@@ -108,19 +108,19 @@ function createWebSocket(
 export function WebSocketClient(
   { url, noComments, onOpen, onClose, onError, onMessage }: WebSocketClientPropsType
 ): JSX.Element {
-  const webSocketRef = React.useRef<WebSocket | null>(null)
-  const callbacksRef = React.useRef<Callbacks>({
+  const webSocketRef = useRef<WebSocket | null>(null)
+  const callbacksRef = useRef<Callbacks>({
     onOpen: () => undefined,
     onClose: () => undefined,
     onError: () => undefined,
     onMessage: () => undefined,
   })
 
-  React.useEffect(() => {
+  useEffect(() => {
     callbacksRef.current = { onOpen, onClose, onError, onMessage }
   }, [onOpen, onClose, onError, onMessage])
 
-  React.useEffect((): (() => void) => {
+  useEffect((): (() => void) => {
     if (noComments) {
       log.debug('[componentDidMount] No comments mode.')
       const comment: CommentMessage = {

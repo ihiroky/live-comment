@@ -1,4 +1,4 @@
-import React from 'react'
+import { useState } from 'react'
 import {
   Button,
   Grid,
@@ -14,7 +14,7 @@ export function PollEdit({ mode, descClass, entryCount, onEntryAdded, onOk, onCa
   onOk: () => void
   onCanceled: () => void
 }): JSX.Element | null {
-  const [description, setDescription] = React.useState<string>('')
+  const [description, setDescription] = useState<string>('')
 
   function onClick(): void {
     onEntryAdded(description)

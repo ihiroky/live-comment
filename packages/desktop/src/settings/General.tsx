@@ -1,4 +1,4 @@
-import React from 'react'
+import { FC, useState, useEffect, ChangeEvent, PropsWithChildren, ReactNode } from 'react'
 import {
   InputLabel,
   Select,
@@ -59,7 +59,7 @@ const validateColor = (v: string): boolean => v.length > 0
 
 function TF({ data, onChange }: {
   data: TextFieldMetadata<GeneralSettings, string | number>
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void
 }): JSX.Element {
   const id = `gn-input-${data.name}`
   const helperTextId = `gn-input-helper-${data.name}`
@@ -84,7 +84,7 @@ function TF({ data, onChange }: {
   )
 }
 
-export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: GeneralProps): JSX.Element => {
+export const General: FC<PropsWithChildren<GeneralProps>> = (props: GeneralProps): JSX.Element => {
   const urlField = createTextFieldMetadata(
     'url', props.url, 'Server URL', 1, validateUrl, 'Input URL like "wss://hoge/app".'
   )
@@ -111,9 +111,9 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
     urlField, roomField, passwordField, durationField, zoomField, fontColorField, fontBorderColorField
   ]
 
-  const [screenOptions, setScreenOptions] = React.useState<ScreenProps[]>([])
+  const [screenOptions, setScreenOptions] = useState<ScreenProps[]>([])
 
-  React.useEffect((): void => {
+  useEffect((): void => {
     window.settings.getScreenPropsList().then((screenPropsList: ScreenProps[]): void => {
       log.debug('[getScreenPropsList] General screenPropsList', screenPropsList)
       const options = screenPropsList.map((p: ScreenProps): ScreenProps => ({ ...p }))
@@ -123,7 +123,7 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
     })
   }, [])
 
-  function onTextFieldChange(e: React.ChangeEvent<HTMLInputElement>): void {
+  function onTextFieldChange(e: ChangeEvent<HTMLInputElement>): void {
     log.debug('[onTextFieldChanged]', e.target.name, e.target.value)
     const field = textFields.find((f: TextFieldMetadata<GeneralSettings, unknown>): boolean => f.name === e.target.name)
     if (!field) {
@@ -140,7 +140,7 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
     props.onUpdate('screen', strValue, isNaN(numValue))
   }
 
-  function onCheckboxChange(e: React.ChangeEvent<HTMLInputElement>): void {
+  function onCheckboxChange(e: ChangeEvent<HTMLInputElement>): void {
     log.debug('[onCheckboxChange]', e.target.name, e.target.checked)
     props.onUpdate('gpu', String(e.target.checked), false)
   }
@@ -194,7 +194,7 @@ export const General: React.FC<React.PropsWithChildren<GeneralProps>> = (props: 
                 onChange={onSelectChange}
               >
                 {
-                  screenOptions.map((p: ScreenProps, i: number): React.ReactNode => (
+                  screenOptions.map((p: ScreenProps, i: number): ReactNode => (
                     <MenuItem key={p.name} value={i}>{p.name}</MenuItem>
                   ))
                 }

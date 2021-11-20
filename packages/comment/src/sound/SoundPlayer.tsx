@@ -1,7 +1,7 @@
 import { Grid, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, Slider } from '@mui/material'
 import makeStyles from '@mui/styles/makeStyles'
 import { getLogger } from 'common'
-import React from 'react'
+import { FC, MouseEvent, useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { isPlaySoundMessage, PlaySoundMessage } from '../types'
 import { useToken } from '../utils/token'
 import { useExistsSounds, useSoundMetadata, usePlaySound } from './hooks'
@@ -59,21 +59,21 @@ function setNumberOptionValue(key: OptionKey, value: number): void {
   window.localStorage.setItem(key, value.toString())
 }
 
-export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
+export const SoundPlayer: FC<Props> = ({ url }: Props): JSX.Element => {
   const token = useToken()
   const existsSounds = useExistsSounds(url, token.value, token.payload.room)
-  const [width, setWidth] = React.useState(window.innerWidth)
-  const [volume, setVolume] = React.useState(getNumberOptionValue('volume', 10))
-  const [concurrentPlays, setConcurrentPlays] = React.useState(getNumberOptionValue('concurrentPlays', 3))
-  const nowPlaysRef = React.useRef(0)
+  const [width, setWidth] = useState(window.innerWidth)
+  const [volume, setVolume] = useState(getNumberOptionValue('volume', 10))
+  const [concurrentPlays, setConcurrentPlays] = useState(getNumberOptionValue('concurrentPlays', 3))
+  const nowPlaysRef = useRef(0)
   const [sounds] = useSoundMetadata(token.payload.room, existsSounds)
   const playSound = usePlaySound(token.payload.room)
   const style = useStyles()
-  const onIconClick = React.useCallback((ev: React.MouseEvent<HTMLButtonElement>, id: string): void => {
+  const onIconClick = useCallback((ev: MouseEvent<HTMLButtonElement>, id: string): void => {
     const message: PlaySoundMessage = { type: 'app', cmd: 'sound/play', id }
     window.parent.postMessage(message, window.location.origin)
   }, [])
-  React.useEffect((): (() => void) => {
+  useEffect((): (() => void) => {
     const resizeListener = (): void => {
       setWidth(window.innerWidth)
     }
@@ -83,7 +83,7 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
       window.removeEventListener('resize', resizeListener)
     }
   }, [])
-  React.useEffect((): (() => void) => {
+  useEffect((): (() => void) => {
     const messageListener = (e: MessageEvent<PlaySoundMessage>): void => {
       if (e.origin !== window.location.origin) {
         log.warn('[messageListener] Receive a message from unexpected origin:', e.origin)
@@ -104,18 +104,18 @@ export const SoundPlayer: React.FC<Props> = ({ url }: Props): JSX.Element => {
       window.removeEventListener('message', messageListener)
     }
   }, [volume, playSound, concurrentPlays])
-  const onVolumeChanged = React.useCallback((_: Event, value: number | number[]): void => {
+  const onVolumeChanged = useCallback((_: Event, value: number | number[]): void => {
     const v = Array.isArray(value) ? value[0] : value
     setVolume(v)
     setNumberOptionValue('volume', v)
   }, [])
-  const onConcurrentPlaysChanged = React.useCallback((e: SelectChangeEvent<number>): void => {
+  const onConcurrentPlaysChanged = useCallback((e: SelectChangeEvent<number>): void => {
     const v = Number(e.target.value)
     setConcurrentPlays(v)
     setNumberOptionValue('concurrentPlays', v)
   }, [])
 
-  const xs = React.useMemo((): 12 | 6 | 4 | 3 | 2 => {
+  const xs = useMemo((): 12 | 6 | 4 | 3 | 2 => {
     const cols = width <= 250 ? 1
       : width <= 500 ? 2
         : width <= 750 ? 3

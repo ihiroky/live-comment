@@ -1,4 +1,4 @@
-import React from 'react'
+import { ComponentProps } from 'react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Polling } from './Polling'
@@ -9,7 +9,7 @@ jest.mock('wscomp')
 
 beforeEach(() => {
   (WebSocketClient as jest.Mock).mockImplementation(
-    (props: React.ComponentProps<typeof WebSocketClient>) => {
+    (props: ComponentProps<typeof WebSocketClient>) => {
       props.onOpen && props.onOpen({
         _reconnectTimer: 0,
         send: jest.fn(),

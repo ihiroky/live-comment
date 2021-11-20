@@ -1,8 +1,8 @@
-import React from 'react'
+import { useMemo } from 'react'
 import jwtDecode, { JwtPayload } from 'jwt-decode'
 
 export function useToken(): { value: string, payload: { room: string }} {
-  return React.useMemo((): { value: string, payload: { room: string }} => {
+  return useMemo((): { value: string, payload: { room: string }} => {
     const token = window.localStorage.getItem('token')
     if (!token) {
       return { value: '', payload: { room: '' } }

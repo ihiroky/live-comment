@@ -1,4 +1,4 @@
-import React from 'react'
+import { useCallback, useRef, MutableRefObject, RefObject, ComponentProps } from 'react'
 import {
   AcnTokenMessage,
   assertNotNullable,
@@ -15,9 +15,9 @@ import { isPollFinishMessage, isPollStartMessage } from 'poll'
 const log = getLogger('webSocketHooks')
 
 export function useWebSocketOnOpen(
-  wscRef: React.MutableRefObject<WebSocketControl | null>,
-): NonNullable<React.ComponentProps<typeof WebSocketClient>['onOpen']> {
-  return React.useCallback((wsc: WebSocketControl): void => {
+  wscRef: MutableRefObject<WebSocketControl | null>,
+): NonNullable<ComponentProps<typeof WebSocketClient>['onOpen']> {
+  return useCallback((wsc: WebSocketControl): void => {
     log.debug('[onOpen]', wsc)
 
     const token = window.localStorage.getItem('token')
@@ -35,9 +35,9 @@ export function useWebSocketOnOpen(
 
 
 export function useWebSocketOnClose(
-  wscRef: React.MutableRefObject<WebSocketControl | null>
-): NonNullable<React.ComponentProps<typeof WebSocketClient>['onClose']> {
-  return React.useCallback((ev: CloseEvent): void => {
+  wscRef: MutableRefObject<WebSocketControl | null>
+): NonNullable<ComponentProps<typeof WebSocketClient>['onClose']> {
+  return useCallback((ev: CloseEvent): void => {
     switch (ev.code) {
       case CloseCode.ACN_FAILED:
         window.localStorage.removeItem('token')
@@ -56,12 +56,12 @@ export function useWebSocketOnMessage(
   state: AppState,
   setState: (state: AppState) => void,
   closePoll: (pollId: string, refresh: boolean) => void,
-  messageListDivRef: React.RefObject<HTMLDivElement>,
-  autoScrollRef: React.RefObject<HTMLDivElement>,
-  soundPanelRef: React.RefObject<HTMLIFrameElement>
-): React.ComponentProps<typeof WebSocketClient>['onMessage'] {
-  const counterRef = React.useRef<number>(0)
-  return React.useCallback((message: Message): void => {
+  messageListDivRef: RefObject<HTMLDivElement>,
+  autoScrollRef: RefObject<HTMLDivElement>,
+  soundPanelRef: RefObject<HTMLIFrameElement>
+): ComponentProps<typeof WebSocketClient>['onMessage'] {
+  const counterRef = useRef<number>(0)
+  return useCallback((message: Message): void => {
     log.debug('[onMessage]', message)
 
     const polls = state.polls

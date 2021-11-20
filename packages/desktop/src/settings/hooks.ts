@@ -1,4 +1,4 @@
-import React from 'react'
+import { useState, useCallback, useEffect, FormEvent } from 'react'
 import {
   Settings,
   Value,
@@ -16,7 +16,7 @@ import { getLogger } from 'common'
 const log = getLogger('settings/hooks')
 
 function useValue<T>(initialValue: T): ValueState<T> {
-  const [value, setValue] = React.useState<Value<T>>({
+  const [value, setValue] = useState<Value<T>>({
     data: initialValue,
     error: false
   })
@@ -48,7 +48,7 @@ export function useSettingsState(): SettingsState {
     noComments: useValue<boolean>(false),
   }
 
-  React.useEffect((): void => {
+  useEffect((): void => {
     window.settings.requestSettings().then((settings: Settings): void => {
       log.debug('[requestSettings]', settings)
 
@@ -85,7 +85,7 @@ export function useSettingsState(): SettingsState {
 export function useOnGeneralSettingsUpdate(
   g: GeneralSettingsState
 ): (key: keyof GeneralSettings, value: string, error: boolean) => void {
-  return React.useCallback((key: keyof GeneralSettings, value: string, error: boolean): void => {
+  return useCallback((key: keyof GeneralSettings, value: string, error: boolean): void => {
     switch (key) {
       case 'url':
       case 'room':
@@ -111,7 +111,7 @@ export function useOnGeneralSettingsUpdate(
 export function useOnWatermarkSettingsUpdate(
   w: WatermarkSettingsState
 ): (key: keyof WatermarkSettings, value: string, error: boolean) => void {
-  return React.useCallback((key: keyof WatermarkSettings, value: string, error: boolean): void => {
+  return useCallback((key: keyof WatermarkSettings, value: string, error: boolean): void => {
     switch (key) {
       case 'html':
       case 'opacity':
@@ -137,8 +137,8 @@ export function useOnWatermarkSettingsUpdate(
 
 export function useOnSubmit(
   settingsState: SettingsState
-): (e: React.FormEvent<HTMLFormElement>) => Promise<void> {
-  return React.useCallback((e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+): (e: FormEvent<HTMLFormElement>) => Promise<void> {
+  return useCallback((e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault()
     const g = settingsState.general
     const w = settingsState.watermark
@@ -171,7 +171,7 @@ export function useOnSubmit(
 }
 
 export function useHasError(settingsState: SettingsState): () => boolean {
-  return React.useCallback((): boolean => {
+  return useCallback((): boolean => {
     let gkey: keyof GeneralSettings
     for (gkey in settingsState.general) {
       if (settingsState.general[gkey].value.error) {

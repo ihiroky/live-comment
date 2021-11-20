@@ -1,4 +1,4 @@
-import React from 'react'
+import { FC, useState, useCallback, useEffect } from 'react'
 import { Grid, Paper, InputBase } from '@mui/material'
 import makeStyles from '@mui/styles/makeStyles'
 import { getLogger, getRandomInteger } from 'common'
@@ -53,18 +53,18 @@ const usePollStyles = makeStyles(() => ({
   }
 }))
 
-export const Poll: React.FC<Props> = (props: Props): JSX.Element => {
-  const [title, setTitle] = React.useState<string>(props.title)
-  const [entries, setEntries] = React.useState<PollEntry[]>([])
-  const [mode, setMode] = React.useState<Mode>('edit')
-  const [data, setData] = React.useState<PollResultProps['data']>(null)
+export const Poll: FC<Props> = (props: Props): JSX.Element => {
+  const [title, setTitle] = useState<string>(props.title)
+  const [entries, setEntries] = useState<PollEntry[]>([])
+  const [mode, setMode] = useState<Mode>('edit')
+  const [data, setData] = useState<PollResultProps['data']>(null)
   const classes = usePollStyles()
 
-  const onRemoveEntry = React.useCallback((index: number): void => {
+  const onRemoveEntry = useCallback((index: number): void => {
     entries.splice(index, 1)
     setEntries([...entries])
   }, [entries])
-  const onEntryAdded = React.useCallback((description: string): void => {
+  const onEntryAdded = useCallback((description: string): void => {
     const newEntries = entries.concat({
       key: getRandomInteger(),
       description,
@@ -72,7 +72,7 @@ export const Poll: React.FC<Props> = (props: Props): JSX.Element => {
     })
     setEntries(newEntries)
   }, [entries])
-  const onEntryUpdated = React.useCallback((update: Update): void => {
+  const onEntryUpdated = useCallback((update: Update): void => {
     for (const [key, diff] of update.entries()) {
       const entry = entries.find(e => e.key === key)
       if (entry) {
@@ -83,19 +83,19 @@ export const Poll: React.FC<Props> = (props: Props): JSX.Element => {
     }
     setEntries([...entries])
   }, [entries])
-  const onOk = React.useCallback((): void => {
+  const onOk = useCallback((): void => {
     // TODO Check if data exists.
     setMode('poll')
     props.onCreated && props.onCreated()
   }, [props])
-  const onCanceled = React.useCallback((): void => {
+  const onCanceled = useCallback((): void => {
     props.onCanceled && props.onCanceled()
   }, [props])
-  const onFinished = React.useCallback((): void => {
+  const onFinished = useCallback((): void => {
     setMode('result-list')
     props.onPollClosed && props.onPollClosed()
   }, [props])
-  const onClosed = React.useCallback((): void => {
+  const onClosed = useCallback((): void => {
     props.onResultClosed && props.onResultClosed()
   }, [props])
 
@@ -111,7 +111,7 @@ export const Poll: React.FC<Props> = (props: Props): JSX.Element => {
     }
   }
 
-  React.useEffect((): void => {
+  useEffect((): void => {
     const newData: PollResultProps['data'] = {
       labels: entries.map((e, i) => String(i + 1)),
       datasets: [{

@@ -1,4 +1,3 @@
-import React from 'react'
 import ReactDOM from 'react-dom'
 import { Poll } from 'poll'
 import { createHash } from 'common'

@@ -1,4 +1,4 @@
-import React from 'react'
+import { FC, PropsWithChildren, useState, useMemo, useCallback } from 'react'
 import { WebSocketClient } from 'wscomp'
 import {
   MarqueePropsGenerator,
@@ -22,15 +22,15 @@ type ScreenProps = {
 
 const log = getLogger('Screen')
 
-export const Screen: React.FC<ScreenProps> = (props: React.PropsWithChildren<ScreenProps>): JSX.Element => {
+export const Screen: FC<ScreenProps> = (props: PropsWithChildren<ScreenProps>): JSX.Element => {
 
-  const [marqueePropsList, setMarqueePropsList] = React.useState<MarqueePropsList>([])
-  const marqueeGenerator = React.useMemo((): MarqueePropsGenerator =>
+  const [marqueePropsList, setMarqueePropsList] = useState<MarqueePropsList>([])
+  const marqueeGenerator = useMemo((): MarqueePropsGenerator =>
     new MarqueePropsGenerator(props.room, props.hash, props.duration, (mpl: MarqueePropsList): void => {
       setMarqueePropsList(mpl)
     }), [props]
   )
-  const onError = React.useCallback((e: Event): void => {
+  const onError = useCallback((e: Event): void => {
     log.error('[onError]', e)
   }, [])
 

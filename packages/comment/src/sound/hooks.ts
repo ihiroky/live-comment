@@ -1,7 +1,7 @@
 import { isObject, getLogger, fetchWithTimeout } from 'common'
 import { get, getAll, update, StoreOperation } from './db'
 import { Zlib } from 'unzip'
-import React from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 const SOUND_FILE_PATH = '/sound/file'
 const CHECKSUM_FILE_PATH = '/sound/checksum'
@@ -175,9 +175,9 @@ async function storeSounds(url: string, token: string, room: string, checksum: s
 }
 
 export function useExistsSounds(url: string, token: string, room: string): boolean {
-  const [existsSounds, setExistsSounds] = React.useState(false)
+  const [existsSounds, setExistsSounds] = useState(false)
 
-  React.useEffect((): void => {
+  useEffect((): void => {
     setExistsSounds(false)
     if (!token) {
       return
@@ -208,10 +208,10 @@ export function useSoundMetadata(
   room: string,
   existsSounds: boolean
 ): [Record<string, SoundMetadata>, Record<string, string>] | [] {
-  const [sounds, setSounds] = React.useState<Record<string, SoundMetadata> | null>({})
-  const [commands, setCommands] = React.useState<Record<string, string> | null>({})
+  const [sounds, setSounds] = useState<Record<string, SoundMetadata> | null>({})
+  const [commands, setCommands] = useState<Record<string, string> | null>({})
 
-  React.useEffect((): void => {
+  useEffect((): void => {
     setSounds(null)
     setCommands(null)
     if (!existsSounds) {
@@ -260,7 +260,7 @@ export function useSoundMetadata(
 export function usePlaySound(
   room: string
 ): (id: string, volume: number, onFinsih?: (e?: Error | DOMException) => void) => void {
-  return React.useCallback((id: string, volume: number, onFinish?: (e?: Error | DOMException) => void): void => {
+  return useCallback((id: string, volume: number, onFinish?: (e?: Error | DOMException) => void): void => {
     const soundData = get<StoredSound>(room, 'sound', id)
     const context = new AudioContext()
     const source = context.createBufferSource()

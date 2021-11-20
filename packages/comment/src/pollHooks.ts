@@ -1,4 +1,4 @@
-import React from 'react'
+import * as React from 'react'
 import { getLogger } from 'common'
 import { WebSocketControl } from 'wscomp'
 import { PollEntry, PollMessage } from 'poll'

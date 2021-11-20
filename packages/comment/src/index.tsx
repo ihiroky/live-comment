@@ -1,4 +1,4 @@
-import React from 'react'
+import { StrictMode } from 'react'
 import ReactDOM from 'react-dom'
 import { BrowserRouter, Route } from 'react-router-dom'
 import { App } from './App'
@@ -26,14 +26,14 @@ if (navigator.cookieEnabled) {
 
 // Too rich to render SoundPlayer here, should be independent?
 ReactDOM.render(
-  <React.StrictMode>
+  <StrictMode>
     <BrowserRouter>
       <Route path="/" exact render={() =>  <LoginForm apiUrl={apiUrl} />} />
       <Route path="/login" exact render={() =>  <LoginForm apiUrl={apiUrl} />} />
       <Route path="/comment" exact render={() => <App url={wsUrl} maxMessageCount={1024} />} />
       <Route path="/sound" exact render={() => <SoundPlayer url={apiUrl} />} />
     </BrowserRouter>
-  </React.StrictMode>,
+  </StrictMode>,
   document.getElementById('root')
 )
 

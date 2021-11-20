@@ -1,4 +1,3 @@
-import React from 'react'
 import { SoundPlayer } from './SoundPlayer'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'

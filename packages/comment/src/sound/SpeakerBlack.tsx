@@ -1,4 +1,4 @@
-import React from 'react'
+import * as React from 'react'
 
 export const NoteBlack: React.FC = (): JSX.Element => (
   <svg x="0px" y="0px" width="512px" height="512px" viewBox="0 0 512 512" style={{ width: 24, height: 24, opacity: 1 }}>

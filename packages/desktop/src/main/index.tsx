@@ -1,4 +1,4 @@
-import React from 'react'
+import { FC, StrictMode } from 'react'
 import ReactDOM from 'react-dom'
 import { Screen } from 'screen'
 import { SettingsV1 } from '../settings'
@@ -13,9 +13,9 @@ declare global {
 }
 
 window.main.request().then((settings: SettingsV1): void => {
-  const App: React.FC = (): JSX.Element => {
+  const App: FC = (): JSX.Element => {
     return (
-      <React.StrictMode>
+      <StrictMode>
         <Screen
           url={settings.general.url}
           room={settings.general.room}
@@ -25,7 +25,7 @@ window.main.request().then((settings: SettingsV1): void => {
           fontBorderColor={settings.general.fontBorderColor}
           watermark={settings.watermark}
         />
-      </React.StrictMode>
+      </StrictMode>
     )
   }
   ReactDOM.render(<App />, document.getElementById('root'))

@@ -1,4 +1,4 @@
-import React from 'react'
+import { ComponentProps } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Poll } from './Poll'
@@ -9,12 +9,12 @@ import { assertNotNullable } from 'common'
 
 jest.mock('wscomp')
 
-let onMessage: React.ComponentProps<typeof WebSocketClient>['onMessage'] | null
+let onMessage: ComponentProps<typeof WebSocketClient>['onMessage'] | null
 
 beforeEach(() => {
   onMessage = null
   mocked(WebSocketClient).mockImplementation(
-    (props: React.ComponentProps<typeof WebSocketClient>) => {
+    (props: ComponentProps<typeof WebSocketClient>) => {
       props.onOpen && props.onOpen({
         _reconnectTimer: 0,
         send: jest.fn(),

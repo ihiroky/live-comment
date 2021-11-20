@@ -1,4 +1,4 @@
-import React from 'react'
+import { useRef } from 'react'
 import {
   Grid,
   Button,
@@ -34,9 +34,9 @@ export function Polling({ url, room, hash, title, entries, onChange, onFinished 
   onFinished: () => void
 }): JSX.Element | null {
   log.info('Polling', entries)
-  const wscRef = React.useRef<WebSocketControl | null>(null)
-  const progressRef = React.useRef<Progress>(new Map())
-  const pollIdRef = React.useRef<number>(getRandomInteger())
+  const wscRef = useRef<WebSocketControl | null>(null)
+  const progressRef = useRef<Progress>(new Map())
+  const pollIdRef = useRef<number>(getRandomInteger())
   const acnOk = useAcnOk(pollIdRef, title, wscRef)
 
   const onMessage = useOnMessage(acnOk, entries, progressRef, onChange)

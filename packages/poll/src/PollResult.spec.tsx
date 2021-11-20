@@ -1,11 +1,11 @@
-import React from 'react'
+import { ComponentProps } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import userEvent from '@testing-library/user-event'
 import { PollResult } from './PollResult'
 
 test('Render children only if mode is poll', () => {
-  const data: React.ComponentProps<typeof PollResult>['data'] = {
+  const data: ComponentProps<typeof PollResult>['data'] = {
     labels: [],
     datasets: [{ data: [0] }]
   }
@@ -29,7 +29,7 @@ test('Render children only if data is null', () => {
 })
 
 test('Render list/graph radio button and close button if mode is result-list', async () => {
-  const data: React.ComponentProps<typeof PollResult>['data'] = {
+  const data: ComponentProps<typeof PollResult>['data'] = {
     labels: [],
     datasets: [{ data: [0] }]
   }

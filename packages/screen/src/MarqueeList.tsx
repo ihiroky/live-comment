@@ -1,4 +1,5 @@
-import React, { CSSProperties } from 'react'
+import { CSSProperties } from 'react'
+import { FC, PropsWithChildren, ReactNode } from 'react'
 import {
   MarqueeProps,
   MarqueePropsList,
@@ -12,7 +13,7 @@ type Props = {
   fontBorderColor: string
 }
 
-export const MarqueeList: React.FC<Props> = (props: React.PropsWithChildren<Props>): JSX.Element => {
+export const MarqueeList: FC<Props> = (props: PropsWithChildren<Props>): JSX.Element => {
   const style: CSSProperties = {
     color: props.color,
   }
@@ -23,7 +24,7 @@ export const MarqueeList: React.FC<Props> = (props: React.PropsWithChildren<Prop
 
   return (
     <div className="message-list">{
-      props.marquees.map((m: Readonly<MarqueeProps>): React.ReactNode =>
+      props.marquees.map((m: Readonly<MarqueeProps>): ReactNode =>
         <p
           className="message"
           key={m.key}

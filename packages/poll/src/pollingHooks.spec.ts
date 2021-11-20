@@ -3,7 +3,7 @@ import { useAcnOk, useOnClick, useOnClose, useOnMessage, useOnOpen, useOnUnmount
 import { AcnMessage, AcnOkMessage, CommentMessage } from 'common'
 import { WebSocketControl } from 'wscomp'
 import { PollEntry, PollMessage, PollStartMessage, Progress, Update } from './types'
-import React from 'react'
+import { MutableRefObject } from 'react'
 
 function createPollEntries(): PollEntry[] {
   return [
@@ -25,9 +25,9 @@ function createWebSocketControlMock(): WebSocketControl {
 
 test('useAcnOk create defered to send PollStartMessage', async () => {
   const props: {
-    pollId: React.MutableRefObject<number>
+    pollId: MutableRefObject<number>
     title: string
-    wsc: React.MutableRefObject<WebSocketControl | null>
+    wsc: MutableRefObject<WebSocketControl | null>
   } = {
     pollId: { current: 0 },
     title: 'title',

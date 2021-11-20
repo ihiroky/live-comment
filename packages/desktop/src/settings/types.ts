@@ -1,4 +1,4 @@
-import React from 'react'
+import { Dispatch, SetStateAction } from 'react'
 import { SettingsV1 } from '../settings'
 
 export type Settings = SettingsV1
@@ -62,7 +62,7 @@ export type WatermarkSettings = Readonly<{
 
 export type ValueState<T> = Readonly<{
   value: Value<T>
-  setValue: React.Dispatch<React.SetStateAction<Value<T>>>
+  setValue: Dispatch<SetStateAction<Value<T>>>
 }>
 
 export type GeneralSettingsState = Readonly<{

@@ -1,4 +1,4 @@
-import React from 'react'
+import { FC, PropsWithChildren, ChangeEvent, ReactNode, Fragment } from 'react'
 import {
   Select,
   InputLabel,
@@ -35,7 +35,7 @@ type WatermarkProps = WatermarkSettings & {
   onUpdate(key: keyof WatermarkSettings, value: string, error: boolean): void
 }
 
-export const Watermark: React.FC<React.PropsWithChildren<WatermarkProps>> = (props: WatermarkProps): JSX.Element => {
+export const Watermark: FC<PropsWithChildren<WatermarkProps>> = (props: WatermarkProps): JSX.Element => {
   const validateOpacity = (v: string): boolean => v.length > 0 && Number(v) >= 0 && Number(v) <= 1
   const validateColor = (v: string): boolean => v.length > 0
   const validateFontSize = (v: string): boolean => /^[1-9][0-9]*(px|pt|em|rem|%)$/.test(v)
@@ -58,7 +58,7 @@ export const Watermark: React.FC<React.PropsWithChildren<WatermarkProps>> = (pro
     ),
   ]
 
-  function onTextFieldChange(e: React.ChangeEvent<HTMLInputElement>): void {
+  function onTextFieldChange(e: ChangeEvent<HTMLInputElement>): void {
     log.debug('[onTextFeildChange]', e.target.name, e.target.value)
     const field = textFields.find(
       (f: TextFieldMetadata<WatermarkSettings, unknown>): boolean => f.name === e.target.name
@@ -76,7 +76,7 @@ export const Watermark: React.FC<React.PropsWithChildren<WatermarkProps>> = (pro
     props.onUpdate('position', String(e.target.value), false)
   }
 
-  function onCheckboxChange(e: React.ChangeEvent<HTMLInputElement>): void {
+  function onCheckboxChange(e: ChangeEvent<HTMLInputElement>): void {
     log.debug('[onCheckboxChange]', e.target.name, '-', e.target.checked)
     props.onUpdate('noComments', String(e.target.checked), false)
   }
@@ -86,11 +86,11 @@ export const Watermark: React.FC<React.PropsWithChildren<WatermarkProps>> = (pro
   return (
     <div className={classes.root}>
       {
-        textFields.map((f: TextFieldMetadata<WatermarkSettings, unknown>): React.ReactNode => {
+        textFields.map((f: TextFieldMetadata<WatermarkSettings, unknown>): ReactNode => {
           const id = `wm-input-${f.name}`
           const helperTextId = `wm-input-helper-${f.name}`
           return (
-            <React.Fragment key={id}>
+            <Fragment key={id}>
               <InputLabel htmlFor={id}>{f.label}</InputLabel>
               <Input
                 fullWidth
@@ -104,7 +104,7 @@ export const Watermark: React.FC<React.PropsWithChildren<WatermarkProps>> = (pro
                 onChange={onTextFieldChange}
               />
               <FormHelperText id={helperTextId}>{f.value.error ? f.errorMessage : ''}</FormHelperText>
-            </React.Fragment>
+            </Fragment>
           )
         })
       }
@@ -118,7 +118,7 @@ export const Watermark: React.FC<React.PropsWithChildren<WatermarkProps>> = (pro
           onChange={onSelectChange}
         >
           {
-            WatermarkPositions.map((v: string): React.ReactNode => (
+            WatermarkPositions.map((v: string): ReactNode => (
               <MenuItem key={v} value={v}>{v}</MenuItem>
             ))
           }
