@@ -61,7 +61,8 @@ jobs:
         run: |
           yarn --cwd packages/app/ clean
           yarn --cwd packages/app/ build-desktop
-        shell: bash
+        env:
+          NODE_ENV: production
 
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1

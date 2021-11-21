@@ -16,7 +16,7 @@
     "build-comment": "tsc -b && NODE_ENV=production rollup -c rollup.comment.js",
     "watch-desktop": "concurrently \"tsc -p tsconfig-desktop.json -w\" \"rollup -c rollup.desktop.js -w\"",
     "start-desktop": "electron . --open-dev-tools --debug",
-    "build-desktop": "tsc -p tsconfig-desktop.json && NODE_ENV=production rollup -c rollup.desktop.js",
+    "build-desktop": "tsc -p tsconfig-desktop.json && rollup -c rollup.desktop.js",
     "watch-streaming": "concurrently \"tsc -w -p tsconfig-server.json\" \"ncc build -w -o dist/bundle/server/streaming dist/server/streaming.js\"",
     "start-streaming": "node dist/bundle/server/streaming/index.js -l DEBUG -p 8080",
     "build-streaming": "tsc -p tsconfig-server.json && ncc build -m -o dist/bundle/server/streaming dist/server/streaming.js",
