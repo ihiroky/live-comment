@@ -4,6 +4,12 @@
   "private": true,
   "main": "dist/desktop/index.js",
   "homepage": "./",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ihiroky/live-comment.git"
+  },
+  "author": "Hiroki Itoh <ihiroky@gmail.com>",
+  "license": "MIT",
   "scripts": {
     "clean": "node scripts/clean.js",
     "watch-comment": "concurrently \"rollup -c rollup.comment.js -w\" \"node scripts/dev.js\"",
