@@ -61,6 +61,7 @@ jobs:
         run: |
           yarn --cwd packages/app/ clean
           yarn --cwd packages/app/ build-desktop
+        shell: bash
 
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
