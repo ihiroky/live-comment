@@ -1,4 +1,4 @@
-import React from 'react'
+import { Component, ChangeEvent, KeyboardEvent, ReactNode } from 'react'
 import { CommentMessage } from 'common'
 
 type PropsType = {
@@ -10,7 +10,7 @@ type StateType = {
   comment: string
 }
 
-export class SendCommentForm extends React.Component<PropsType, StateType> {
+export class SendCommentForm extends Component<PropsType, StateType> {
 
   private canSendMessage: boolean
 
@@ -37,19 +37,19 @@ export class SendCommentForm extends React.Component<PropsType, StateType> {
     }
   }
 
-  private onChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+  private onChange = (e: ChangeEvent<HTMLInputElement>): void => {
     this.setState({
       comment: e.target.value
     })
   }
 
-  private onKeyUp = (e: React.KeyboardEvent<HTMLInputElement>): void => {
+  private onKeyUp = (e: KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Control') {
       this.canSendMessage = false
     }
   }
 
-  private onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
+  private onKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
     switch (e.key) {
       case 'Control':
         this.canSendMessage = true
@@ -72,7 +72,7 @@ export class SendCommentForm extends React.Component<PropsType, StateType> {
     this.canSendMessage = false
   }
 
-  render(): React.ReactNode {
+  render(): ReactNode {
     return (
       <form onSubmit={(e) => { e.preventDefault() }}>
         <input

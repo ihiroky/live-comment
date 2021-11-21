@@ -8,14 +8,14 @@ import {
   getRandomInteger,
 } from 'common'
 import { WebSocketControl } from 'wscomp'
-import React from 'react'
+import { createRef, RefObject } from 'react'
 
 export type MarqueeProps = {
   key: number
   created: number
   level: number
   comment: string
-  ref: React.RefObject<HTMLParagraphElement>
+  ref: RefObject<HTMLParagraphElement>
 }
 
 export type MarqueePropsList = Readonly<Readonly<MarqueeProps>[]>
@@ -161,7 +161,7 @@ export class MarqueePropsGenerator {
       created: now,
       comment: message.comment,
       level: level,
-      ref: React.createRef<HTMLParagraphElement>()
+      ref: createRef<HTMLParagraphElement>()
     })
     this.marquees = marquees
     this.marqueePropsListUpdated(marquees)

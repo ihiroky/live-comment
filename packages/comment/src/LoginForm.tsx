@@ -1,4 +1,4 @@
-import React from 'react'
+import { FC, ChangeEvent, FormEvent, useState, useCallback, useEffect } from 'react'
 import { TextField, Button, Grid } from '@mui/material'
 import makeStyles from '@mui/styles/makeStyles'
 import {
@@ -43,21 +43,21 @@ const useStyles = makeStyles({
 
 const log = getLogger('LoginForm')
 
-export const LoginForm: React.FC<{ apiUrl: string}> = ({ apiUrl } : { apiUrl: string }): JSX.Element => {
-  const [notification, setNotification] = React.useState<{ message: string }>({
+export const LoginForm: FC<{ apiUrl: string}> = ({ apiUrl } : { apiUrl: string }): JSX.Element => {
+  const [notification, setNotification] = useState<{ message: string }>({
     message: ''
   })
-  const [room, setRoom] = React.useState<TextFieldState>({
+  const [room, setRoom] = useState<TextFieldState>({
     value: '',
     helperText: 'Input room name',
   })
-  const [password, setPassword] = React.useState<TextFieldState>({
+  const [password, setPassword] = useState<TextFieldState>({
     value: '',
     helperText: 'Input password of the room',
   })
-  const [keepLogin, setKeepLogin] = React.useState<boolean>(false)
+  const [keepLogin, setKeepLogin] = useState<boolean>(false)
 
-  React.useEffect((): void => {
+  useEffect((): void => {
     const token = window.localStorage.getItem('token')
     if (token) {
       gotoCommentPage()
@@ -73,7 +73,7 @@ export const LoginForm: React.FC<{ apiUrl: string}> = ({ apiUrl } : { apiUrl: st
     setNotification(notification)
   }, [])
 
-  const onSubmit = React.useCallback((e: React.FormEvent<HTMLFormElement>): void => {
+  const onSubmit = useCallback((e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
     const message: AcnMessage = {
       type: 'acn',
@@ -108,7 +108,7 @@ export const LoginForm: React.FC<{ apiUrl: string}> = ({ apiUrl } : { apiUrl: st
     })
   }, [apiUrl, room.value, password.value, keepLogin])
 
-  const onTextFieldChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>): void => {
+  const onTextFieldChange = useCallback((e: ChangeEvent<HTMLInputElement>): void => {
     log.debug('[onTextFieldChanged]', e.target.name, e.target.value)
     if (notification.message.length > 0) {
       setNotification({ message: '' })
@@ -133,7 +133,7 @@ export const LoginForm: React.FC<{ apiUrl: string}> = ({ apiUrl } : { apiUrl: st
     }
   }, [notification.message.length])
 
-  const hasError = React.useCallback((): boolean => {
+  const hasError = useCallback((): boolean => {
     return room.helperText.length > 0 || password.helperText.length > 0
   }, [room.helperText, password.helperText])
 

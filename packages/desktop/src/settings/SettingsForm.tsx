@@ -1,4 +1,4 @@
-import React from 'react'
+import { FC, useState, ReactNode, ChangeEvent } from 'react'
 import { Theme, AppBar, Tabs, Tab, Box, Grid, Button } from '@mui/material'
 import makeStyles from '@mui/styles/makeStyles'
 import { General } from './General'
@@ -20,7 +20,7 @@ import {
 import { getLogger } from 'common'
 
 type TabPanelProps = {
-  children?: React.ReactNode
+  children?: ReactNode
   index: number
   value: number
 }
@@ -86,13 +86,13 @@ function toWatermarkSettings(state: WatermarkSettingsState): WatermarkSettings {
   }
 }
 
-export const SettingsForm: React.FC = (): JSX.Element => {
+export const SettingsForm: FC = (): JSX.Element => {
 
   const settingsState: SettingsState = useSettingsState()
-  const [value, setValue] = React.useState<number>(0)
+  const [value, setValue] = useState<number>(0)
 
   // eslint-disable-next-line @typescript-eslint/ban-types
-  function onChange(e: React.ChangeEvent<{}>, newValue: number): void {
+  function onChange(e: ChangeEvent<{}>, newValue: number): void {
     log.debug('[onChange]', value, newValue)
     setValue(newValue)
   }

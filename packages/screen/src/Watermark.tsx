@@ -1,4 +1,4 @@
-import React from 'react'
+import { CSSProperties, PropsWithChildren, useMemo } from 'react'
 import dompurify from 'dompurify'
 
 export type WatermarkProps = {
@@ -11,8 +11,8 @@ export type WatermarkProps = {
   noComments: boolean
 }
 
-function calcCssProperties(props: WatermarkProps): React.CSSProperties {
-  const cssProps: React.CSSProperties = {
+function calcCssProperties(props: WatermarkProps): CSSProperties {
+  const cssProps: CSSProperties = {
     position: 'absolute',
     color: props.color,
     fontSize: props.fontSize,
@@ -43,12 +43,12 @@ function calcCssProperties(props: WatermarkProps): React.CSSProperties {
   return cssProps
 }
 
-export function Watermark(props: React.PropsWithChildren<WatermarkProps>): JSX.Element {
-  const style: React.CSSProperties = React.useMemo<React.CSSProperties>(
-    (): React.CSSProperties => calcCssProperties(props),
+export function Watermark(props: PropsWithChildren<WatermarkProps>): JSX.Element {
+  const style: CSSProperties = useMemo<CSSProperties>(
+    (): CSSProperties => calcCssProperties(props),
     [props]
   )
-  const __html = React.useMemo<string>((): string => dompurify.sanitize(props.html), [props.html])
+  const __html = useMemo<string>((): string => dompurify.sanitize(props.html), [props.html])
   return (
     <div style={style} dangerouslySetInnerHTML={{ __html }} />
   )

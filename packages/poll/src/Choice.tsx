@@ -1,4 +1,4 @@
-import React from 'react'
+import { useRef, useEffect, useMemo } from 'react'
 import { Button, Grid } from '@mui/material'
 import makeStyles from '@mui/styles/makeStyles'
 import { Mode, PollEntry } from './types'
@@ -29,10 +29,10 @@ function elementIdOf(e: PollEntry): string {
 
 export function useBlinkCountedUpEntries(entries: PollEntry[], blinkClass: string): void {
   // const [prevCounts, setPrevCounts] = React.useState<number[]>([])
-  const prevCountsRef = React.useRef<number[]>([])
-  const blinkReadyIdSetRef = React.useRef<Set<string>>(new Set())
+  const prevCountsRef = useRef<number[]>([])
+  const blinkReadyIdSetRef = useRef<Set<string>>(new Set())
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (prevCountsRef.current.length !== entries.length) {
       prevCountsRef.current = entries.map(e => e.count)
       return
@@ -82,7 +82,7 @@ export function Choice({ entries, mode, descClass, topClass, onRemoveEntry }: {
 }): JSX.Element | null {
   const classes = useStyles()
   useBlinkCountedUpEntries(entries, classes.blink)
-  const highestCount = React.useMemo((): number => {
+  const highestCount = useMemo((): number => {
     if (entries.length === 0 || (mode !== 'result-list' && mode !== 'result-graph')) {
       return -1
     }

@@ -1,4 +1,4 @@
-import React from 'react'
+import { ChangeEvent, PropsWithChildren, useState, useCallback, useMemo} from 'react'
 import {
   Button,
   FormControlLabel,
@@ -74,7 +74,7 @@ function calcBarAttributes(data: number[]): BarAttributes {
 
 function TypeSelect({ type, onChange }: {
   type: ResultType
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void
 }): JSX.Element {
   return (
     <Grid item xs={12}>
@@ -111,10 +111,10 @@ const graphOptions = {
 }
 
 export function PollResult(
-  { mode, data, onClosed, onTypeChanged, children }: React.PropsWithChildren<PollResultProps>
+  { mode, data, onClosed, onTypeChanged, children }: PropsWithChildren<PollResultProps>
 ): JSX.Element | null {
-  const [type, setType] = React.useState<ResultType>('result-list')
-  const enchantedData = React.useMemo((): PollResultProps['data'] => {
+  const [type, setType] = useState<ResultType>('result-list')
+  const enchantedData = useMemo((): PollResultProps['data'] => {
     if (data === null || data.datasets.length === 0) {
       return null
     }
@@ -125,7 +125,7 @@ export function PollResult(
     datasets.borderWidth = barAttrs.borderWidths
     return data
   }, [data])
-  const onChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>): void => {
+  const onChange = useCallback((event: ChangeEvent<HTMLInputElement>): void => {
     const value = event.target.value
     if (value === 'result-list' || value === 'result-graph') {
       setType(value)

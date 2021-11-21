@@ -1,5 +1,4 @@
-
-import React from 'react'
+import { FC } from 'react'
 import { PollEntry } from 'poll'
 import { Button } from '@mui/material'
 import { AppState } from './types'
@@ -10,7 +9,7 @@ type PollControlProps = {
   onClosePoll: (pollId: string) => void
 }
 
-export const PollControl: React.FC<PollControlProps> = (
+export const PollControl: FC<PollControlProps> = (
   { poll, onPoll, onClosePoll }: PollControlProps
 ): JSX.Element => {
   return (

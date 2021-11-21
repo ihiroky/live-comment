@@ -1,5 +1,5 @@
 import { ApplicationMessage, CloseCode, CommentMessage } from 'common'
-import React from 'react'
+import { createRef, RefObject } from 'react'
 import { WebSocketControl } from 'wscomp'
 import {
   MarqueePropsGenerator,
@@ -26,8 +26,8 @@ describe('calcMinimumEmptyLevel', () => {
 
   test('Return zero if first entry level is more than zero', () => {
     const marquees: MarqueeProps[] = [
-      { key: 0, created: 0, level: 1, comment: 'comment0', ref: React.createRef<HTMLParagraphElement>() },
-      { key: 1, created: 1, level: 2, comment: 'comment0', ref: React.createRef<HTMLParagraphElement>() },
+      { key: 0, created: 0, level: 1, comment: 'comment0', ref: createRef<HTMLParagraphElement>() },
+      { key: 1, created: 1, level: 2, comment: 'comment0', ref: createRef<HTMLParagraphElement>() },
     ]
 
     const actual = calcMinimumEmptyLevel(marquees)
@@ -37,9 +37,9 @@ describe('calcMinimumEmptyLevel', () => {
 
   test('Return first emtpy level', () => {
     const marquees: MarqueeProps[] = [
-      { key: 0, created: 1, level: 0, comment: 'comment0', ref: React.createRef<HTMLParagraphElement>() },
-      { key: 1, created: 2, level: 1, comment: 'comment1', ref: React.createRef<HTMLParagraphElement>() },
-      { key: 2, created: 3, level: 3, comment: 'comment2', ref: React.createRef<HTMLParagraphElement>() },
+      { key: 0, created: 1, level: 0, comment: 'comment0', ref: createRef<HTMLParagraphElement>() },
+      { key: 1, created: 2, level: 1, comment: 'comment1', ref: createRef<HTMLParagraphElement>() },
+      { key: 2, created: 3, level: 3, comment: 'comment2', ref: createRef<HTMLParagraphElement>() },
     ]
 
     const actual = calcMinimumEmptyLevel(marquees)
@@ -49,10 +49,10 @@ describe('calcMinimumEmptyLevel', () => {
 
   test('Return first empty level (the smae level exists)', () => {
     const marquees: MarqueeProps[] = [
-      { key: 0, created: 0, level: 0, comment: 'comment0', ref: React.createRef<HTMLParagraphElement>() },
-      { key: 1, created: 1, level: 1, comment: 'comment1', ref: React.createRef<HTMLParagraphElement>() },
-      { key: 2, created: 2, level: 1, comment: 'comment2', ref: React.createRef<HTMLParagraphElement>() },
-      { key: 2, created: 3, level: 3, comment: 'comment2', ref: React.createRef<HTMLParagraphElement>() },
+      { key: 0, created: 0, level: 0, comment: 'comment0', ref: createRef<HTMLParagraphElement>() },
+      { key: 1, created: 1, level: 1, comment: 'comment1', ref: createRef<HTMLParagraphElement>() },
+      { key: 2, created: 2, level: 1, comment: 'comment2', ref: createRef<HTMLParagraphElement>() },
+      { key: 2, created: 3, level: 3, comment: 'comment2', ref: createRef<HTMLParagraphElement>() },
     ]
 
     const actual = calcMinimumEmptyLevel(marquees)
@@ -62,9 +62,9 @@ describe('calcMinimumEmptyLevel', () => {
 
   test('Return -1 if no empty level in the list', () => {
     const marquees: MarqueeProps[] = [
-      { key: 0, created: 0, level: 0, comment: 'comment0', ref: React.createRef<HTMLParagraphElement>() },
-      { key: 1, created: 1, level: 1, comment: 'comment1', ref: React.createRef<HTMLParagraphElement>() },
-      { key: 2, created: 2, level: 2, comment: 'comment2', ref: React.createRef<HTMLParagraphElement>() },
+      { key: 0, created: 0, level: 0, comment: 'comment0', ref: createRef<HTMLParagraphElement>() },
+      { key: 1, created: 1, level: 1, comment: 'comment1', ref: createRef<HTMLParagraphElement>() },
+      { key: 2, created: 2, level: 2, comment: 'comment2', ref: createRef<HTMLParagraphElement>() },
     ]
 
     const actual = calcMinimumEmptyLevel(marquees)
@@ -87,7 +87,7 @@ describe('findLevelRightSpaceExists', () => {
 
   test('Return 0 if the first element level of marquees is more than 0', () => {
     const marquees: MarqueeProps[] = [
-      { key: 0, created: 0, level: 1, comment: 'comment0', ref: React.createRef<HTMLParagraphElement>() },
+      { key: 0, created: 0, level: 1, comment: 'comment0', ref: createRef<HTMLParagraphElement>() },
     ]
 
     const actual = findLevelRightSpaceExists(marquees)
@@ -106,7 +106,7 @@ describe('findLevelRightSpaceExists', () => {
           return { right }
         }
       } as HTMLParagraphElement
-      const ref = { current: p } as React.RefObject<HTMLParagraphElement>
+      const ref = { current: p } as RefObject<HTMLParagraphElement>
       return {
         key: i,
         created: 0,

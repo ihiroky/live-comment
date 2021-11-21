@@ -1,14 +1,14 @@
 import { AcnMessage, Deffered, getLogger, isAcnOkMessage, Message } from 'common'
 import { WebSocketControl } from 'wscomp'
-import React from 'react'
+import { MutableRefObject, RefObject, useCallback, useEffect, useMemo } from 'react'
 import { isPollMessage, PollEntry, PollFinishMessage, PollStartMessage, Progress, Update } from './types'
 
 const log = getLogger('pollingHooks')
 
 export function useAcnOk(
-  pollIdRef: React.MutableRefObject<number>, title: string, wscRef: React.MutableRefObject<WebSocketControl | null>
+  pollIdRef: MutableRefObject<number>, title: string, wscRef: MutableRefObject<WebSocketControl | null>
 ): Deffered<PollEntry[]> {
-  return React.useMemo<Deffered<PollEntry[]>>(() => {
+  return useMemo<Deffered<PollEntry[]>>(() => {
     const deffered = new Deffered<PollEntry[]>()
     deffered.promise.then((entries: PollEntry[]): void => {
       const start: PollStartMessage = {
@@ -28,10 +28,10 @@ export function useAcnOk(
 export function useOnMessage(
   acnOk: { resolve: (entries: PollEntry[]) => void },
   entries: PollEntry[],
-  progressRef: React.MutableRefObject<Progress>,
+  progressRef: MutableRefObject<Progress>,
   onChange: (update: Update) => void
 ): (message: Message) => void {
-  return React.useCallback((message: Message): void => {
+  return useCallback((message: Message): void => {
     log.debug('[onMessage]', message)
     if (isAcnOkMessage(message)) {
       acnOk.resolve(entries)
@@ -57,11 +57,11 @@ export function useOnMessage(
 }
 
 export function useOnOpen(
-  wscRef: React.MutableRefObject<WebSocketControl | null>,
+  wscRef: MutableRefObject<WebSocketControl | null>,
   room: string,
   hash: string
 ): (wsc: WebSocketControl) => void {
-  return React.useCallback((wsc: WebSocketControl): void => {
+  return useCallback((wsc: WebSocketControl): void => {
     wscRef.current = wsc
 
     const acn: AcnMessage = {
@@ -73,8 +73,8 @@ export function useOnOpen(
   }, [wscRef, room, hash])
 }
 
-export function useOnClose(wscRef: React.MutableRefObject<WebSocketControl | null>): (ev: CloseEvent) => void {
-  return React.useCallback((ev: CloseEvent): void => {
+export function useOnClose(wscRef: MutableRefObject<WebSocketControl | null>): (ev: CloseEvent) => void {
+  return useCallback((ev: CloseEvent): void => {
     log.info('[onClose]', ev.code, ev.reason)
     wscRef.current?.reconnectWithBackoff()
   }, [wscRef])
@@ -82,12 +82,12 @@ export function useOnClose(wscRef: React.MutableRefObject<WebSocketControl | nul
 
 
 export function useOnClick(
-  progressRef: React.MutableRefObject<Progress>,
-  wscRef: React.MutableRefObject<WebSocketControl | null>,
-  pollIdRef: React.MutableRefObject<number>,
+  progressRef: MutableRefObject<Progress>,
+  wscRef: MutableRefObject<WebSocketControl | null>,
+  pollIdRef: MutableRefObject<number>,
   onFinished: () => void
 ): () => void {
-  return React.useCallback((): void => {
+  return useCallback((): void => {
     progressRef.current.clear()
     if (wscRef.current) {
       const finish: PollFinishMessage = {
@@ -105,11 +105,11 @@ export function useOnClick(
 
 
 export function useOnUnmount(
-  progress: React.MutableRefObject<Progress>,
-  wscRef: React.MutableRefObject<WebSocketControl | null>,
-  pollIdRef: React.RefObject<number>
+  progress: MutableRefObject<Progress>,
+  wscRef: MutableRefObject<WebSocketControl | null>,
+  pollIdRef: RefObject<number>
 ): void {
-  React.useEffect((): (() => void) => {
+  useEffect((): (() => void) => {
     return (): void => {
       // progress is not a react node
       // eslint-disable-next-line react-hooks/exhaustive-deps

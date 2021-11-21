@@ -1,4 +1,4 @@
-import React from 'react'
+import { FC, useState, useCallback, useEffect, useRef } from 'react'
 import { Message, getLogger } from 'common'
 import { WebSocketClient, WebSocketControl } from 'wscomp'
 import { SendCommentForm } from './SendCommentForm'
@@ -125,23 +125,23 @@ function setBooleanOptionValue(key: OptionKey, value: boolean): void {
   window.localStorage.setItem(key, value ? 't' : '')
 }
 
-export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
+export const App: FC<AppProps> = (props: AppProps): JSX.Element => {
   // TODO Divide state
   const autoScroll = getBooleanOptionValue('autoScroll', true)
   const sendWithCtrlEnter = getBooleanOptionValue('sendWithCtrlEnter', true)
   const openSoundPanel = getBooleanOptionValue('openSoundPanel', false)
   const token = useToken()
-  const [state, setState] = React.useState<AppState>({
+  const [state, setState] = useState<AppState>({
     comments: [],
     polls: [],
     autoScroll: (autoScroll === undefined) || autoScroll,
     sendWithCtrlEnter: (sendWithCtrlEnter === undefined) || sendWithCtrlEnter,
     openSoundPanel: !!openSoundPanel,
   })
-  const autoScrollRef = React.useRef<HTMLDivElement>(null)
-  const messageListDivRef = React.useRef<HTMLDivElement>(null)
-  const wscRef = React.useRef<WebSocketControl | null>(null)
-  const soundPanelRef = React.useRef<HTMLIFrameElement>(null)
+  const autoScrollRef = useRef<HTMLDivElement>(null)
+  const messageListDivRef = useRef<HTMLDivElement>(null)
+  const wscRef = useRef<WebSocketControl | null>(null)
+  const soundPanelRef = useRef<HTMLIFrameElement>(null)
 
   const onOpen = useWebSocketOnOpen(wscRef)
   const onClose = useWebSocketOnClose(wscRef)
@@ -150,25 +150,25 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
   const onMessage = useWebSocketOnMessage(
     props.maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef
   )
-  const onError = React.useCallback((e: Event): void => {
+  const onError = useCallback((e: Event): void => {
     log.error('[onError]', e)
   }, [])
-  const onSubmit = React.useCallback((message: Message): void => {
+  const onSubmit = useCallback((message: Message): void => {
     wscRef.current?.send(message)
   }, [])
-  const onCheckChangeBox = React.useCallback((name: OptionKey, value: boolean): void => {
+  const onCheckChangeBox = useCallback((name: OptionKey, value: boolean): void => {
     setBooleanOptionValue(name, value)
     setState({
       ...state,
       [name]: value
     })
   }, [state])
-  const backToLogin = React.useCallback((): void => {
+  const backToLogin = useCallback((): void => {
     window.localStorage.removeItem('token')
     goToLoginPage()
   }, [])
 
-  React.useEffect((): (() => void) => {
+  useEffect((): (() => void) => {
     const token = window.localStorage.getItem('token')
     if (!token) {
       goToLoginPage()
@@ -181,7 +181,7 @@ export const App: React.FC<AppProps> = (props: AppProps): JSX.Element => {
       }
     }
   }, [])
-  React.useEffect((): (() => void)=> {
+  useEffect((): (() => void)=> {
     const messageListener = (e: MessageEvent<PlaySoundMessage>): void => {
       if (e.origin !== window.location.origin) {
         log.warn('[messageListener] Receive a message from unexpected origin:', e.origin)

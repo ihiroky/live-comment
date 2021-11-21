@@ -1,4 +1,3 @@
-import React from 'react'
 import { getByRole, getByText, queryByRole, render } from '@testing-library/react'
 import { renderHook } from '@testing-library/react-hooks'
 import userEvent from '@testing-library/user-event'

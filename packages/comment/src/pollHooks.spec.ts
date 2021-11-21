@@ -1,10 +1,10 @@
 import { renderHook } from '@testing-library/react-hooks'
-import React from 'react'
+import { MutableRefObject } from 'react'
 import { WebSocketControl } from 'wscomp'
 import { AppState } from './types'
 import { useOnPoll, useOnClosePoll } from './pollHooks'
 
-function createWscRefMock(): React.MutableRefObject<WebSocketControl | null> {
+function createWscRefMock(): MutableRefObject<WebSocketControl | null> {
   return {
     current: {
       _reconnectTimer: 0,
