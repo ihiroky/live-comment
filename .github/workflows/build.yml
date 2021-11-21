@@ -21,10 +21,8 @@ jobs:
 
       - name: Run checks
         run: |
-          yarn eslint --ext ts,tsx --max-warnings 0 packages/*/src
-          yarn --cwd packages/comment/ tsc -b
-          yarn --cwd packages/desktop/ tsc -b
-          yarn --cwd packages/server/ tsc -b
+          yarn eslint --ext ts,tsx --max-warnings 0 packages/app/src
+          yarn --cwd packages/app/ tsc -b
           yarn jest --reporters=default --reporters=jest-junit --coverage --coverageDirectory reports/coverage
         shell: bash
 
@@ -61,7 +59,8 @@ jobs:
 
       - name: Build apps
         run: |
-          yarn --cwd packages/desktop/ build
+          yarn --cwd packages/app/ clean
+          yarn --cwd packages/app/ build-desktop
 
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
@@ -93,16 +92,19 @@ jobs:
 
       - name: Build apps
         run: |
-          yarn --cwd packages/comment build
-          yarn --cwd packages/server  build
+          yarn --cwd packages/app/ clean
+          yarn --cwd packages/app/ build-comment
+          yarn --cwd packages/app/ build-streaming
+          yarn --cwd packages/app/ build-api
 
       - name: Create release directory tree
         run: |
           mkdir -p build/apps
-          cp -a packages/comment/build        build/apps/comment
-          mkdir -p build/apps/server
-          cp -a packages/server/dist          build/apps/server
-          cp -a packages/server/src/scripts/* build/apps/server
+          cp -a packages/app/dist/bundle/comment          build/apps/comment
+          mkdir -p build/apps/servergi
+          cp -a packages/app/src/server/scripts/*         build/apps/server/
+          cp -a packages/app/dist/bundle/server/streaming build/apps/server/streaming
+          cp -a packages/app/dist/bundle/server/api       build/apps/server/api
         shell: bash
 
       - name: Archive apps
