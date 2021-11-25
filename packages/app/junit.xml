@@ -1,0 +1,489 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="215" failures="0" errors="0" time="17.101">
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:16:48" time="8.219" tests="1">
+    <testcase classname=" Draw" name=" Draw" time="0.058">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:16:48" time="8.625" tests="12">
+    <testcase classname=" Invalid message on login" name=" Invalid message on login" time="0.057">
+    </testcase>
+    <testcase classname=" Login OK" name=" Login OK" time="0.032">
+    </testcase>
+    <testcase classname=" Invalid room" name=" Invalid room" time="0.008">
+    </testcase>
+    <testcase classname=" No authorization header" name=" No authorization header" time="0.006">
+    </testcase>
+    <testcase classname=" No bearer" name=" No bearer" time="0.006">
+    </testcase>
+    <testcase classname=" No jwt payload" name=" No jwt payload" time="0.008">
+    </testcase>
+    <testcase classname=" Invalid jwt" name=" Invalid jwt" time="0.006">
+    </testcase>
+    <testcase classname=" No room" name=" No room" time="0.018">
+    </testcase>
+    <testcase classname=" No sound file returns 404" name=" No sound file returns 404" time="0.007">
+    </testcase>
+    <testcase classname=" Get sound file" name=" Get sound file" time="0.024">
+    </testcase>
+    <testcase classname=" No checksum file" name=" No checksum file" time="0.008">
+    </testcase>
+    <testcase classname=" Get checksum of sound file" name=" Get checksum of sound file" time="0.008">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:16:48" time="9.747" tests="3">
+    <testcase classname=" Label, name, and checked" name=" Label, name, and checked" time="0.262">
+    </testcase>
+    <testcase classname=" Uncheck checkbox" name=" Uncheck checkbox" time="0.158">
+    </testcase>
+    <testcase classname=" Check checkobx" name=" Check checkobx" time="0.099">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:16:48" time="10.174" tests="3">
+    <testcase classname=" Render children only if mode is poll" name=" Render children only if mode is poll" time="0.03">
+    </testcase>
+    <testcase classname=" Render children only if data is null" name=" Render children only if data is null" time="0.007">
+    </testcase>
+    <testcase classname=" Render list/graph radio button and close button if mode is result-list" name=" Render list/graph radio button and close button if mode is result-list" time="0.537">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:16:48" time="10.875" tests="5">
+    <testcase classname=" Render nothing if not edit mode" name=" Render nothing if not edit mode" time="0.029">
+    </testcase>
+    <testcase classname=" Enter description and click add button, then onEntryAdded is called and description is cleared" name=" Enter description and click add button, then onEntryAdded is called and description is cleared" time="0.958">
+    </testcase>
+    <testcase classname=" OK button is disabled if entryCount is zero" name=" OK button is disabled if entryCount is zero" time="0.095">
+    </testcase>
+    <testcase classname=" OK button is enabled if entryCount &gt;= 1, and click it then onOk is called" name=" OK button is enabled if entryCount &gt;= 1, and click it then onOk is called" time="0.138">
+    </testcase>
+    <testcase classname=" Click cancel button then onCancel is called" name=" Click cancel button then onCancel is called" time="0.141">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:16:58" time="2.212" tests="4">
+    <testcase classname=" Poll start message." name=" Poll start message." time="0.177">
+    </testcase>
+    <testcase classname=" Poll title." name=" Poll title." time="0.112">
+    </testcase>
+    <testcase classname=" Poll entries and poll buttons fire onPoll events." name=" Poll entries and poll buttons fire onPoll events." time="0.638">
+    </testcase>
+    <testcase classname=" Poll close button fires a onClosePoll event" name=" Poll close button fires a onClosePoll event" time="0.297">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:16:48" time="12.781" tests="12">
+    <testcase classname=" Session initial properties" name=" Session initial properties" time="0.067">
+    </testcase>
+    <testcase classname=" Acn OK, and count up before sending and count down after sended" name=" Acn OK, and count up before sending and count down after sended" time="0.062">
+    </testcase>
+    <testcase classname=" Acn failed, then close the session" name=" Acn failed, then close the session" time="0.005">
+    </testcase>
+    <testcase classname=" Autorization with token and OK" name=" Autorization with token and OK" time="0.062">
+    </testcase>
+    <testcase classname=" Authorization with token and verification failed" name=" Authorization with token and verification failed" time="0.057">
+    </testcase>
+    <testcase classname=" Authorization with token which has no room" name=" Authorization with token which has no room" time="0.056">
+    </testcase>
+    <testcase classname=" An unauthenticated session is closed if exists on boardcasting" name=" An unauthenticated session is closed if exists on boardcasting" time="0.005">
+    </testcase>
+    <testcase classname=" Broardcast in the sender room" name=" Broardcast in the sender room" time="0.016">
+    </testcase>
+    <testcase classname=" Write log and remove session from health check on error" name=" Write log and remove session from health check on error" time="0.005">
+    </testcase>
+    <testcase classname=" Write log and remove session from health check on close" name=" Write log and remove session from health check on close" time="0.004">
+    </testcase>
+    <testcase classname=" Emit healthcheck event periodically" name=" Emit healthcheck event periodically" time="0.007">
+    </testcase>
+    <testcase classname=" Emit healthcheck event periodically" name=" Emit healthcheck event periodically" time="0.003">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:16:59" time="3.099" tests="4">
+    <testcase classname=" Page title" name=" Page title" time="0.41">
+    </testcase>
+    <testcase classname=" Volume is changed if move slider" name=" Volume is changed if move slider" time="0.436">
+    </testcase>
+    <testcase classname=" Change max number of sound being played concurrently" name=" Change max number of sound being played concurrently" time="0.655">
+    </testcase>
+    <testcase classname=" Send message to play sound if icon is clicked" name=" Send message to play sound if icon is clicked" time="0.15">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:16:48" time="14.111" tests="2">
+    <testcase classname=" Edit, poll and display result" name=" Edit, poll and display result" time="4.145">
+    </testcase>
+    <testcase classname=" Cancel" name=" Cancel" time="0.292">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:17:01" time="1.876" tests="6">
+    <testcase classname=" Nothing draws on result-graph mode" name=" Nothing draws on result-graph mode" time="0.036">
+    </testcase>
+    <testcase classname=" Show entries only on poll mode" name=" Show entries only on poll mode" time="0.075">
+    </testcase>
+    <testcase classname=" Show entries and delete buttons on edit mode" name=" Show entries and delete buttons on edit mode" time="0.182">
+    </testcase>
+    <testcase classname=" Click Del button then onRemoveEntry is called" name=" Click Del button then onRemoveEntry is called" time="0.254">
+    </testcase>
+    <testcase classname=" Show entries and counts on result-list mode" name=" Show entries and counts on result-list mode" time="0.039">
+    </testcase>
+    <testcase classname="blink Count up entriy blinks" name="blink Count up entriy blinks" time="0.139">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:16:58" time="4.64" tests="7">
+    <testcase classname=" html field update" name=" html field update" time="0.921">
+    </testcase>
+    <testcase classname=" opacity field update" name=" opacity field update" time="0.644">
+    </testcase>
+    <testcase classname=" color field update" name=" color field update" time="0.296">
+    </testcase>
+    <testcase classname=" fontSize field update" name=" fontSize field update" time="0.404">
+    </testcase>
+    <testcase classname=" offset field update" name=" offset field update" time="0.376">
+    </testcase>
+    <testcase classname=" Position selector" name=" Position selector" time="0.391">
+    </testcase>
+    <testcase classname=" noComments update" name=" noComments update" time="0.379">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:17:01" time="1.697" tests="5">
+    <testcase classname=" Input text and click button." name=" Input text and click button." time="0.28">
+    </testcase>
+    <testcase classname=" Input text and press Enter key." name=" Input text and press Enter key." time="0.128">
+    </testcase>
+    <testcase classname=" Input text and click button with &quot;send with ctrl+enter&quot; option." name=" Input text and click button with &quot;send with ctrl+enter&quot; option." time="0.099">
+    </testcase>
+    <testcase classname=" Input text and press Enter key only with &quot;send with ctrl+enter&quot; option." name=" Input text and press Enter key only with &quot;send with ctrl+enter&quot; option." time="0.183">
+    </testcase>
+    <testcase classname=" Input text and press Ctrl+Enter key with &quot;send with ctrl+enter&quot; option." name=" Input text and press Ctrl+Enter key with &quot;send with ctrl+enter&quot; option." time="0.105">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:16:56" time="6.457" tests="9">
+    <testcase classname=" Url field update" name=" Url field update" time="0.798">
+    </testcase>
+    <testcase classname=" Room field update" name=" Room field update" time="0.942">
+    </testcase>
+    <testcase classname=" Password field update" name=" Password field update" time="0.34">
+    </testcase>
+    <testcase classname=" Message duration field update" name=" Message duration field update" time="0.477">
+    </testcase>
+    <testcase classname=" Zoom field update" name=" Zoom field update" time="0.613">
+    </testcase>
+    <testcase classname=" fontColor field update" name=" fontColor field update" time="0.365">
+    </testcase>
+    <testcase classname=" fontBorderColor field update" name=" fontBorderColor field update" time="0.2">
+    </testcase>
+    <testcase classname=" Enable GPU acceleration update" name=" Enable GPU acceleration update" time="0.297">
+    </testcase>
+    <testcase classname=" Screen selector" name=" Screen selector" time="0.499">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:17:03" time="0.385" tests="12">
+    <testcase classname=" useAcnOk create defered to send PollStartMessage" name=" useAcnOk create defered to send PollStartMessage" time="0.082">
+    </testcase>
+    <testcase classname=" useOnMessage resolves acnOk if message is AcnMessage" name=" useOnMessage resolves acnOk if message is AcnMessage" time="0.004">
+    </testcase>
+    <testcase classname=" useOnMessage does nothing if message is not AcnMessage or PollMessage" name=" useOnMessage does nothing if message is not AcnMessage or PollMessage" time="0.004">
+    </testcase>
+    <testcase classname=" useOnMessage does nothing if message is not AcnMessage or PollMessage" name=" useOnMessage does nothing if message is not AcnMessage or PollMessage" time="0.003">
+    </testcase>
+    <testcase classname=" useOnMessage does nothing if message.from has the same choice" name=" useOnMessage does nothing if message.from has the same choice" time="0.005">
+    </testcase>
+    <testcase classname=" useOnMessage create incremental update if a new PollMessage is received" name=" useOnMessage create incremental update if a new PollMessage is received" time="0.006">
+    </testcase>
+    <testcase classname=" useOnMessage create incremental and decremental Update if a update PollMessage is received" name=" useOnMessage create incremental and decremental Update if a update PollMessage is received" time="0.004">
+    </testcase>
+    <testcase classname=" Defferent &quot;from&quot;s do not effect each other" name=" Defferent &quot;from&quot;s do not effect each other" time="0.003">
+    </testcase>
+    <testcase classname=" onOpen sends AcnMessage and cache WebSocketControl" name=" onOpen sends AcnMessage and cache WebSocketControl" time="0.004">
+    </testcase>
+    <testcase classname=" onClose call reconnectWithBackoff()" name=" onClose call reconnectWithBackoff()" time="0.029">
+    </testcase>
+    <testcase classname=" onClick clear progress, send finish message and call onFinished" name=" onClick clear progress, send finish message and call onFinished" time="0.004">
+    </testcase>
+    <testcase classname=" onUnmount clear progress and send finish message" name=" onUnmount clear progress and send finish message" time="0.005">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:17:03" time="0.502" tests="10">
+    <testcase classname=" onOpen does nothing if no token" name=" onOpen does nothing if no token" time="0.025">
+    </testcase>
+    <testcase classname=" onOpen sets wscRef and send an acn message" name=" onOpen sets wscRef and send an acn message" time="0.014">
+    </testcase>
+    <testcase classname=" onClose with ACN_FAILED goes to login page" name=" onClose with ACN_FAILED goes to login page" time="0.005">
+    </testcase>
+    <testcase classname=" onClose with no ACN_FAILED tries to reconnect" name=" onClose with no ACN_FAILED tries to reconnect" time="0.003">
+    </testcase>
+    <testcase classname=" onMessage ignores non poll application message" name=" onMessage ignores non poll application message" time="0.005">
+    </testcase>
+    <testcase classname=" onMessage which receives comment message add a comment entry" name=" onMessage which receives comment message add a comment entry" time="0.004">
+    </testcase>
+    <testcase classname=" onMessage drop old comment if count of comments exceeds maxMessageCount" name=" onMessage drop old comment if count of comments exceeds maxMessageCount" time="0.003">
+    </testcase>
+    <testcase classname=" onMessage which receives PollStartMessage add a poll entry" name=" onMessage which receives PollStartMessage add a poll entry" time="0.005">
+    </testcase>
+    <testcase classname=" onMessage which receives PollFinishMessage removes a poll entry" name=" onMessage which receives PollFinishMessage removes a poll entry" time="0.004">
+    </testcase>
+    <testcase classname=" onMessage scrolls to autoScrollRef if autoScroll is true" name=" onMessage scrolls to autoScrollRef if autoScroll is true" time="0.003">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:17:03" time="0.25" tests="16">
+    <testcase classname=" Error if configuration file does not have any room definition" name=" Error if configuration file does not have any room definition" time="0.039">
+    </testcase>
+    <testcase classname=" Error if configuration file have empty rooms" name=" Error if configuration file have empty rooms" time="0.002">
+    </testcase>
+    <testcase classname=" Error if a room has no name" name=" Error if a room has no name" time="0.002">
+    </testcase>
+    <testcase classname=" Error if a room has no hash" name=" Error if a room has no hash" time="0.001">
+    </testcase>
+    <testcase classname=" No jwtPrivateKeyPath" name=" No jwtPrivateKeyPath" time="0.001">
+    </testcase>
+    <testcase classname=" jwtPrivateKeyPath does not exist" name=" jwtPrivateKeyPath does not exist" time="0.001">
+    </testcase>
+    <testcase classname=" jwtPrivateKeyPath is not a file." name=" jwtPrivateKeyPath is not a file." time="0.002">
+    </testcase>
+    <testcase classname=" No jwtPublicKeyPath" name=" No jwtPublicKeyPath" time="0.001">
+    </testcase>
+    <testcase classname=" jwtPublicKeyPath does not exist" name=" jwtPublicKeyPath does not exist" time="0.002">
+    </testcase>
+    <testcase classname=" jwtPublicKeyPath is not a file." name=" jwtPublicKeyPath is not a file." time="0.002">
+    </testcase>
+    <testcase classname=" Default port is 8080" name=" Default port is 8080" time="0.003">
+    </testcase>
+    <testcase classname=" Get port specified at command line" name=" Get port specified at command line" time="0.002">
+    </testcase>
+    <testcase classname=" Default loglevel is INFO" name=" Default loglevel is INFO" time="0.002">
+    </testcase>
+    <testcase classname=" Get loglevel specified at command line" name=" Get loglevel specified at command line" time="0.001">
+    </testcase>
+    <testcase classname=" Not reload when timestamp is not changed." name=" Not reload when timestamp is not changed." time="0.002">
+    </testcase>
+    <testcase classname=" Reload when timestamp gets newer" name=" Reload when timestamp gets newer" time="0.035">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:16:57" time="6.239" tests="10">
+    <testcase classname=" Room text field and its helper text" name=" Room text field and its helper text" time="0.59">
+    </testcase>
+    <testcase classname=" Password field and its helper text" name=" Password field and its helper text" time="0.18">
+    </testcase>
+    <testcase classname=" Login button is disabled if room is empty" name=" Login button is disabled if room is empty" time="0.441">
+    </testcase>
+    <testcase classname=" Login button is disabled if password is empty" name=" Login button is disabled if password is empty" time="0.414">
+    </testcase>
+    <testcase classname=" Go to comment page if token already exists" name=" Go to comment page if token already exists" time="0.207">
+    </testcase>
+    <testcase classname=" Show notification if message is stored" name=" Show notification if message is stored" time="0.32">
+    </testcase>
+    <testcase classname=" Submit crednetail then OK" name=" Submit crednetail then OK" time="0.426">
+    </testcase>
+    <testcase classname=" Submit credential then failed" name=" Submit credential then failed" time="0.437">
+    </testcase>
+    <testcase classname=" Submit credential and unexpected message" name=" Submit credential and unexpected message" time="0.381">
+    </testcase>
+    <testcase classname=" Keep login" name=" Keep login" time="0.494">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:17:03" time="0.26" tests="3">
+    <testcase classname=" onPoll send PollMessage" name=" onPoll send PollMessage" time="0.023">
+    </testcase>
+    <testcase classname=" onClosePoll drops a specified poll" name=" onClosePoll drops a specified poll" time="0.017">
+    </testcase>
+    <testcase classname=" onClosePoll drops a specified poll and update state if refresh is true" name=" onClosePoll drops a specified poll and update state if refresh is true" time="0.004">
+    </testcase>
+  </testsuite>
+  <testsuite name="calcMinimumEmptyLevel" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:17:03" time="0.217" tests="23">
+    <testcase classname="calcMinimumEmptyLevel Return zero if no marquee exists" name="calcMinimumEmptyLevel Return zero if no marquee exists" time="0.003">
+    </testcase>
+    <testcase classname="calcMinimumEmptyLevel Return zero if first entry level is more than zero" name="calcMinimumEmptyLevel Return zero if first entry level is more than zero" time="0">
+    </testcase>
+    <testcase classname="calcMinimumEmptyLevel Return first emtpy level" name="calcMinimumEmptyLevel Return first emtpy level" time="0.001">
+    </testcase>
+    <testcase classname="calcMinimumEmptyLevel Return first empty level (the smae level exists)" name="calcMinimumEmptyLevel Return first empty level (the smae level exists)" time="0">
+    </testcase>
+    <testcase classname="calcMinimumEmptyLevel Return -1 if no empty level in the list" name="calcMinimumEmptyLevel Return -1 if no empty level in the list" time="0">
+    </testcase>
+    <testcase classname="findLevelRightSpaceExists Return 0 if marquees is empty" name="findLevelRightSpaceExists Return 0 if marquees is empty" time="0.001">
+    </testcase>
+    <testcase classname="findLevelRightSpaceExists Return 0 if the first element level of marquees is more than 0" name="findLevelRightSpaceExists Return 0 if the first element level of marquees is more than 0" time="0">
+    </testcase>
+    <testcase classname="findLevelRightSpaceExists Return level zero which right has enouch space at zero" name="findLevelRightSpaceExists Return level zero which right has enouch space at zero" time="0.001">
+    </testcase>
+    <testcase classname="findLevelRightSpaceExists Return the minimum level which right has enouch space" name="findLevelRightSpaceExists Return the minimum level which right has enouch space" time="0.001">
+    </testcase>
+    <testcase classname="findLevelRightSpaceExists Return the first level which has enough right space" name="findLevelRightSpaceExists Return the first level which has enough right space" time="0.001">
+    </testcase>
+    <testcase classname="findLevelRightSpaceExists Return -1 there is no right space" name="findLevelRightSpaceExists Return -1 there is no right space" time="0">
+    </testcase>
+    <testcase classname="findLevelRightSpaceExists There is no right spance if a marquee is not rendered yet" name="findLevelRightSpaceExists There is no right spance if a marquee is not rendered yet" time="0.001">
+    </testcase>
+    <testcase classname="MarqueePropsGenerator onOpen - Send AcnMessage and accept WebSocketControl" name="MarqueePropsGenerator onOpen - Send AcnMessage and accept WebSocketControl" time="0.005">
+    </testcase>
+    <testcase classname="MarqueePropsGenerator close - close WebSocketControl" name="MarqueePropsGenerator close - close WebSocketControl" time="0.001">
+    </testcase>
+    <testcase classname="MarqueePropsGenerator onClose Send error message if CloseEvent has ACN_FAILED" name="MarqueePropsGenerator onClose Send error message if CloseEvent has ACN_FAILED" time="0.002">
+    </testcase>
+    <testcase classname="MarqueePropsGenerator onClose Show error message and try to reconnect if CloseEvnet has no ACN_FAILED" name="MarqueePropsGenerator onClose Show error message and try to reconnect if CloseEvnet has no ACN_FAILED" time="0.001">
+    </testcase>
+    <testcase classname="MarqueePropsGenerator onMessage Drop message except CommentMessage" name="MarqueePropsGenerator onMessage Drop message except CommentMessage" time="0">
+    </testcase>
+    <testcase classname="MarqueePropsGenerator onMessage Drop message if too many marqueeing messages exists" name="MarqueePropsGenerator onMessage Drop message if too many marqueeing messages exists" time="0.009">
+    </testcase>
+    <testcase classname="MarqueePropsGenerator onMessage Drop out-of-date message" name="MarqueePropsGenerator onMessage Drop out-of-date message" time="0.023">
+    </testcase>
+    <testcase classname="MarqueePropsGenerator onMessage Minimum empty level exists" name="MarqueePropsGenerator onMessage Minimum empty level exists" time="0.001">
+    </testcase>
+    <testcase classname="MarqueePropsGenerator onMessage No minimum empty level and enough right space exists" name="MarqueePropsGenerator onMessage No minimum empty level and enough right space exists" time="0.007">
+    </testcase>
+    <testcase classname="MarqueePropsGenerator onMessage No minimum empty level and no enough right space exists" name="MarqueePropsGenerator onMessage No minimum empty level and no enough right space exists" time="0.002">
+    </testcase>
+    <testcase classname="MarqueePropsGenerator onMessage Insert middle of the marquees" name="MarqueePropsGenerator onMessage Insert middle of the marquees" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:17:03" time="0.277" tests="15">
+    <testcase classname=" countUpPending counts up messageCount and messageCharCount" name=" countUpPending counts up messageCount and messageCharCount" time="0.004">
+    </testcase>
+    <testcase classname=" countDownPending counts down messageCount and messageCharCount" name=" countDownPending counts down messageCount and messageCharCount" time="0.002">
+    </testcase>
+    <testcase classname=" Start slot timers" name=" Start slot timers" time="0.005">
+    </testcase>
+    <testcase classname=" Session is terminated if not alive at checkPingPong" name=" Session is terminated if not alive at checkPingPong" time="0.01">
+    </testcase>
+    <testcase classname=" Session does nothing if readyState is CLOSING" name=" Session does nothing if readyState is CLOSING" time="0.002">
+    </testcase>
+    <testcase classname=" Session does nothing if readyState is CLOSED" name=" Session does nothing if readyState is CLOSED" time="0.003">
+    </testcase>
+    <testcase classname=" Session alive gets false and ping if alive and not CLOSING or CLOSED" name=" Session alive gets false and ping if alive and not CLOSING or CLOSED" time="0.003">
+    </testcase>
+    <testcase classname=" Do nothing if pending counts are under threshold" name=" Do nothing if pending counts are under threshold" time="0.011">
+    </testcase>
+    <testcase classname=" Session is closed if pending message count exceeds its threshold" name=" Session is closed if pending message count exceeds its threshold" time="0.006">
+    </testcase>
+    <testcase classname=" Session is closed if pending character count exceeds its threshold" name=" Session is closed if pending character count exceeds its threshold" time="0.006">
+    </testcase>
+    <testcase classname=" Stop all timers" name=" Stop all timers" time="0.007">
+    </testcase>
+    <testcase classname=" Properties of session are initialized by add()" name=" Properties of session are initialized by add()" time="0.001">
+    </testcase>
+    <testcase classname=" Select slot which has minimum session count" name=" Select slot which has minimum session count" time="0.007">
+    </testcase>
+    <testcase classname=" Update alive and lastPongTime if pong packet is received" name=" Update alive and lastPongTime if pong packet is received" time="0.002">
+    </testcase>
+    <testcase classname=" Remove session from its slot" name=" Remove session from its slot" time="0.004">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:17:03" time="0.168" tests="20">
+    <testcase classname=" isAcnMessage" name=" isAcnMessage" time="0.003">
+    </testcase>
+    <testcase classname=" isAcnMessage no acn" name=" isAcnMessage no acn" time="0">
+    </testcase>
+    <testcase classname=" isAcnMessage null" name=" isAcnMessage null" time="0.001">
+    </testcase>
+    <testcase classname=" isAcnOkMessage" name=" isAcnOkMessage" time="0">
+    </testcase>
+    <testcase classname=" isAcnOkMessage no acnok" name=" isAcnOkMessage no acnok" time="0.001">
+    </testcase>
+    <testcase classname=" isAcnTokenMessage" name=" isAcnTokenMessage" time="0">
+    </testcase>
+    <testcase classname=" isAcnTokenMessage false" name=" isAcnTokenMessage false" time="0.001">
+    </testcase>
+    <testcase classname=" isApplicationMessage" name=" isApplicationMessage" time="0">
+    </testcase>
+    <testcase classname=" isApplicationMessage no acn" name=" isApplicationMessage no acn" time="0.001">
+    </testcase>
+    <testcase classname=" isApplicationMessage null" name=" isApplicationMessage null" time="0">
+    </testcase>
+    <testcase classname=" isClientMessage comment" name=" isClientMessage comment" time="0.001">
+    </testcase>
+    <testcase classname=" isClientMessage app" name=" isClientMessage app" time="0">
+    </testcase>
+    <testcase classname=" isClientMessage no comment/app" name=" isClientMessage no comment/app" time="0.001">
+    </testcase>
+    <testcase classname=" isClientMessage null" name=" isClientMessage null" time="0">
+    </testcase>
+    <testcase classname=" isCommentMessage" name=" isCommentMessage" time="0.001">
+    </testcase>
+    <testcase classname=" isCommentMessage no comment" name=" isCommentMessage no comment" time="0">
+    </testcase>
+    <testcase classname=" isCommentMessage null" name=" isCommentMessage null" time="0.001">
+    </testcase>
+    <testcase classname=" isErrorMessage" name=" isErrorMessage" time="0">
+    </testcase>
+    <testcase classname=" isCommentMessage no error" name=" isCommentMessage no error" time="0">
+    </testcase>
+    <testcase classname=" isErrorMessage null" name=" isErrorMessage null" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:17:03" time="0.334" tests="8">
+    <testcase classname=" useSettingsState initial value" name=" useSettingsState initial value" time="0.079">
+    </testcase>
+    <testcase classname=" useOnGeneralSettingsUpdate string" name=" useOnGeneralSettingsUpdate string" time="0.005">
+    </testcase>
+    <testcase classname=" useOnGeneralSettingsUpdate boolean" name=" useOnGeneralSettingsUpdate boolean" time="0.003">
+    </testcase>
+    <testcase classname=" useOnGeneralSettingsUpdate number" name=" useOnGeneralSettingsUpdate number" time="0.01">
+    </testcase>
+    <testcase classname=" useOnWatermarkSettingsUpdate string" name=" useOnWatermarkSettingsUpdate string" time="0.004">
+    </testcase>
+    <testcase classname=" useOnWatermarkSettingsUpdate WatermarkPosition" name=" useOnWatermarkSettingsUpdate WatermarkPosition" time="0.003">
+    </testcase>
+    <testcase classname=" useOnWatermarkSettingsUpdate boolean" name=" useOnWatermarkSettingsUpdate boolean" time="0.003">
+    </testcase>
+    <testcase classname=" useOnSubmit" name=" useOnSubmit" time="0.004">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:17:03" time="0.161" tests="3">
+    <testcase classname=" null is not &quot;Object&quot;" name=" null is not &quot;Object&quot;" time="0.003">
+    </testcase>
+    <testcase classname=" {} is &quot;Object&quot;" name=" {} is &quot;Object&quot;" time="0.001">
+    </testcase>
+    <testcase classname=" 1 is not &quot;Object&quot;" name=" 1 is not &quot;Object&quot;" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:17:02" time="1.266" tests="1">
+    <testcase classname=" Click Finish button, then call onFinished" name=" Click Finish button, then call onFinished" time="0.219">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:17:03" time="0.137" tests="3">
+    <testcase classname=" Throw error if value is undefined." name=" Throw error if value is undefined." time="0.008">
+    </testcase>
+    <testcase classname=" Throw error if value is null." name=" Throw error if value is null." time="0.001">
+    </testcase>
+    <testcase classname=" Do not throw error if value is 0." name=" Do not throw error if value is 0." time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:17:03" time="0.091" tests="2">
+    <testcase classname=" Resolve calls resolved" name=" Resolve calls resolved" time="0.002">
+    </testcase>
+    <testcase classname=" Reject calls rejected" name=" Reject calls rejected" time="0.004">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:17:03" time="0.097" tests="4">
+    <testcase classname=" loadDefault" name=" loadDefault" time="0.003">
+    </testcase>
+    <testcase classname=" parse v1" name=" parse v1" time="0.001">
+    </testcase>
+    <testcase classname=" parse v0" name=" parse v0" time="0.001">
+    </testcase>
+    <testcase classname=" parse no version" name=" parse no version" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="useExistsSounds" errors="0" failures="0" skipped="0" timestamp="2021-11-21T12:17:02" time="1.155" tests="12">
+    <testcase classname="useExistsSounds Do nothing if no token" name="useExistsSounds Do nothing if no token" time="0.081">
+    </testcase>
+    <testcase classname="useExistsSounds Checksum does not exist" name="useExistsSounds Checksum does not exist" time="0.06">
+    </testcase>
+    <testcase classname="useExistsSounds Checksum exists and no update" name="useExistsSounds Checksum exists and no update" time="0.04">
+    </testcase>
+    <testcase classname="useExistsSounds Checksum and update exist, but no sound file exists" name="useExistsSounds Checksum and update exist, but no sound file exists" time="0.064">
+    </testcase>
+    <testcase classname="useExistsSounds Checksum and update exist, and store sound file" name="useExistsSounds Checksum and update exist, and store sound file" time="0.205">
+    </testcase>
+    <testcase classname="useSoundMetadata Empty if no sound" name="useSoundMetadata Empty if no sound" time="0.008">
+    </testcase>
+    <testcase classname="useSoundMetadata No stored data" name="useSoundMetadata No stored data" time="0.044">
+    </testcase>
+    <testcase classname="useSoundMetadata Load stored data" name="useSoundMetadata Load stored data" time="0.063">
+    </testcase>
+    <testcase classname="useSoundMetadata Skip invalid data" name="useSoundMetadata Skip invalid data" time="0.059">
+    </testcase>
+    <testcase classname="usePlaySound No sound" name="usePlaySound No sound" time="0.144">
+    </testcase>
+    <testcase classname="usePlaySound Decode sound and play it" name="usePlaySound Decode sound and play it" time="0.056">
+    </testcase>
+    <testcase classname="usePlaySound Decode failed" name="usePlaySound Decode failed" time="0.054">
+    </testcase>
+  </testsuite>
+</testsuites>

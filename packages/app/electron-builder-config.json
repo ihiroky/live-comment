@@ -1,0 +1,43 @@
+{
+  "productName": "live-comment",
+  "appId": "ga.live-comment.desktop",
+  "electronVersion": "12.1.2",
+  "files": [
+    "package.json",
+    "dist/common/**/*.js",
+    "dist/desktop/**/*.js"
+  ],
+  "extraFiles": [
+    "resources/**",
+    "dist/desktop/preload/*.js"
+  ],
+  "publish": {
+    "provider": "github",
+    "releaseType": "draft"
+  },
+  "win": {
+    "target": [{
+      "target": "nsis",
+      "arch": ["x64"]
+    }],
+    "publish": ["github"]
+  },
+  "mac": {
+    "target": [{
+      "target": "dmg",
+      "arch": ["x64"]
+    }],
+    "publish": ["github"]
+  },
+  "linux": {
+    "executableName": "live-comment",
+    "target": [{
+      "target": "deb",
+      "arch": ["x64"]
+    }],
+    "publish": ["github"]
+  },
+  "nsis": {
+    "runAfterFinish": false
+  }
+}
