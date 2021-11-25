@@ -43,6 +43,9 @@
     "max-len": ["error", { "code": 120, "tabWidth": 2, "ignoreStrings": true }],
     "no-else-return": 1,
     "no-console": 1,
+    "no-restricted-imports": [1, {
+      "patterns": ["**/comment/**", "**/desktop/**", "**/server/**"]
+    }],
     "semi": [1, "never"],
     "space-infix-ops": 1,
     "space-unary-ops": 1,
