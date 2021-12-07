@@ -1,31 +1,16 @@
 import { isObject, fetchWithTimeout } from '@/common/utils'
 import { getLogger } from '@/common/Logger'
 import { get, getAll, update, StoreOperation } from './db'
-import { Zlib } from 'unzip'
 import { useState, useEffect, useCallback } from 'react'
+import {
+  SoundMetadata,
+  openZipFile,
+  SoundFileDefinition,
+} from '@/sound/file'
 
 const SOUND_FILE_PATH = '/sound/file'
 const CHECKSUM_FILE_PATH = '/sound/checksum'
-const MANIFEST_JSON = 'manifest.json'
 const CHECKSUM = 'checksum'
-const ACCEPTABLE_SUFFIX = ['.mp3', '.wav']
-
-type SoundFileDefinition = {
-  file: string
-  displayName?: string
-  command?: string | string[]
-}
-
-type SoundManifest = {
-  files: Array<
-    | SoundFileDefinition
-    | string
-    | [string]
-    | [string, string]
-    | [string, string, string]
-    | [string, string, string[]]
-  >
-}
 
 type StoredSoundMetadata = {
   displayName: string
@@ -36,12 +21,6 @@ type StoredSound = {
   data: Uint8Array
 }
 
-type SoundMetadata = {
-  id: string
-  displayName: string
-  command: string[]
-}
-
 const log = getLogger('sound/hooks')
 
 function isStoredSoundMetadata(value: unknown): value is StoredSoundMetadata {
@@ -49,35 +28,6 @@ function isStoredSoundMetadata(value: unknown): value is StoredSoundMetadata {
     typeof value.displayName === 'string' &&
     (typeof value.command === 'string' || Array.isArray(value.command) || value.command === null)
   )
-}
-
-function normalizeSoundFileDefinition(def: SoundManifest['files'][number]): SoundFileDefinition {
-  if (!Array.isArray(def)) {
-    if (typeof def === 'string') {
-      return { file: def }
-    }
-    if (isObject(def) && typeof def.file === 'string') {
-      return def
-    }
-    throw new Error(`Unexpected format: ${def}`)
-  }
-  if (def.length !== 1 && def.length !== 2 && def.length !== 3) {
-    throw new Error(`Unexpected format: ${def}`)
-  }
-  switch (def.length) {
-    case 1: return { file: def[0] }
-    case 2: return { file: def[0], displayName: def[1] }
-    case 3: return { file: def[0], displayName: def[1], command: def[2] }
-  }
-}
-
-function trimAcceptableSuffix(fileName: string): string | null {
-  for (const suffix of ACCEPTABLE_SUFFIX) {
-    if (fileName.endsWith(suffix)) {
-      return fileName.substring(0, fileName.length - suffix.length)
-    }
-  }
-  return null
 }
 
 async function isSoundsAvailable(
@@ -137,41 +87,23 @@ async function storeSounds(url: string, token: string, room: string, checksum: s
     throw new Error('Failed to get sound file.')
   }
 
-  const zipBuffer = await zipBlob.arrayBuffer()
-  const zipData = new Uint8Array(zipBuffer)
-  const unzip = new Zlib.Unzip(zipData)
-  const utf8Decoder = new TextDecoder()
-  const manifest: SoundManifest = JSON.parse(utf8Decoder.decode(unzip.decompress(MANIFEST_JSON)))
-  log.debug('manifest', manifest)
-  const manifestMap = new Map(
-    manifest.files
-      .map(normalizeSoundFileDefinition)
-      .filter(e => e !== null)
-      .map(e => [e.file, e])
-  )
-  await update(room, ['soundMetadata', 'sound'], (op: StoreOperation): void => {
+  await update(room, ['soundMetadata', 'sound'], (op: StoreOperation): Promise<void> => {
     op.clear('soundMetadata')
     op.clear('sound')
 
     op.put('soundMetadata', CHECKSUM, checksum)
-    for (const fileName of unzip.getFilenames()) {
-      const id = trimAcceptableSuffix(fileName)
-      if (id === null) {
-        continue
+    return openZipFile(
+      zipBlob,
+      (name: string, def: SoundFileDefinition, data: Uint8Array): void => {
+        const displayName = def.displayName ?? name
+        const command = def.command ?? null
+        // TODO add index to sort by stored order
+        const metadataValue: StoredSoundMetadata = { displayName, command }
+        op.put('soundMetadata', name, metadataValue)
+        const value: StoredSound = { data }
+        op.put('sound', name, value)
       }
-      const soundDefinition = manifestMap.get(fileName)
-      if (!soundDefinition) {
-        continue
-      }
-      const data = unzip.decompress(fileName)
-      const displayName = soundDefinition.displayName ?? id
-      const command = soundDefinition.command ?? null
-      // TODO add index to sort by stored order
-      const metadataValue: StoredSoundMetadata = { displayName, command }
-      op.put('soundMetadata', id, metadataValue)
-      const value: StoredSound = { data }
-      op.put('sound', id, value)
-    }
+    )
   })
 }
 

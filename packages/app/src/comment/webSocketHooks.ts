@@ -9,7 +9,8 @@ import { assertNotNullable } from '@/common/assert'
 import { getLogger } from '@/common/Logger'
 import { WebSocketClient, WebSocketControl } from '@/wscomp/WebSocketClient'
 import { goToLoginPage } from './utils/pages'
-import { AppState, isPlaySoundMessage } from './types'
+import { AppState } from './types'
+import { isPlaySoundMessage } from './types'
 import { isPollFinishMessage, isPollStartMessage } from '@/poll/types'
 
 const log = getLogger('webSocketHooks')

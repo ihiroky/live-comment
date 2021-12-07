@@ -132,20 +132,6 @@ async function sendSoundFileChecksum(res: Response, c: Configuration): Promise<v
   createReadStream(filePath).pipe(res)
 }
 
-/*
-async function receiveSoundFile(req: Request, res: Response, c: Configuration): Promise<void> {
-  const zipBuf = req.body
-
-  // TODO validation
-
-  const filePath = getFilePath(res, c, 'zip')
-  writeFile(filePath, zipBuf, { encoding: 'binary' })
-    .then((): void => {
-      res.status(200).json({})
-    })
-}
-*/
-
 function createRouter(configuration: Configuration): Router {
   const router = express.Router()
   router.post('/login', function(req: Request, res: Response): void {

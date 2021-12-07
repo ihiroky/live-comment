@@ -100,7 +100,7 @@ export type StoreOperation = {
 export async function update(
   dbName: string,
   storeNames: StoreName[],
-  updater: (op: StoreOperation) => void
+  updater: (op: StoreOperation) => Promise<void>
 ): Promise<void> {
   const db = await open(dbName)
   const tx = db.transaction(storeNames, 'readwrite')
@@ -109,7 +109,7 @@ export async function update(
     stores.set(name, tx.objectStore(name))
   }
   try {
-    updater({
+    await updater({
       put: (storeName: StoreName, id: string, value: unknown): void => {
         const store = stores.get(storeName)
         if (!store) {
