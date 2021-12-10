@@ -1,6 +1,6 @@
-import { getLogger } from "@/common/Logger"
-import { isObject } from "@/common/utils"
-import { Zlib } from "unzip"
+import { getLogger } from '@/common/Logger'
+import { isObject } from '@/common/utils'
+import { Zlib } from 'unzip'
 
 export type SoundFileDefinition = {
   file: string
@@ -65,7 +65,7 @@ export async function openZipFile(
 ): Promise<void> {
   const zipBuffer = await zipBlob.arrayBuffer()
   const zipData = new Uint8Array(zipBuffer)
-  const unzip = new Zlib.Unzip(zipData)
+  const unzip = new Zlib.Unzip(zipData, { utf8: true })
   const utf8Decoder = new TextDecoder()
   const manifest: SoundManifest = JSON.parse(utf8Decoder.decode(unzip.decompress(MANIFEST_JSON)))
   log.debug('sound file manifest:', manifest)
