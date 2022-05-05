@@ -1,7 +1,7 @@
 import { Alert, AlertColor, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, InputLabel, Slider, Snackbar, Tooltip } from '@mui/material'
 import { makeStyles } from '@mui/styles'
 import { fetchWithTimeout, isObject } from '@/common/utils'
-import { FC, useState, useCallback, useEffect, ChangeEvent } from 'react'
+import { FC, useState, useCallback, ChangeEvent } from 'react'
 
 function uploadZipAsync(url: string, token: string, zipFile: File): Promise<unknown> {
   return fetchWithTimeout(
