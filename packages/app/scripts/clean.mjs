@@ -1,4 +1,4 @@
-const fs = require('fs');
+import fs from 'node:fs'
 
 ['dist', 'build'].forEach(dir => {
   if (fs.existsSync(dir)) {
