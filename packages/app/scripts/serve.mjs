@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-const http = require('http')
-const fs = require('fs')
+import http from 'node:http'
+import fs from 'node:fs'
 
 const server = http.createServer(function(request, response) {
   const text = request.url.endsWith('/main.js')
