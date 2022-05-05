@@ -54,7 +54,6 @@ function downloadZipAsync(url: string, token: string, setAlert: (msg: AlertMessa
         chunks.push(value)
         downloadSize += value.byteLength
         setAlert({
-          type: 'downloadSound',
           severity: 'info',
           message: `Downloading... ${downloadSize} bytes.`,
         })
