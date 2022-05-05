@@ -1,11 +1,12 @@
-import { Grid, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, Slider } from '@mui/material'
-import makeStyles from '@mui/styles/makeStyles'
+import { FormControl, FormControlLabel, FormGroup, Grid, IconButton, SelectChangeEvent, Switch } from '@mui/material'
+import { makeStyles } from '@mui/styles'
 import { getLogger } from '@/common/Logger'
 import { FC, MouseEvent, useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { isPlaySoundMessage, PlaySoundMessage } from '../types'
 import { useToken } from '../utils/token'
 import { useExistsSounds, useSoundMetadata, usePlaySound } from './hooks'
 import { NoteBlack } from './NoteBlack'
+import { Preferences } from './Preferences'
 
 type Props = {
   url: string
@@ -44,6 +45,9 @@ const useStyles = makeStyles({
     fontSize: 'small',
     opacity: 0.66
   },
+  preferences: {
+    padding: '6px',
+  }
 })
 
 const log = getLogger('sound/SoundPlayer')
@@ -64,8 +68,7 @@ export const SoundPlayer: FC<Props> = ({ url }: Props): JSX.Element => {
   const existsSounds = useExistsSounds(url, token.value, token.payload.room)
   const [width, setWidth] = useState(window.innerWidth)
   const [volume, setVolume] = useState(getNumberOptionValue('volume', 10))
-  const [concurrentPlays, setConcurrentPlays] = useState(getNumberOptionValue('concurrentPlays', 3))
-  const nowPlaysRef = useRef(0)
+  const [prefsShown, setPrefsShown] = useState(false)
   const [sounds] = useSoundMetadata(token.payload.room, existsSounds)
   const playSound = usePlaySound(token.payload.room)
   const style = useStyles()
@@ -93,27 +96,18 @@ export const SoundPlayer: FC<Props> = ({ url }: Props): JSX.Element => {
         log.warn('[messageListener] Receive an unexpected message:', e.data)
         return
       }
-      if (nowPlaysRef.current < concurrentPlays) {
-        nowPlaysRef.current++
-        playSound(e.data.id, volume, () => { nowPlaysRef.current-- })
-      }
+      playSound(e.data.id, volume, () => undefined)
     }
     window.addEventListener('message', messageListener)
 
     return (): void => {
       window.removeEventListener('message', messageListener)
     }
-  }, [volume, playSound, concurrentPlays])
-  const onVolumeChanged = useCallback((_: Event, value: number | number[]): void => {
-    const v = Array.isArray(value) ? value[0] : value
-    setVolume(v)
-    setNumberOptionValue('volume', v)
-  }, [])
-  const onConcurrentPlaysChanged = useCallback((e: SelectChangeEvent<number>): void => {
-    const v = Number(e.target.value)
-    setConcurrentPlays(v)
-    setNumberOptionValue('concurrentPlays', v)
-  }, [])
+  }, [playSound, volume])
+  const onVolumeChanged = useCallback((volume: number): void => {
+    setVolume(volume)
+    setNumberOptionValue('volume', volume)
+  }, [setVolume])
 
   const xs = useMemo((): 12 | 6 | 4 | 3 | 2 => {
     const cols = width <= 250 ? 1
@@ -129,6 +123,9 @@ export const SoundPlayer: FC<Props> = ({ url }: Props): JSX.Element => {
             : 2
   }, [width])
 
+  /*
+    TODO サーバーと通し
+  */
   return (
     <div style={{ width, height: '100%' }}>
       <div className={style.title}>
@@ -136,20 +133,24 @@ export const SoundPlayer: FC<Props> = ({ url }: Props): JSX.Element => {
       </div>
       <div className={style.controls}>
         <div className={style.controlItem}>
-          <InputLabel htmlFor="volume" style={{ paddingLeft: 6, paddingRight: 6 }}>Volume:</InputLabel>
-          <Slider aria-label="Volume" id="volume" value={volume} onChange={onVolumeChanged} max={100} />
+          <FormControl component="fieldset" variant="standard">
+            <FormGroup>
+              <FormControlLabel label="Show preferences" control={
+                <Switch checked={prefsShown} onChange={(_, checked) => {setPrefsShown(checked)}} name="prefs" />
+              }/>
+            </FormGroup>
+          </FormControl>
         </div>
-        <div className={style.controlItem}>
-          <InputLabel id="conc-sounds-label" style={{ paddingLeft: 6, paddingRight: 6, margin: 'auto 0px' }}>Concurrent plays:</InputLabel>
-          <Select
-            labelId="conc-sounds-label"
-            id="conc-sounds"
-            value={concurrentPlays}
-            label="Concurrent plays"
-            onChange={onConcurrentPlaysChanged}
-          >
-            { [0, 1, 2, 3, 5, 8, 13, Infinity].map(n => <MenuItem key={`numOfSound-${n}`} value={n}>{n}</MenuItem> ) }
-          </Select>
+        <div className={[style.controlItem, style.preferences].join(' ')}>
+          {prefsShown &&
+            <Preferences
+              url={url}
+              room={token.payload.room}
+              token={token.value}
+              volume={volume}
+              volumeChanged={onVolumeChanged}
+            />
+          }
         </div>
       </div>
       <div className={style.list}>

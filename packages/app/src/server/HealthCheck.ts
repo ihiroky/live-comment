@@ -30,9 +30,8 @@ function checkPingPong(client: ClientSession): void {
   client.ping()
 }
 
-function receiveHeartbeat(this: WebSocket, data: Buffer): void {
+function receiveHeartbeat(this: WebSocket): void {
   const self = this as ClientSession
-  log.debug('[receiveHeartbeat] From', self.id, data.toString())
   self.alive = true
   self.lastPongTime = Date.now()
 }
