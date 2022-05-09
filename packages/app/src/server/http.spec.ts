@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import { AcnMessage, ErrorMessage, isAcnOkMessage } from '@/common/Message'
 import { assertNotNullable } from '@/common/assert'
 import { LogLevels } from '@/common/Logger'
