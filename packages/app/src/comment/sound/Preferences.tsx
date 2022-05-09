@@ -37,10 +37,10 @@ function downloadZipAsync(url: string, token: string, setAlert: (msg: AlertMessa
     3000
   ).then(async (res: Response): Promise<Blob> => {
     if (!res.ok) {
-      throw new Error('Failed to download sound file.')
+      throw new Error(`Unexpected response: ${res.status}`)
     }
     if (!res.body) {
-      throw new Error('Empty response.')
+      throw new Error('Empty response body.')
     }
     const reader = res.body.getReader()
     const chunks: Uint8Array[] = []
@@ -70,12 +70,13 @@ function saveAsZipFile(room: string): (zipBlob: Blob) => void {
     const a = document.createElement('a')
     a.download = room + '.zip'
     a.href = url
+    a.dataset.testid = 'download-link'
     document.body.appendChild(a)
     a.click()
     window.setTimeout(() => {
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-    }, 0)
+    }, 100)
   }
 }
 
@@ -87,13 +88,13 @@ type AlertMessage = {
 /*
  * uploadStatus transition:
  *
- * selecting -[click upload]-> confirming -+-[click confirm]-> uploading -+-[finish upload]-> done
- *     ^                                   v                              |                    |
- *     +---------------------------- [click cancel]                       v                [timeout]
- *     +-----------------------------------------------------------[upload error]              |
- *     +---------------------------------------------------------------------------------------+
+ * selecting -[click upload]-> confirming -+-[click confirm]-> uploading -+-[finish upload]
+ *     ^                                   v                              |         |
+ *     +---------------------------- [click cancel]                       v         |
+ *     +-----------------------------------------------------------[upload error]   |
+ *     +----------------------------------------------------------------------------+
  */
-type UploadStatus = 'selecting' | 'confirming' | 'uploading' | 'done'
+type UploadStatus = 'selecting' | 'confirming' | 'uploading'
 
 type Props = {
   url: string
@@ -124,7 +125,7 @@ export const Preferences: FC<Props> = ({url, room, token, volume, volumeChanged}
       .catch((e: unknown): void => {
         setAlert({
           severity: 'error',
-          message: 'Failed to download sound file' + (e ? ': ' + String(e) : '')
+          message: e ? String(e) : 'Failed to download sound file.',
         })
       })
   }, [url, room, token])
@@ -177,7 +178,7 @@ export const Preferences: FC<Props> = ({url, room, token, volume, volumeChanged}
       .catch ((e: unknown): void => {
         setAlert({
           severity: 'error',
-          message: 'Failed to upload sound file' + (e ? ': ' + String(e) : '')
+          message: e ? String(e) : 'Failed to upload sound file.',
         })
       }).then((): void => {
         setUploadStatus('selecting')
@@ -218,9 +219,6 @@ export const Preferences: FC<Props> = ({url, room, token, volume, volumeChanged}
                 </Tooltip>
               )}
               <Snackbar open={alert !== null} autoHideDuration={5000} onClose={() => {
-                if (uploadStatus === 'done') {
-                  setUploadStatus('selecting')
-                }
                 setAlert(null)
               }}>
                 {alert ? <Alert severity={alert.severity}>{alert.message}</Alert> : undefined}
@@ -250,7 +248,7 @@ function UploadAlertDialog({ open, onCancelled, onConfirmed }: UploadAlertDialog
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onCancelled} color="primary" autoFocus>
+        <Button onClick={onCancelled} color="secondary" autoFocus>
           Cancel
         </Button>
         <Button onClick={onConfirmed} color="primary">

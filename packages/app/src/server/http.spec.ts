@@ -8,6 +8,7 @@ import { Argv } from './argv'
 import { Configuration, loadConfigAsync } from './Configuration'
 import { createApp } from './http'
 import { sign } from 'jsonwebtoken'
+import crypto from 'node:crypto'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
@@ -196,7 +197,8 @@ test('No sound file returns 404', async () => {
 })
 
 test('Get sound file', async () => {
-  const jwt = sign({ room: 'test' }, config.jwtPrivateKey, { expiresIn: '10s', algorithm: 'ES256' })
+  const room = 'test'
+  const jwt = sign({ room }, config.jwtPrivateKey, { expiresIn: '10s', algorithm: 'ES256' })
   const soundFilePath = path.join(soundDirPath, 'test.zip')
   fs.writeFileSync(soundFilePath, 'content')
   const res = await request(app)
@@ -206,7 +208,7 @@ test('Get sound file', async () => {
 
   expect(res.statusCode).toBe(200)
   expect(res.get('content-type')).toBe('application/zip')
-  expect(res.get('content-disposition')).toBe('attachment; filename="sounds.zip"')
+  expect(res.get('content-disposition')).toBe(`attachment; filename="${room}-sounds.zip"`)
   expect(res.text).toBe('content')
 })
 
@@ -232,4 +234,67 @@ test('Get checksum of sound file', async () => {
 
   expect(res.statusCode).toBe(200)
   expect(res.text).toBe('content')
+})
+
+test('Post sound file', async () => {
+  const room = 'test'
+  const jwt = sign({ room }, config.jwtPrivateKey, { expiresIn: '10s', algorithm: 'ES256' })
+  const soundFilePath = path.join(soundDirPath, 'test.zip')
+  const zipToUpload = fs.readFileSync(path.resolve(__dirname, '../../config/sounds/test.zip'))
+
+  const res = await request(app)
+    .post('/sound/file')
+    .type('application/zip')
+    .set('Authorization', `Bearer ${jwt}`)
+    .send(zipToUpload)
+
+  expect(res.statusCode).toBe(200)
+  expect(res.text).toBe('{}')
+  expect(fs.existsSync(soundFilePath)).toBe(true)
+  const actualMd5 = crypto.createHash('md5').update(fs.readFileSync(soundFilePath)).digest('hex')
+  const expectedMd5 = crypto.createHash('md5').update(zipToUpload).digest('hex')
+  expect(actualMd5).toBe(expectedMd5)
+})
+
+test('Post no application/zip', async () => {
+  const room = 'test'
+  const jwt = sign({ room }, config.jwtPrivateKey, { expiresIn: '10s', algorithm: 'ES256' })
+  const soundFilePath = path.join(soundDirPath, 'test.zip')
+
+  const res = await request(app)
+    .post('/sound/file')
+    .set('Authorization', `Bearer ${jwt}`)
+    .send(Buffer.from([]))
+
+  expect(res.statusCode).toBe(400)
+  expect(JSON.parse(res.text)).toEqual({
+    type: 'error',
+    error: 'UNEXPECTED_FORMAT',
+    message: 'Unexpected message.'
+  })
+  expect(fs.existsSync(soundFilePath)).toBe(false)
+})
+
+test('Post zip which contains invalid content', async () => {
+  const room = 'test'
+  const jwt = sign({ room }, config.jwtPrivateKey, { expiresIn: '10s', algorithm: 'ES256' })
+  const soundFilePath = path.join(soundDirPath, 'test.zip')
+  const zipToUpload = fs.readFileSync(path.resolve(__dirname, '../../config/sounds/test-invalid.zip'))
+
+  const res = await request(app)
+    .post('/sound/file')
+    .type('application/zip')
+    .set('Authorization', `Bearer ${jwt}`)
+    .send(zipToUpload)
+
+  expect(res.statusCode).toBe(400)
+  expect(JSON.parse(res.text)).toEqual({
+    type: 'error',
+    error: 'UNEXPECTED_FORMAT',
+    message: JSON.stringify([
+      '"Quiz-Question02-1.mp3" is not defined in the manifest.',
+      'No sound file found for "Quiz-Wrong_Buzzer02-1.mp3".',
+    ])
+  })
+  expect(fs.existsSync(soundFilePath)).toBe(false)
 })

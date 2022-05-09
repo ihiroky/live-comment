@@ -8,12 +8,6 @@ import { sign } from 'jsonwebtoken'
 
 jest.mock('./hooks')
 
-function waitAsync(ms: number): Promise<void> {
-  return new Promise<void>((resolve: () => void): void => {
-    setTimeout(resolve, ms)
-  })
-}
-
 afterEach(() => {
   window.localStorage.clear()
 })
@@ -30,70 +24,28 @@ test('Page title', () => {
   expect(title.textContent).toBe('Ding Dong Ding! 🔔')
 })
 
-test('Volume is changed if move slider', async () => {
-  const playSoundMock = jest.fn()
-  mocked(usePlaySound).mockReturnValue(playSoundMock)
+test('Show/hide preferences if switch toggles', async () => {
   const token = sign({ room: 'room' }, 'hoge')
   window.localStorage.setItem('token', token)
-  mocked(useSoundMetadata).mockReturnValue([
-    { id0: { id: 'id0', displayName: 'dn0', command: [] }},
-    {}
-  ])
+  mocked(usePlaySound).mockReturnValue(jest.fn())
+  mocked(useSoundMetadata).mockReturnValue([])
 
-  render(<SoundPlayer url="https://localhost/" />)
+  render(<SoundPlayer url="https://localhost" />)
 
-  const slider = screen.getByLabelText('Volume')
-  // (150, 150) may be the position slider value is 100.
-  userEvent.click(slider, { clientX: 150, clientY: 150 })
-  // Receive message to play sound
-  const message: PlaySoundMessage = {
-    type: 'app',
-    cmd: 'sound/play',
-    id: 'id',
-  }
-  // event.origin gets empty if use window.postMessage().
-  // So use MessageEvent/dispatchEvent to avoid it.
-  const e = new MessageEvent('message', { data: message, origin: window.location.origin })
-  window.dispatchEvent(e)
+  const toggle = screen.getByLabelText('Show preferences')
+  userEvent.click(toggle)
+  await waitFor(() => {
+    screen.getByText(/Volume:/)
+    screen.getByText(/Sound:/)
+  })
 
-  await waitFor(() => expect(playSoundMock).toBeCalledWith('id', 100, expect.any(Function)))
-})
-
-test('Change max number of sound being played concurrently', async () => {
-  const playSoundMock = jest.fn()
-  mocked(usePlaySound).mockReturnValue(playSoundMock)
-  const token = sign({ room: 'room' }, 'hoge')
-  window.localStorage.setItem('token', token)
-  mocked(useSoundMetadata).mockReturnValue([
-    { id0: { id: 'id0', displayName: 'dn0', command: [] }},
-    {}
-  ])
-
-  render(<SoundPlayer url="https://localhost/" />)
-
-  // Select '1' in MUI Select
-  const select = screen.getByLabelText('Concurrent plays:')
-  userEvent.type(select, '{selectall}{enter}')
-  userEvent.click(screen.getByText('1'))
-  await waitAsync(50)
-
-  // Receive message to play sound
-  const message: PlaySoundMessage = {
-    type: 'app',
-    cmd: 'sound/play',
-    id: 'id',
-  }
-  // event.origin gets empty if use window.postMessage().
-  // So use MessageEvent/dispatchEvent to avoid it.
-  const e = new MessageEvent('message', { data: message, origin: window.location.origin })
-  // Send twice.
-  window.dispatchEvent(e)
-  window.dispatchEvent(e)
-
-  // But playSound is called once.
-  await waitAsync(50)
-  expect(playSoundMock).toBeCalledWith('id', 10, expect.any(Function))
-  expect(playSoundMock).toBeCalledTimes(1)
+  userEvent.click(toggle)
+  await waitFor(() => {
+    const v = screen.queryByText(/Volume:/)
+    expect(v).toBeNull()
+    const s = screen.queryByText(/Sound:/)
+    expect(s).toBeNull()
+  })
 })
 
 test('Send message to play sound if icon is clicked', async () => {

@@ -5,7 +5,7 @@ module.exports = {
   "moduleNameMapper": {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  "testEnvironment": "jsdom",
+  "testEnvironment": "node",
   "testMatch": [
     "**/__tests__/**/*.+(ts|tsx|js)",
     "**/?(*.)+(spec|test).+(ts|tsx|js)"

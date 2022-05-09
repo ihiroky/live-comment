@@ -128,7 +128,7 @@ async function sendSoundFile(res: Response, c: Configuration): Promise<void> {
 async function recvSoundFile(req: Request, res: Response, c: Configuration): Promise<void> {
   const validationResult = validateSoundFile(req)
   if (validationResult) {
-    res.status(validationResult.status).json(validationResult.body)
+    res.status(validationResult.status).json(validationResult.error)
     return
   }
 
@@ -138,6 +138,8 @@ async function recvSoundFile(req: Request, res: Response, c: Configuration): Pro
     await fsp.writeFile(tmpMd5Path, chekcksum)
     const tmpZipPath = getFilePath(res, c, 'zip.tmp')
     await fsp.writeFile(tmpZipPath, req.body)
+
+    // TODO backup old zip file
 
     const zipPath = getFilePath(res, c, 'zip')
     fs.rename(tmpZipPath, zipPath, (err: unknown): void => {
@@ -166,13 +168,13 @@ async function recvSoundFile(req: Request, res: Response, c: Configuration): Pro
 
 function validateSoundFile(req: Request): {
   status: number
-  body: ErrorMessage
+  error: ErrorMessage
 } | null {
   if (!(req.body instanceof Buffer)) {
     log.debug('[validateSoundFile]', req.body)
     return {
       status: 400,
-      body:{
+      error:{
         type: 'error',
         error: 'UNEXPECTED_FORMAT',
         message: 'Unexpected message.'
@@ -187,11 +189,11 @@ function validateSoundFile(req: Request): {
       Uint8Array.from(req.body),
       () => { return },
       (fileName: string) => {
-        errors.push(`"${fileName}" is not defined in the manifest.)`)
+        errors.push(`"${fileName}" is not defined in the manifest.`)
       },
       (unused: SoundFileDefinition[]) => {
         const fileNamesCsv = unused.map(e => e.file).join(', ')
-        errors.push(`No sound file found for ${fileNamesCsv}`)
+        errors.push(`No sound file found for "${fileNamesCsv}".`)
       }
     )
     if (errors.length > 0) {
@@ -202,7 +204,7 @@ function validateSoundFile(req: Request): {
       }
       return {
         status: 400,
-        body,
+        error: body,
       }
     }
   } catch (e: unknown) {
@@ -215,7 +217,7 @@ function validateSoundFile(req: Request): {
     }
     return {
       status: 400,
-      body,
+      error: body,
     }
   }
 
