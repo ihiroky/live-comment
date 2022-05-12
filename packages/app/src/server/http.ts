@@ -11,7 +11,7 @@ import { sign, verify } from './jwt'
 import { JwtPayload, TokenExpiredError } from 'jsonwebtoken'
 import { openZipFile, SoundFileDefinition } from '@/sound/file'
 
-
+// TODO .zip.md5 -> .md5
 
 const log = getLogger('http')
 
@@ -86,7 +86,7 @@ function login(
   res.status(401).json(error)
 }
 
-async function logout(_: Request, res: Response): Promise<void> {
+function logout(_: Request, res: Response): void {
   res.status(200).json({})
 }
 
@@ -133,26 +133,10 @@ async function recvSoundFile(req: Request, res: Response, c: Configuration): Pro
   }
 
   try {
-    const chekcksum = createHash('md5').update(req.body).digest('hex')
-    const tmpMd5Path = getFilePath(res, c, 'zip.md5.tmp')
-    await fsp.writeFile(tmpMd5Path, chekcksum)
-    const tmpZipPath = getFilePath(res, c, 'zip.tmp')
-    await fsp.writeFile(tmpZipPath, req.body)
-
-    // TODO backup old zip file
-
     const zipPath = getFilePath(res, c, 'zip')
-    fs.rename(tmpZipPath, zipPath, (err: unknown): void => {
-      if (err) {
-        log.error('[recvSoundFile]', err)
-      }
-    })
-    const md5Path = getFilePath(res, c, 'zip.md5')
-    fs.rename(tmpMd5Path, md5Path, (err: unknown): void => {
-      if (err) {
-        log.error('[recvSoundFile]', err)
-      }
-    })
+    const md5Path = getFilePath(res, c, 'md5')
+    const room = res.locals.jwtPayload.room
+    await saveSoundFile(zipPath, md5Path, req.body, room, c.soundDirPath)
     res.status(200).json({})
   } catch (e: unknown) {
     const detail = (typeof e === 'string') ? e :
@@ -224,9 +208,53 @@ function validateSoundFile(req: Request): {
   return null
 }
 
+// Export for unit test.
+export async function saveSoundFile(
+  zipPath: string,
+  md5Path: string,
+  zipBuffer: Buffer,
+  room: string,
+  soundDirPath: string
+): Promise<void> {
+  const chekcksum = createHash('md5').update(zipBuffer).digest('hex')
+  const tmpMd5Path = `${md5Path}.tmp`
+  await fsp.writeFile(tmpMd5Path, chekcksum)
+  const tmpZipPath = `${zipPath}.tmp`
+  await fsp.writeFile(tmpZipPath, zipBuffer)
+
+  // Create the last backup file.
+  const zipStat = await fsp.stat(zipPath).catch(() => null)
+  if (zipStat !== null) {
+    const timeStr = zipStat.mtime.toISOString().substring(0, 23).replace(/[-:.]/g, '').replace('T', '-')
+    await fsp.copyFile(zipPath, `${zipPath}.${timeStr}`)
+    const md5Stat = await fsp.stat(md5Path).catch(() => null)
+    if (md5Stat !== null) {
+      // Use zip mtime as the md5 mtime.
+      await fsp.copyFile(md5Path, `${md5Path}.${timeStr}`)
+    }
+  }
+
+  // Delete old backup files.
+  const dirents = await fsp.readdir(soundDirPath, {withFileTypes: true})
+  const zipFile = `${room}.zip`
+  const zipBackups = dirents
+    .filter(d => d.isFile() && d.name.startsWith(`${zipFile}.`) && !d.name.endsWith('.tmp'))
+    .sort((a, b) => a.name.localeCompare(b.name))
+  const deleteCount = zipBackups.length - 3 // Keep 3 old files.
+  for (let i = 0; i < deleteCount; i++) {
+    const zipPathToRm = zipBackups[i].name
+    const md5PathToRm = zipPathToRm.replace('.zip', '.md5')
+    await fsp.unlink(path.join(soundDirPath, zipPathToRm))
+    await fsp.unlink(path.join(soundDirPath, md5PathToRm))
+  }
+
+  await fsp.rename(tmpZipPath, zipPath)
+  await fsp.rename(tmpMd5Path, md5Path)
+}
+
 async function sendSoundFileChecksum(res: Response, c: Configuration): Promise<void> {
   log.debug('[sendSoundFileChecksum]')
-  const filePath = await ensureFile(res, c, 'zip.md5')
+  const filePath = await ensureFile(res, c, 'md5')
   if (!filePath) {
     res.status(404).json({})
     return
@@ -244,15 +272,15 @@ function createRouter(configuration: Configuration): Router {
   router.get('/logout', function(req: Request, res: Response): void {
     logout(req, res)
   })
-  router.get('/sound/file', function(req: Request, res: Response): void {
-    sendSoundFile(res, configuration)
+  router.get('/sound/file', function(req: Request, res: Response): Promise<void> {
+    return sendSoundFile(res, configuration)
   })
-  router.post('/sound/file', function(req: Request, res: Response): void {
-    recvSoundFile(req, res, configuration)
+  router.post('/sound/file', function(req: Request, res: Response): Promise<void> {
+    return recvSoundFile(req, res, configuration)
   })
-  router.get('/sound/checksum', function(req: Request, res: Response): void {
+  router.get('/sound/checksum', function(req: Request, res: Response): Promise<void> {
     log.debug('GET /sound/checksum')
-    sendSoundFileChecksum(res, configuration)
+    return sendSoundFileChecksum(res, configuration)
   })
   return router
 }

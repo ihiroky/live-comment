@@ -9,7 +9,7 @@ import { Express } from 'express'
 import request from 'supertest'
 import { Argv } from './argv'
 import { Configuration, loadConfigAsync } from './Configuration'
-import { createApp } from './http'
+import { createApp, saveSoundFile } from './http'
 import { sign } from 'jsonwebtoken'
 import crypto from 'node:crypto'
 import fs from 'fs'
@@ -228,7 +228,7 @@ test('No checksum file', async () => {
 
 test('Get checksum of sound file', async () => {
   const jwt = sign({ room: 'test' }, config.jwtPrivateKey, { expiresIn: '10s', algorithm: 'ES256' })
-  const soundFilePath = path.join(soundDirPath, 'test.zip.md5')
+  const soundFilePath = path.join(soundDirPath, 'test.md5')
   fs.writeFileSync(soundFilePath, 'content')
   const res = await request(app)
     .get('/sound/checksum')
@@ -300,4 +300,39 @@ test('Post zip which contains invalid content', async () => {
     ])
   })
   expect(fs.existsSync(soundFilePath)).toBe(false)
+})
+
+test('Post zip file is backuped past 3 generations', async () => {
+  const room = 'test'
+  const zipPath = `${soundDirPath}/test.zip`
+  const md5Path = `${soundDirPath}/test.md5`
+  const zipToUpload = fs.readFileSync(path.resolve(__dirname, '../../config/sounds/test.zip'))
+
+  const assertFiles = (zipFiles: string[], md5Files: string[]) => {
+    expect(zipFiles.includes('test.zip')).toBe(true)
+    expect(zipFiles.filter(file => file.startsWith('test.zip.')).length).toBe(3)
+    expect(zipFiles.length).toBe(4)
+    expect(md5Files.includes('test.md5')).toBe(true)
+    expect(md5Files.filter(file => file.startsWith('test.md5.')).length).toBe(3)
+    expect(md5Files.length).toBe(4)
+  }
+
+  // Save latest and 3 backup files.
+  for (let i = 0; i < 4; i++) {
+    await saveSoundFile(zipPath, md5Path, zipToUpload, room, soundDirPath)
+    await new Promise(resolve => setTimeout(resolve, 50)) // Ensure different timestamps.
+  }
+
+  const zipFiles = fs.readdirSync(soundDirPath).filter(file => file.includes('.zip'))
+  const md5Files = fs.readdirSync(soundDirPath).filter(file => file.includes('.md5'))
+  assertFiles(zipFiles, md5Files)
+
+  // Rotate backup files.
+  await saveSoundFile(zipPath, md5Path, zipToUpload, room, soundDirPath)
+
+  const zipFilesAfterRotate = fs.readdirSync(soundDirPath).filter(file => file.includes('.zip'))
+  const md5FilesAfterRotate = fs.readdirSync(soundDirPath).filter(file => file.includes('.md5'))
+  assertFiles(zipFilesAfterRotate, md5FilesAfterRotate)
+  expect(zipFilesAfterRotate).not.toEqual(zipFiles)
+  expect(md5FilesAfterRotate).not.toEqual(md5Files)
 })
