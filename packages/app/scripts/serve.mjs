@@ -5,14 +5,19 @@ import http from 'node:http'
 import fs from 'node:fs'
 
 const server = http.createServer(function(request, response) {
-  const text = request.url.endsWith('/main.js')
-    ? fs.readFileSync('main.js')
-    : fs.readFileSync('index.html')
-  response.writeHead(200, {
-    'Content-Type': 'text/html',
-    'Feature-Policy': "autoplay 'self'"
-  })
-  response.end(text)
+  try {
+    const text = request.url.endsWith('/main.js')
+      ? fs.readFileSync('main.js')
+      : fs.readFileSync('index.html')
+    response.writeHead(200, {
+      'Content-Type': 'text/html',
+      'Feature-Policy': "autoplay 'self'"
+    })
+    response.end(text)
+  } catch (e) {
+    response.writeHead(404)
+    response.end(`${request.url} is not found: ${String(e)}}`)
+  }
 })
 
 fs.mkdirSync('dist/bundle/comment/', { recursive: true }, err => { if (err) console.error(err) })
