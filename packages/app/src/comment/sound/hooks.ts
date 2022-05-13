@@ -86,14 +86,14 @@ async function storeSounds(url: string, token: string, room: string, checksum: s
   if (zipBlob === null) {
     throw new Error('Failed to get sound file.')
   }
+  const zipBuffer = await zipBlob.arrayBuffer()
 
-  await update(room, ['soundMetadata', 'sound'], (op: StoreOperation): Promise<void> => {
+  await update(room, ['soundMetadata', 'sound'], (op: StoreOperation): void => {
     op.clear('soundMetadata')
     op.clear('sound')
-
     op.put('soundMetadata', CHECKSUM, checksum)
-    return openZipFile(
-      zipBlob,
+    openZipFile(
+      new Uint8Array(zipBuffer),
       (name: string, def: SoundFileDefinition, data: Uint8Array): void => {
         const displayName = def.displayName ?? name
         const command = def.command ?? null

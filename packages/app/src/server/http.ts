@@ -1,13 +1,17 @@
+import path from 'path'
 import express, { Express, NextFunction, Request, Response, Router } from 'express'
 import cors from 'cors'
-import { createReadStream } from 'fs'
-import { stat } from 'fs/promises'
+import fs from 'node:fs'
+import fsp from 'node:fs/promises'
+import { createHash } from 'node:crypto'
 import { AcnMessage, AcnOkMessage,  ErrorMessage, isAcnMessage, } from '@/common/Message'
 import { getLogger } from '@/common/Logger'
 import { Configuration } from './Configuration'
 import { sign, verify } from './jwt'
 import { JwtPayload, TokenExpiredError } from 'jsonwebtoken'
-import path from 'path'
+import { openZipFile, SoundFileDefinition } from '@/sound/file'
+
+// TODO .zip.md5 -> .md5
 
 const log = getLogger('http')
 
@@ -82,7 +86,7 @@ function login(
   res.status(401).json(error)
 }
 
-async function logout(_: Request, res: Response): Promise<void> {
+function logout(_: Request, res: Response): void {
   res.status(200).json({})
 }
 
@@ -97,7 +101,7 @@ async function ensureFile(res: Response, c: Configuration, ext: string): Promise
   }
   const filePath = getFilePath(res, c, ext)
   try {
-    const s = await stat(filePath)
+    const s = await fsp.stat(filePath)
     if (!s.isFile()) {
       return null
     }
@@ -114,22 +118,150 @@ async function sendSoundFile(res: Response, c: Configuration): Promise<void> {
     return
   }
 
-  log.debug('Load sound zip file.')
+  const room = res.locals.jwtPayload.room
+  log.debug('Load sound zip file for ' + room)
   res.setHeader('Content-Type', 'application/zip')
-  res.setHeader('Content-Disposition', 'attachment; filename="sounds.zip"')
-  createReadStream(filePath).pipe(res)
+  res.setHeader('Content-Disposition', `attachment; filename="${room}-sounds.zip"`)
+  fs.createReadStream(filePath).pipe(res)
+}
+
+async function recvSoundFile(req: Request, res: Response, c: Configuration): Promise<void> {
+  const validationResult = validateSoundFile(req)
+  if (validationResult) {
+    res.status(validationResult.status).json(validationResult.error)
+    return
+  }
+
+  try {
+    const zipPath = getFilePath(res, c, 'zip')
+    const md5Path = getFilePath(res, c, 'md5')
+    const room = res.locals.jwtPayload.room
+    await saveSoundFile(zipPath, md5Path, req.body, room, c.soundDirPath)
+    res.status(200).json({})
+  } catch (e: unknown) {
+    const detail = (typeof e === 'string') ? e :
+      (e instanceof Error) ? e.toString() : 'Unexpected error'
+    const msg: ErrorMessage = {
+      type: 'error',
+      error: 'ERROR',
+      message: detail,
+    }
+    res.status(500).json(msg)
+  }
+}
+
+function validateSoundFile(req: Request): {
+  status: number
+  error: ErrorMessage
+} | null {
+  if (!(req.body instanceof Buffer)) {
+    log.debug('[validateSoundFile]', req.body)
+    return {
+      status: 400,
+      error:{
+        type: 'error',
+        error: 'UNEXPECTED_FORMAT',
+        message: 'Unexpected message.'
+      }
+    }
+  }
+
+  // TODO Worker
+  try {
+    const errors: string[] = []
+    openZipFile(
+      Uint8Array.from(req.body),
+      () => { return },
+      (fileName: string) => {
+        errors.push(`"${fileName}" is not defined in the manifest.`)
+      },
+      (unused: SoundFileDefinition[]) => {
+        const fileNamesCsv = unused.map(e => e.file).join(', ')
+        errors.push(`No sound file found for "${fileNamesCsv}".`)
+      }
+    )
+    if (errors.length > 0) {
+      const body: ErrorMessage = {
+        type: 'error',
+        error: 'UNEXPECTED_FORMAT',
+        message: JSON.stringify(errors),
+      }
+      return {
+        status: 400,
+        error: body,
+      }
+    }
+  } catch (e: unknown) {
+    const message = (typeof e === 'string') ? e :
+      (e instanceof Error) ? e.toString() : 'Unexpected error'
+    const body: ErrorMessage = {
+      type: 'error',
+      error: 'UNEXPECTED_FORMAT',
+      message,
+    }
+    return {
+      status: 400,
+      error: body,
+    }
+  }
+
+  return null
+}
+
+// Export for unit test.
+export async function saveSoundFile(
+  zipPath: string,
+  md5Path: string,
+  zipBuffer: Buffer,
+  room: string,
+  soundDirPath: string
+): Promise<void> {
+  const chekcksum = createHash('md5').update(zipBuffer).digest('hex')
+  const tmpMd5Path = `${md5Path}.tmp`
+  await fsp.writeFile(tmpMd5Path, chekcksum)
+  const tmpZipPath = `${zipPath}.tmp`
+  await fsp.writeFile(tmpZipPath, zipBuffer)
+
+  // Create the last backup file.
+  const zipStat = await fsp.stat(zipPath).catch(() => null)
+  if (zipStat !== null) {
+    const timeStr = zipStat.mtime.toISOString().substring(0, 23).replace(/[-:.]/g, '').replace('T', '-')
+    await fsp.copyFile(zipPath, `${zipPath}.${timeStr}`)
+    const md5Stat = await fsp.stat(md5Path).catch(() => null)
+    if (md5Stat !== null) {
+      // Use zip mtime as the md5 mtime.
+      await fsp.copyFile(md5Path, `${md5Path}.${timeStr}`)
+    }
+  }
+
+  // Delete old backup files.
+  const dirents = await fsp.readdir(soundDirPath, {withFileTypes: true})
+  const zipFile = `${room}.zip`
+  const zipBackups = dirents
+    .filter(d => d.isFile() && d.name.startsWith(`${zipFile}.`) && !d.name.endsWith('.tmp'))
+    .sort((a, b) => a.name.localeCompare(b.name))
+  const deleteCount = zipBackups.length - 3 // Keep 3 old files.
+  for (let i = 0; i < deleteCount; i++) {
+    const zipPathToRm = zipBackups[i].name
+    const md5PathToRm = zipPathToRm.replace('.zip', '.md5')
+    await fsp.unlink(path.join(soundDirPath, zipPathToRm))
+    await fsp.unlink(path.join(soundDirPath, md5PathToRm))
+  }
+
+  await fsp.rename(tmpZipPath, zipPath)
+  await fsp.rename(tmpMd5Path, md5Path)
 }
 
 async function sendSoundFileChecksum(res: Response, c: Configuration): Promise<void> {
   log.debug('[sendSoundFileChecksum]')
-  const filePath = await ensureFile(res, c, 'zip.md5')
+  const filePath = await ensureFile(res, c, 'md5')
   if (!filePath) {
     res.status(404).json({})
     return
   }
 
   log.debug('checksum.')
-  createReadStream(filePath).pipe(res)
+  fs.createReadStream(filePath).pipe(res)
 }
 
 function createRouter(configuration: Configuration): Router {
@@ -140,13 +272,15 @@ function createRouter(configuration: Configuration): Router {
   router.get('/logout', function(req: Request, res: Response): void {
     logout(req, res)
   })
-  router.get('/sound/file', function(req: Request, res: Response): void {
-    log.debug('GET /sound/file')
-    sendSoundFile(res, configuration)
+  router.get('/sound/file', function(req: Request, res: Response): Promise<void> {
+    return sendSoundFile(res, configuration)
   })
-  router.get('/sound/checksum', function(req: Request, res: Response): void {
+  router.post('/sound/file', function(req: Request, res: Response): Promise<void> {
+    return recvSoundFile(req, res, configuration)
+  })
+  router.get('/sound/checksum', function(req: Request, res: Response): Promise<void> {
     log.debug('GET /sound/checksum')
-    sendSoundFileChecksum(res, configuration)
+    return sendSoundFileChecksum(res, configuration)
   })
   return router
 }
@@ -192,11 +326,12 @@ export function createApp(configuration: Configuration): Express {
   const app = express()
   const acnAznMiddleware = acnAznMiddlewareBase.bind(null, configuration)
   const corsMiddleware = cors({
-    origin: [/http:\/\/\w+\.live-comment.ga$/, 'http://localhost:18080']
+    origin: [/https:\/\/\w+\.live-comment.ga$/, 'http://localhost:18080']
   })
 
   app.use(express.json())
-  app.use(express.raw({ limit: '3mb', type: 'application/zip' }))
+  // TODO Limit should be configurable
+  app.use(express.raw({ limit: '5mb', type: 'application/zip' }))
   app.use(corsMiddleware)
   app.use(acnAznMiddleware)
   const router = createRouter(configuration)

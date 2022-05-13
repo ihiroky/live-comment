@@ -100,7 +100,6 @@ export class Configuration {
     try {
       const config = await loadConfigAsync(this.path, this.lastUpdated)
       if (config.content === null) {
-        log.debug('[reloadIfUpdatedAsync] No update detected.')
         return
       }
 

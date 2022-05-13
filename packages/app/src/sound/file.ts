@@ -1,4 +1,3 @@
-import { getLogger } from '@/common/Logger'
 import { isObject } from '@/common/utils'
 import { Zlib } from 'unzip'
 
@@ -27,7 +26,6 @@ export type SoundMetadata = {
 
 const MANIFEST_JSON = 'manifest.json'
 const ACCEPTABLE_SUFFIX: ReadonlyArray<string> = ['.mp3', '.wav']
-const log = getLogger('sound/file')
 
 export function normalizeSoundFileDefinition(def: SoundManifest['files'][number]): SoundFileDefinition {
   if (!Array.isArray(def)) {
@@ -37,10 +35,10 @@ export function normalizeSoundFileDefinition(def: SoundManifest['files'][number]
     if (isObject(def) && typeof def.file === 'string') {
       return def
     }
-    throw new Error(`Unexpected format: ${def}`)
+    throw new Error(`Unexpected format, must be string or { file: string, ... }: ${JSON.stringify(def)}`)
   }
   if (def.length !== 1 && def.length !== 2 && def.length !== 3) {
-    throw new Error(`Unexpected format: ${def}`)
+    throw new Error(`Unexpected format, must be array of its length 1, 2 or 3: ${JSON.stringify(def)}`)
   }
   switch (def.length) {
     case 1: return { file: def[0] }
@@ -58,17 +56,18 @@ function trimAcceptableSuffix(fileName: string): string | null {
   return null
 }
 
-export async function openZipFile(
-  zipBlob: Blob,
+export function openZipFile(
+  zipData: Uint8Array,
   entryCallback: (name: string, def: SoundFileDefinition, data: Uint8Array) => void,
-  noEntryCallback?: (name: string, fileName: string, data: Uint8Array) => void,
-): Promise<void> {
-  const zipBuffer = await zipBlob.arrayBuffer()
-  const zipData = new Uint8Array(zipBuffer)
+  noEntryCallback?: (fileName: string, data: Uint8Array) => void,
+  unusedDefinitionCallback?: (unused: SoundFileDefinition[]) => void,
+): void {
   const unzip = new Zlib.Unzip(zipData, { utf8: true })
   const utf8Decoder = new TextDecoder()
   const manifest: SoundManifest = JSON.parse(utf8Decoder.decode(unzip.decompress(MANIFEST_JSON)))
-  log.debug('sound file manifest:', manifest)
+  if (!Array.isArray(manifest.files)) {
+    throw new Error('The `files` property is not array type.')
+  }
   const manifestMap = new Map(
     manifest.files
       .map(normalizeSoundFileDefinition)
@@ -86,8 +85,12 @@ export async function openZipFile(
     const def = manifestMap.get(fileName)
     if (def) {
       entryCallback(name, def, data)
+      manifestMap.delete(fileName)
     } else if (noEntryCallback) {
-      noEntryCallback(name, fileName, data)
+      noEntryCallback(fileName, data)
     }
+  }
+  if (unusedDefinitionCallback && manifestMap.size > 0) {
+    unusedDefinitionCallback(Array.from(manifestMap.values()))
   }
 }

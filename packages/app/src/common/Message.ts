@@ -3,6 +3,7 @@ import { isObject } from './utils'
 const Errors = [
   'ACN_FAILED',
   'TOO_MANY_PENDING_MESSAGES',
+  'UNEXPECTED_FORMAT',
   'ERROR',
 ] as const
 

@@ -9,10 +9,10 @@ import { LogLevels, setDefaultLogLevel } from '@/common/Logger'
 
 const wsUrl = process.env.NODE_ENV === 'production'
   ? `wss://${window.location.hostname}/app`
-  : `ws://localhost:8080/`
+  : `ws://localhost:8080`
 const apiUrl = process.env.NODE_ENV === 'production'
   ? `https://${window.location.hostname}/api`
-  : `http://localhost:9080/`
+  : `http://localhost:9080`
 if (process.env.NODE_ENV !== 'production') {
   setDefaultLogLevel(LogLevels.DEBUG)
 }
