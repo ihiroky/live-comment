@@ -131,7 +131,7 @@ export const App: FC<AppProps> = (props: AppProps): JSX.Element => {
   // TODO Divide state
   const autoScroll = getBooleanOptionValue('autoScroll', true)
   const sendWithCtrlEnter = getBooleanOptionValue('sendWithCtrlEnter', true)
-  const openSoundPanel = getBooleanOptionValue('openSoundPanel', false)
+  const openSoundPanel = getBooleanOptionValue('openSoundPanel', true)
   const token = useToken()
   const [state, setState] = useState<AppState>({
     comments: [],
