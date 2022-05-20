@@ -9,6 +9,7 @@ const env = process.env.NODE_ENV || 'development'
 
 fs.mkdirSync('dist/bundle/comment/', { recursive: true }, err => { if (err) console.log(err) })
 fs.copyFileSync('public/index.html', 'dist/bundle/comment/index.html')
+fs.copyFileSync('public/robots.txt', 'dist/bundle/comment/robots.txt')
 
 function plugins() {
   return  [
