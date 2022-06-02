@@ -16,19 +16,15 @@ function cmd(cmd) {
     fs.rmSync(dir, {recursive: true})
   }
 })
-fs.mkdirSync('dist/server/', { recursive: true })
-fs.mkdirSync('dist/bundle/server/streaming', { recursive: true })
-fs.mkdirSync('dist/bundle/server/api', { recursive: true })
-fs.writeFileSync('dist/server/streaming.js', "console.log('dummy.');")
-fs.writeFileSync('dist/server/api.js', "console.log('dummy.');")
-fs.writeFileSync('dist/bundle/server/streaming/index.js', "console.log('dummy.');")
-fs.writeFileSync('dist/bundle/server/api/index.js', "console.log('dummy.');")
+fs.mkdirSync('dist/bundle/server/', { recursive: true })
+fs.writeFileSync('dist/bundle/server/streaming.js', "console.log('dummy.');")
+fs.writeFileSync('dist/bundle/server/api.js', "console.log('dummy.');")
 
 const comment = [
   {
     name: pad('comment:build'),
     prefixColor: 'cyan',
-    command: `${cmd('rollup')} -c rollup.comment.js -w`,
+    command: `${cmd('rollup')} -c rollup/comment.js -w`,
   },
   {
     name: pad('comment:serve'),
@@ -38,57 +34,40 @@ const comment = [
 ]
 const desktop = [
   {
-    name: pad('desktop:tsc'),
+    name: pad('desktop:main:tsc'),
     prefixColor: 'yellow',
     command: `${cmd('tsc')} -p tsconfig-desktop.json -w`
   },
   {
     name: pad('desktop:bundle'),
     prefixColor: 'cyan',
-    command: `${cmd('rollup')} -c rollup.desktop.js -w`,
+    command: `${cmd('rollup')} -c rollup/desktop.js -w`,
   },
 ]
-const streaming = [
+// TODO nodemon to @rollup/plugin-run
+const servers = [
   {
-    name: pad('stream:tsc'),
-    prefixColor: 'yellow',
-    command: `${cmd('tsc')} -w -p tsconfig-server.json`,
-  },
-  {
-    name: pad('stream:bundle'),
+    name: pad('comment:build'),
     prefixColor: 'cyan',
-    command: `${cmd('ncc')} build -w -o dist/bundle/server/streaming dist/server/streaming.js`,
+    command: `${cmd('rollup')} -c rollup/server.js -w`,
   },
+  // rollup-run can't run multiple processes defined in single config.js at once.
   {
     name: pad('stream:serve'),
     prefixColor: 'green',
-    command: `${cmd('nodemon')} -w dist/bundle/server/streaming dist/bundle/server/streaming/index.js -- -l DEBUG -p 8080`,
-  },
-]
-const api = [
-  {
-    name: pad('api:tsc'),
-    prefixColor: 'yellow',
-    command: `${cmd('tsc')} -w -p tsconfig-server.json`,
-  },
-  {
-    name: pad('api:bundle'),
-    prefixColor: 'cyan',
-    command: `${cmd('ncc')} build -w -o dist/bundle/server/api dist/server/api.js`,
+    command: `${cmd('nodemon')} -w dist/bundle/server/streaming.js dist/bundle/server/streaming.js -- -l DEBUG -p 8080`,
   },
   {
     name: pad('api:serve'),
     prefixColor: 'green',
-    command: `${cmd('nodemon')} -w dist/bundle/server/api dist/bundle/server/api/index.js -- -l DEBUG -p 9080`,
-
+    command: `${cmd('nodemon')} -w dist/bundle/server/api.js dist/bundle/server/api.js -- -l DEBUG -p 9080`,
   },
 ]
 
 concurrently([
   ...comment,
   ...desktop,
-  ...streaming,
-  ...api,
+  ...servers,
 ], {
   prefix: '[{time} {name}({pid})]'
 })

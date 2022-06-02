@@ -1,4 +1,4 @@
-import WebSocket from 'ws'
+import WebSocket, { WebSocketServer } from 'ws'
 import http from 'http'
 import crypto from 'crypto'
 import { Configuration } from './Configuration'
@@ -182,9 +182,9 @@ export function createWebSocketServer(
   server: http.Server,
   healthCheck: HealthCheck,
   configuration: Configuration
-): WebSocket.Server {
+): WebSocketServer {
   healthCheck.start()
-  const wss = new WebSocket.Server({ server })
+  const wss = new WebSocketServer({ server })
   wss.on('connection', function(ws: WebSocket, req: http.IncomingMessage): void {
     log.debug('onconnect', req.socket.remoteAddress)
     onConnected(this, ws, req, healthCheck, configuration)

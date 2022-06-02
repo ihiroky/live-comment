@@ -6,11 +6,11 @@ import fs from 'node:fs'
 
 const server = http.createServer(function(request, response) {
   try {
-    const text = request.url.endsWith('/main.js')
-      ? fs.readFileSync('main.js')
-      : fs.readFileSync('index.html')
+    const [text, mimeType] = request.url.endsWith('/main.js')
+      ? [fs.readFileSync('main.js'), 'application/javascript']
+      : [fs.readFileSync('index.html'), 'text/html']
     response.writeHead(200, {
-      'Content-Type': 'text/html',
+      'Content-Type': mimeType,
       'Feature-Policy': "autoplay 'self'"
     })
     response.end(text)
@@ -20,7 +20,7 @@ const server = http.createServer(function(request, response) {
   }
 })
 
-fs.mkdirSync('dist/bundle/comment/', { recursive: true }, err => { if (err) console.error(err) })
+fs.mkdirSync('dist/bundle/comment/', { recursive: true, mode: 0o755 })
 const wd = './dist/bundle/comment/'
 process.chdir(wd)
 server.listen(18080)
