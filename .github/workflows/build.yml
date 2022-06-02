@@ -96,16 +96,14 @@ jobs:
         run: |
           yarn --cwd packages/app/ clean
           yarn --cwd packages/app/ build-comment
-          yarn --cwd packages/app/ build-streaming
-          yarn --cwd packages/app/ build-api
+          yarn --cwd packages/app/ build-servers
 
       - name: Create release directory tree
         run: |
           mkdir -p build/apps/server
-          cp -a packages/app/dist/bundle/comment          build/apps/comment
-          cp -a packages/app/src/server/scripts/*         build/apps/server/
-          cp -a packages/app/dist/bundle/server/streaming build/apps/server/streaming
-          cp -a packages/app/dist/bundle/server/api       build/apps/server/api
+          cp -a packages/app/dist/bundle/comment  build/apps/comment
+          cp -a packages/app/src/server/scripts/* build/apps/server/
+          cp -a packages/app/dist/bundle/server/* build/apps/server/
         shell: bash
 
       - name: Archive apps
