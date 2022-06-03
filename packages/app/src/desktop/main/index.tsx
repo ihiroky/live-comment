@@ -1,5 +1,5 @@
 import { FC, StrictMode } from 'react'
-import ReactDOM from 'react-dom'
+import { createRoot } from 'react-dom/client'
 import { Screen } from '@/screen/Screen'
 import { SettingsV1 } from '../settings'
 import { createHash } from '@/common/utils'
@@ -28,5 +28,10 @@ window.main.request().then((settings: SettingsV1): void => {
       </StrictMode>
     )
   }
-  ReactDOM.render(<App />, document.getElementById('root'))
+  const rootElement = document.getElementById('root')
+  if (!rootElement) {
+    throw new Error('Root element not found')
+  }
+  const root = createRoot(rootElement)
+  root.render(<App />)
 })
