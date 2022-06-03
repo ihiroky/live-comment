@@ -122,6 +122,7 @@ export function WebSocketClient(
   }, [onOpen, onClose, onError, onMessage])
 
   useEffect((): (() => void) => {
+    log.debug('[useEffect] mount')
     if (noComments) {
       log.debug('[componentDidMount] No comments mode.')
       const comment: CommentMessage = {
@@ -130,9 +131,19 @@ export function WebSocketClient(
       }
       callbacksRef.current.onMessage(comment)
     }
-    createWebSocket(url, callbacksRef, webSocketRef)
+    // React mount/umount component at initial rendering in strict mode.
+    // To avoid unexpected error on WebSocket, delay WebSocket creation.
+    // Otherwise, hang up on Firefox.
+    let timer = window.setTimeout((): void => {
+      createWebSocket(url, callbacksRef, webSocketRef)
+      timer = 0
+    }, 500)
 
     return (): void => {
+      log.debug('[useEffect] unmount')
+      if (timer) {
+        window.clearTimeout(timer)
+      }
       if (webSocketRef.current) {
         webSocketRef.current.close()
         webSocketRef.current = null

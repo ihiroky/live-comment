@@ -23,38 +23,37 @@ fs.writeFileSync('dist/bundle/server/api.js', "console.log('dummy.');")
 const comment = [
   {
     name: pad('comment:build'),
-    prefixColor: 'cyan',
+    prefixColor: 'yellow',
     command: `${cmd('rollup')} -c rollup/comment.js -w`,
   },
   {
     name: pad('comment:serve'),
-    prefixColor: 'green',
+    prefixColor: 'yellowBright',
     command: `${process.execPath} scripts/serve.mjs`,
   },
 ]
 const desktop = [
   {
     name: pad('desktop:main:tsc'),
-    prefixColor: 'yellow',
+    prefixColor: 'cyan',
     command: `${cmd('tsc')} -p tsconfig-desktop.json -w`
   },
   {
     name: pad('desktop:bundle'),
-    prefixColor: 'cyan',
+    prefixColor: 'cyanBright',
     command: `${cmd('rollup')} -c rollup/desktop.js -w`,
   },
 ]
-// TODO nodemon to @rollup/plugin-run
 const servers = [
   {
     name: pad('comment:build'),
-    prefixColor: 'cyan',
+    prefixColor: 'green',
     command: `${cmd('rollup')} -c rollup/server.js -w`,
   },
   // rollup-run can't run multiple processes defined in single config.js at once.
   {
     name: pad('stream:serve'),
-    prefixColor: 'green',
+    prefixColor: 'greenBright',
     command: `${cmd('nodemon')} -w dist/bundle/server/streaming.js dist/bundle/server/streaming.js -- -l DEBUG -p 8080`,
   },
   {

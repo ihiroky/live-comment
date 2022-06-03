@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
-import ReactDOM from 'react-dom'
-import { BrowserRouter, Route } from 'react-router-dom'
+import { createRoot } from 'react-dom/client'
+import { Routes, Route, BrowserRouter } from 'react-router-dom'
 import { App } from './App'
 import { LoginForm } from './LoginForm'
 import * as serviceWorker from './serviceWorker'
@@ -25,16 +25,22 @@ if (navigator.cookieEnabled) {
 }
 
 // Too rich to render SoundPlayer here, should be independent?
-ReactDOM.render(
+const rootElement = document.getElementById('root')
+if (!rootElement) {
+  throw new Error('Root element not found')
+}
+const root = createRoot(rootElement)
+root.render(
   <StrictMode>
     <BrowserRouter>
-      <Route path="/" exact render={() =>  <LoginForm apiUrl={apiUrl} />} />
-      <Route path="/login" exact render={() =>  <LoginForm apiUrl={apiUrl} />} />
-      <Route path="/comment" exact render={() => <App url={wsUrl} maxMessageCount={1024} />} />
-      <Route path="/sound" exact render={() => <SoundPlayer url={apiUrl} />} />
+      <Routes>
+        <Route path="/" element={<LoginForm apiUrl={apiUrl} />} />
+        <Route path="/login" element={<LoginForm apiUrl={apiUrl} />} />
+        <Route path="/comment" element={<App url={wsUrl} maxMessageCount={1024} />} />
+        <Route path="/sound" element={<SoundPlayer url={apiUrl} />} />
+      </Routes>
     </BrowserRouter>
-  </StrictMode>,
-  document.getElementById('root')
+  </StrictMode>
 )
 
 // If you want your app to work offline and load faster, you can change
