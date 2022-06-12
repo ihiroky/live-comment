@@ -7,8 +7,8 @@ import fs from 'node:fs'
 const server = http.createServer(function(request, response) {
   try {
     const [text, mimeType] = request.url.endsWith('/main.js')
-      ? [fs.readFileSync('main.js'), 'application/javascript']
-      : [fs.readFileSync('index.html'), 'text/html']
+      ? [fs.readFileSync('main.js'), 'text/javascript; charset=utf8']
+      : [fs.readFileSync('index.html'), 'text/html; charset=utf8']
     response.writeHead(200, {
       'Content-Type': mimeType,
       'Feature-Policy': "autoplay 'self'"

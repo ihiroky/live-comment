@@ -1,12 +1,9 @@
-import electron from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { SettingsV1 } from '../settings'
+import { CHANNEL_REQUEST_SETTINGS } from '../channels'
 
-// Only type definition can be imported.
-
-const CHANNEL_REQUEST_SETTINGS = '#request-settings'
-
-electron.contextBridge.exposeInMainWorld('poll', {
+contextBridge.exposeInMainWorld('poll', {
   request: (): Promise<SettingsV1> => {
-    return electron.ipcRenderer.invoke(CHANNEL_REQUEST_SETTINGS)
+    return ipcRenderer.invoke(CHANNEL_REQUEST_SETTINGS)
   },
 })

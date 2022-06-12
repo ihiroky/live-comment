@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 function pad(name) {
-  return name.padEnd(14)
+  return name.padEnd(16)
 }
 
 function cmd(cmd) {
@@ -34,23 +34,28 @@ const comment = [
 ]
 const desktop = [
   {
-    name: pad('desktop:main:tsc'),
+    name: pad('desktop:main'),
     prefixColor: 'cyan',
     command: `${cmd('tsc')} -p tsconfig-desktop.json -w`
   },
   {
-    name: pad('desktop:bundle'),
+    name: pad('desktop:renderer'),
     prefixColor: 'cyanBright',
     command: `${cmd('rollup')} -c rollup/desktop.js -w`,
   },
+  {
+    name: pad('desktop:preload'),
+    prefixColor: 'cyanBright',
+    command: `${cmd('rollup')} -c rollup/desktop-preload.js -w`,
+  }
 ]
 const servers = [
   {
-    name: pad('comment:build'),
+    name: pad('servers:build'),
     prefixColor: 'green',
     command: `${cmd('rollup')} -c rollup/server.js -w`,
   },
-  // rollup-run can't run multiple processes defined in single config.js at once.
+  // Use nodemon because rollup-run can't run multiple processes defined in single config.js at once.
   {
     name: pad('stream:serve'),
     prefixColor: 'greenBright',

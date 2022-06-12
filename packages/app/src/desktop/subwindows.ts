@@ -53,7 +53,7 @@ function createSubWindow(
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.resolve(`dist/desktop/preload/${js}`)
+      preload: path.resolve(`dist/bundle/desktop/preload/${js}`)
     },
   })
   const dataUrl = getHtmlDataUrl(id, js)
@@ -76,7 +76,7 @@ export function registerAppRootProtocol(): void {
   electron.protocol.registerFileProtocol(
     APP_ROOT_PROTOCOL,
     (request: electron.ProtocolRequest, callback: (response: electron.ProtocolResponse) => void) => {
-      const url = request.url.substr(APP_ROOT_PROTOCOL.length + 3) // 3: '://'.length
+      const url = request.url.substring(APP_ROOT_PROTOCOL.length + 3) // 3: '://'.length
       const filePath = path.resolve(url)
       log.debug(filePath)
       callback({ path: filePath })
