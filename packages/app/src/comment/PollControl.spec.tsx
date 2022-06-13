@@ -26,7 +26,7 @@ test('Poll start message.', () => {
   const status = screen.getByRole('status')
 
   expect(status.textContent).toBe(
-    `Presenter starts a poll!!! [id:${poll.id}] Click the number you choose.`
+    `Presenter starts a poll! [id:${poll.id}] Click the number you choose.`
   )
 })
 

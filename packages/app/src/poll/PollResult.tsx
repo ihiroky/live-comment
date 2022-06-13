@@ -6,8 +6,26 @@ import {
   Radio,
   RadioGroup,
 } from '@mui/material'
-import { Bar } from 'react-chartjs-2'
 import { Mode } from './types'
+import { Bar } from 'react-chartjs-2'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js'
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+)
 
 export type PollResultProps = {
   data: {
@@ -98,16 +116,23 @@ function CloseButton({ onClosed }: { onClosed: PollResultProps['onClosed']}): JS
 }
 
 const graphOptions = {
-  indexAxis: 'y',
+  indexAxis: 'y' as const,
   responsive: true,
   plugins: {
     legend: {
-      display: false
+      display: false,
     },
     title: {
       display: false,
     },
   },
+  scales: {
+    y: {
+      ticks: {
+        display: false,
+      }
+    }
+  }
 }
 
 export function PollResult(
@@ -149,7 +174,7 @@ export function PollResult(
     <>
       <TypeSelect type={type} onChange={onChange} />
       <Grid item xs={12}>
-        <Bar type="horizontalBar" data={enchantedData} options={graphOptions} />
+        <Bar data={enchantedData} options={graphOptions} />
       </Grid>
       <CloseButton onClosed={onClosed} />
     </>

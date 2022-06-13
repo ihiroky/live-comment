@@ -1,34 +1,28 @@
-import electron from 'electron'
+import { contextBridge, ipcRenderer, SourcesOptions } from 'electron'
 
-// Only type definition can be imported.
 import {
   SettingsV1
 } from '../settings'
+import {
+  CHANNEL_REQUEST_SETTINGS,
+  CHANNEL_POST_SETTINGS,
+  CHANNEL_DESKTOP_THUMBNAIL,
+  ScreenProps,
+} from '../channels'
 
-const CHANNEL_REQUEST_SETTINGS = '#request-settings'
-const CHANNEL_POST_SETTINGS = '#post-settings'
 
-type ScreenProps = {
-  name: string
-  thumbnailDataUrl: string
-}
-
-electron.contextBridge.exposeInMainWorld('settings', {
+contextBridge.exposeInMainWorld('settings', {
   requestSettings: (): Promise<SettingsV1> => {
-    return electron.ipcRenderer.invoke(CHANNEL_REQUEST_SETTINGS)
+    return ipcRenderer.invoke(CHANNEL_REQUEST_SETTINGS)
   },
   postSettings: (settings: SettingsV1): Promise<void> => {
-    return electron.ipcRenderer.invoke(CHANNEL_POST_SETTINGS, settings)
+    return ipcRenderer.invoke(CHANNEL_POST_SETTINGS, settings)
   },
   async getScreenPropsList(): Promise<ScreenProps[]> {
-    const options: electron.SourcesOptions = {
+    const options: SourcesOptions = {
       types: ['screen'],
       thumbnailSize: { width: 300, height: 200 }
     }
-    const sources: electron.DesktopCapturerSource[] = await electron.desktopCapturer.getSources(options)
-    return sources.map((src: electron.DesktopCapturerSource): ScreenProps => ({
-      name: src.name,
-      thumbnailDataUrl: src.thumbnail.toDataURL()
-    }))
+    return ipcRenderer.invoke(CHANNEL_DESKTOP_THUMBNAIL, options)
   }
 })

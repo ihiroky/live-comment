@@ -1,14 +1,9 @@
-import electron from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
+import { SettingsV1 } from '../settings'
+import { CHANNEL_REQUEST_SCREEN_PROPS } from '../channels'
 
-// Only type definition can be imported.
-import {
-  SettingsV1
-} from '../settings'
-
-const CHANNEL_REQUEST_SCREEN_PROPS = '#request-screen-props'
-
-electron.contextBridge.exposeInMainWorld('main', {
+contextBridge.exposeInMainWorld('main', {
   request: (): Promise<SettingsV1> => {
-    return electron.ipcRenderer.invoke(CHANNEL_REQUEST_SCREEN_PROPS)
+    return ipcRenderer.invoke(CHANNEL_REQUEST_SCREEN_PROPS)
   },
 })

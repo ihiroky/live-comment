@@ -9,7 +9,7 @@
   ],
   "extraFiles": [
     "resources/**",
-    "dist/desktop/preload/*.js"
+    "dist/bundle/desktop/preload/*.js"
   ],
   "publish": {
     "provider": "github",

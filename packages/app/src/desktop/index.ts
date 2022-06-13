@@ -8,10 +8,15 @@ import {
   createSettingsWindow,
   createPollWindow,
 } from './subwindows'
+import {
+  CHANNEL_REQUEST_SETTINGS,
+  CHANNEL_POST_SETTINGS,
+  CHANNEL_REQUEST_SCREEN_PROPS,
+  CHANNEL_DESKTOP_THUMBNAIL,
+  ScreenProps,
+} from './channels'
 
-const CHANNEL_REQUEST_SETTINGS = '#request-settings'
-const CHANNEL_POST_SETTINGS = '#post-settings'
-const CHANNEL_REQUEST_SCREEN_PROPS = '#request-screen-props'
+
 
 let mainWindow_: electron.BrowserWindow | null = null
 
@@ -103,7 +108,7 @@ async function asyncLoadSettings(): Promise<Settings.SettingsV1> {
   }
 }
 
-async function asyncSaveSettings(e: electron.IpcMainInvokeEvent, settings: Settings.SettingsV1): Promise<void> {
+async function asyncSaveSettings(_: electron.IpcMainInvokeEvent, settings: Settings.SettingsV1): Promise<void> {
   log.debug('[asyncSaveSttings]', settings)
   try {
     const userConfigPath: fs.PathLike = await asyncGetUserConfigPromise(false)
@@ -149,7 +154,7 @@ async function asyncShowMainWindow(): Promise<void> {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.resolve('dist/desktop/preload/main.js')
+      preload: path.resolve('dist/bundle/desktop/preload/main.js')
     }
   })
   mainWindow_.setAlwaysOnTop(true, 'screen-saver')
@@ -164,10 +169,22 @@ async function asyncShowMainWindow(): Promise<void> {
   })
 }
 
+async function asyncGetDesktopThumnail(
+  _: electron.IpcMainInvokeEvent,
+  options: electron.SourcesOptions
+): Promise<ScreenProps[]> {
+  const sources: electron.DesktopCapturerSource[] = await electron.desktopCapturer.getSources(options)
+  return sources.map((src: electron.DesktopCapturerSource): ScreenProps => ({
+    name: src.name,
+    thumbnailDataUrl: src.thumbnail.toDataURL()
+  }))
+}
+
 function onReady(): void {
   electron.ipcMain.handle(CHANNEL_REQUEST_SETTINGS, asyncLoadSettings)
   electron.ipcMain.handle(CHANNEL_POST_SETTINGS, asyncSaveSettings)
   electron.ipcMain.handle(CHANNEL_REQUEST_SCREEN_PROPS, asyncLoadSettings)
+  electron.ipcMain.handle(CHANNEL_DESKTOP_THUMBNAIL, asyncGetDesktopThumnail)
 
   registerAppRootProtocol()
   moveToRootDirectory()
@@ -196,6 +213,7 @@ electron.app.on('second-instance', (): void => {
     mainWindow_.focus()
   }
 })
+
 const settings = loadSettings()
 if (!settings.general.gpu) {
   electron.app.disableHardwareAcceleration()
