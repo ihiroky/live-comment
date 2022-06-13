@@ -22,7 +22,7 @@
   "dependencies": {
     "@mui/material": "^5.1.1",
     "@mui/styles": "^5.1.1",
-    "chart.js": "^3.0.0",
+    "chart.js": "^3.8.0",
     "cors": "^2.8.5",
     "dompurify": "^2.2.7",
     "express": "^4.17.1",
@@ -31,7 +31,7 @@
     "jsonwebtoken": "^8.5.1",
     "jwt-decode": "^3.1.2",
     "react": "^18.1.0",
-    "react-chartjs-2": "^3.0.3",
+    "react-chartjs-2": "^4.2.0",
     "react-dom": "^18.1.0",
     "react-router-dom": "^6.3.0",
     "unzip": "1.0.0",

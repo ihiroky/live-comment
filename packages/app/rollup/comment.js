@@ -12,9 +12,6 @@ export default [{
     name: 'Comment',
     format: 'iife'
   },
-  watch: {
-    buildDelay: 3333,
-  },
   plugins: plugins(),
   onwarn,
 }]

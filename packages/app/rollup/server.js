@@ -8,9 +8,6 @@ export default [
       name: 'Api',
       format: 'cjs'
     },
-    watch: {
-      buildDelay: 3333,
-    },
     plugins: plugins(),
     onwarn,
   }, {
@@ -19,9 +16,6 @@ export default [
       file: 'dist/bundle/server/streaming.js',
       name: 'Streaming',
       format: 'cjs'
-    },
-    watch: {
-      buildDelay: 3333,
     },
     plugins: plugins(),
     onwarn,

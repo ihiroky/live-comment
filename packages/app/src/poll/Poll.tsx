@@ -114,7 +114,7 @@ export const Poll: FC<Props> = (props: Props): JSX.Element => {
 
   useEffect((): void => {
     const newData: PollResultProps['data'] = {
-      labels: entries.map((e, i) => String(i + 1)),
+      labels: entries.map(e => e.description),
       datasets: [{
         data: entries.map(e => e.count),
       }]
