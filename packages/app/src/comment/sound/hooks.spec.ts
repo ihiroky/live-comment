@@ -1,5 +1,5 @@
 import { useExistsSounds, usePlaySound, useSoundMetadata } from './hooks'
-import { renderHook } from '@testing-library/react-hooks'
+import { renderHook, act } from '@testing-library/react-hooks'
 import { get, update, getAll } from './db'
 import { mocked } from 'ts-jest/utils'
 import { Zlib } from 'unzip'
@@ -63,8 +63,8 @@ describe('useExistsSounds', () => {
     })
 
     const { result, waitFor } = renderHook(() => useExistsSounds('https://host/', 'token', 'room'))
-
     await waitFor(() => expect(result.current).toBe(true))
+
     expect(result.current).toBe(true)
     expect(get).toBeCalledWith('room', 'soundMetadata', 'checksum')
     expect(window.fetch).toBeCalledWith('https://host/sound/checksum',{
@@ -187,8 +187,10 @@ describe('useExistsSounds', () => {
     })
 
     const { result } = renderHook(() => useExistsSounds('https://host/', 'token', 'room'))
-    await new Promise<void>((resolve: () => void): void => {
-      setTimeout(resolve, 50)
+    await act(async () => {
+      await new Promise<void>((resolve: () => void): void => {
+        setTimeout(resolve, 50)
+      })
     })
 
     expect(result.current).toBe(true)
