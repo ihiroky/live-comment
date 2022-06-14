@@ -198,11 +198,14 @@ test('Screen selector', async () => {
   render(<General {...props} screen={{ data: 0, error: false }} />)
   const screen0 = await waitFor(() => screen.getByRole('button', { name: 's0' }))
   userEvent.click(screen0)
-  const listbox = within(screen.getByRole('listbox'))
-  const items = listbox.getAllByText(/s[0-9]/i)
 
+  const items = within(screen.getByRole('listbox')).getAllByText(/s[0-9]/i)
   expect(items[0].textContent).toBe('s0')
   expect(items[1].textContent).toBe('s1')
   expect(items[2].textContent).toBe('s2')
-  // TODO Select an item
+
+  userEvent.click(items[1])
+  await waitFor(async () => {
+    expect(props.onUpdate).toHaveBeenCalledWith('screen', '1', false)
+  })
 })

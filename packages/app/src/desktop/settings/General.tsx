@@ -119,7 +119,6 @@ export const General: FC<PropsWithChildren<GeneralProps>> = (props: GeneralProps
       const options = screenPropsList.map((p: ScreenProps): ScreenProps => ({ ...p }))
       log.debug('[getScreenPropsList] screen options', options)
       setScreenOptions(options)
-      //setScreenOptions(screenPropsList)
     })
   }, [])
 
