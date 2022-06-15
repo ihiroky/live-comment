@@ -1,5 +1,5 @@
 import { ComponentProps } from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Poll } from './Poll'
 import { WebSocketClient } from '@/wscomp/WebSocketClient'
@@ -70,7 +70,6 @@ test('Edit, poll and display result', async () => {
   screen.getByText('A description two')
   const finishButton = screen.getByRole('button', { name: 'Finish' })
   await waitFor(() => expect(onMessage).not.toBeNull())
-  assertNotNullable(onMessage, 'onMessage')
   const pollMessage0: PollMessage = {
     type: 'app',
     cmd: 'poll/poll',
@@ -78,7 +77,10 @@ test('Edit, poll and display result', async () => {
     to: 'owner',
     choice: 0,
   }
-  onMessage(pollMessage0)
+  await act(() => {
+    assertNotNullable(onMessage, 'onMessage')
+    onMessage(pollMessage0)
+  })
   const pollMessage1: PollMessage = {
     type: 'app',
     cmd: 'poll/poll',
@@ -86,7 +88,10 @@ test('Edit, poll and display result', async () => {
     to: 'owner',
     choice: 1,
   }
-  onMessage(pollMessage1)
+  await act(() => {
+    assertNotNullable(onMessage, 'onMessage')
+    onMessage(pollMessage1)
+  })
   // Modification from c1
   const pollMessage2: PollMessage = {
     type: 'app',
@@ -95,7 +100,10 @@ test('Edit, poll and display result', async () => {
     to: 'owner',
     choice: 0,
   }
-  onMessage(pollMessage2)
+  await act(() => {
+    assertNotNullable(onMessage, 'onMessage')
+    onMessage(pollMessage2)
+  })
   // Finish polling
   userEvent.click(finishButton)
   expect(onPollClosed).toBeCalled()
