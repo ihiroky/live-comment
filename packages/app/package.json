@@ -16,6 +16,7 @@
     "build-comment": "NODE_ENV=production rollup -c rollup/comment.js",
     "build-desktop": "tsc -p tsconfig-desktop.json && rollup -c rollup/desktop.js",
     "build-servers": "NODE_ENV=production rollup -c rollup/server.js",
+    "build-extension": "NODE_ENV=production rollup -c rollup/extension.js",
     "start-desktop": "electron . --open-dev-tools --debug --disable-gpu-sandbox",
     "lint": "eslint --ext ts,tsx --max-warnings 0 src"
   },
@@ -69,6 +70,7 @@
     "nodemon": "^2.0.16",
     "react-test-renderer": "^18.1.0",
     "rollup": "^2.56.3",
+    "rollup-plugin-copy": "^3.4.0",
     "rollup-plugin-terser": "^7.0.2",
     "supertest": "^6.1.6",
     "tslib": "^2.0.0",

@@ -1,6 +1,5 @@
-import { copy, plugins, onwarn } from './c.js'
-
-copy('src/screen/screen.css', 'resources/main/index.css')
+import { plugins, onwarn } from './c.js'
+import copy from 'rollup-plugin-copy'
 
 export default [{
   input: 'src/desktop/main/index.tsx',
@@ -9,7 +8,9 @@ export default [{
     name: 'Screen',
     format: 'iife'
   },
-  plugins: plugins(),
+  plugins: plugins([
+    { src: 'src/screen/screen.css', dest: 'resources/main/index.css' },
+  ]),
   onwarn,
 }, {
   input: 'src/desktop/settings/index.tsx',

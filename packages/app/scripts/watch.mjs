@@ -10,6 +10,32 @@ function cmd(cmd) {
   return path.join('node_modules', '.bin', cmd)
 }
 
+function parseOpts() {
+  const opts = process.argv[2]
+  if (!opts) {
+    return {
+      comment: true,
+      desktop: true,
+      extension: true,
+      server: true
+    }
+  } else if (opts === '-h' || opts === '--help') {
+    // eslint-disable-next-line no-console
+    console.info(`Usage: ${process.argv[1]} [cdes]\n
+    c: Watch comment module.\n
+    d: Watch desktop module.\n
+    e: Watch extension module.\n
+    s: Watch server module.`)
+  } else {
+    return {
+      comment: opts.includes('c'),
+      desktop: opts.includes('d'),
+      extension: opts.includes('e'),
+      server: opts.includes('s'),
+    }
+  }
+}
+
 // Clean dist and build directories and prepare for watch mode not to fail.
 ['dist', 'build'].forEach(dir => {
   if (fs.existsSync(dir)) {
@@ -19,6 +45,8 @@ function cmd(cmd) {
 fs.mkdirSync('dist/bundle/server/', { recursive: true })
 fs.writeFileSync('dist/bundle/server/streaming.js', "console.log('dummy.');")
 fs.writeFileSync('dist/bundle/server/api.js', "console.log('dummy.');")
+
+const opts = parseOpts()
 
 const comment = [
   {
@@ -49,6 +77,13 @@ const desktop = [
     command: `${cmd('rollup')} -c rollup/desktop-preload.js -w`,
   }
 ]
+const extension = [
+  {
+    name: pad('extension:build'),
+    prefixColor: 'magenta',
+    command: `${cmd('rollup')} -c rollup/extension.js -w`,
+  }
+]
 const servers = [
   {
     name: pad('servers:build'),
@@ -68,10 +103,21 @@ const servers = [
   },
 ]
 
-concurrently([
-  ...comment,
-  ...desktop,
-  ...servers,
-], {
+const commands = []
+if (opts.comment) {
+  commands.push(...comment)
+}
+if (opts.desktop) {
+  commands.push(...desktop)
+}
+if (opts.extension) {
+  commands.push(...extension)
+}
+if (opts.server) {
+  commands.push(...servers)
+}
+// eslint-disable-next-line no-console
+console.info(`Watching: ${commands.map(c => '\n ' + c.name.trim()).join('')}`)
+concurrently(commands, {
   prefix: '[{time} {name}({pid})]'
 })

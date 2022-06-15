@@ -1,9 +1,7 @@
-import { copy, plugins, onwarn } from './c.js'
+import { plugins, onwarn } from './c.js'
 import { mkdirSync } from 'fs'
 
 mkdirSync('dist/bundle/comment/', { recursive: true, mode: 0o755 })
-copy('public/index.html', 'dist/bundle/comment/index.html')
-copy('public/robots.txt', 'dist/bundle/comment/robots.txt')
 
 export default [{
   input: 'src/comment/index.tsx',
@@ -12,6 +10,9 @@ export default [{
     name: 'Comment',
     format: 'iife'
   },
-  plugins: plugins(),
+  plugins: plugins([
+    { src: 'src/public/index.html', dest: 'dist/bundle/comment/' },
+    { src: 'src/public/robots.txt', dest: 'dist/bundle/comment/' },
+  ]),
   onwarn,
 }]
