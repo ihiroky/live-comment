@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+
+  "name": "Live Comment",
+  "description": "Show comments on your browser",
+  "version": "1.0",
+
+  "options_ui": {
+    "page": "options.html"
+  },
+
+  "action": {
+    "default_icon": {
+      "16": "images/icon.png",
+      "32": "images/icon@2.png"
+    },
+    "default_popup": "popup.html"
+  },
+
+  "icons": {
+    "16": "images/icon.png",
+    "32": "images/icon@2.png",
+    "48": "images/icon@3.png",
+    "128": "images/icon@6.png"
+  },
+
+  "content_scripts": [
+      {
+          "matches": ["<all_urls>"],
+          "js": ["contentScript.js"]
+      }
+  ],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "permissions": [
+    "storage"
+  ],
+
+  "host_permissions": [
+    "<all_urls>"
+  ]
+}

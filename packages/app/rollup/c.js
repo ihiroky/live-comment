@@ -6,17 +6,13 @@ import typescript from '@rollup/plugin-typescript'
 import { terser } from 'rollup-plugin-terser'
 import replace from '@rollup/plugin-replace'
 import json from '@rollup/plugin-json'
-import fs from 'fs'
+import copy from 'rollup-plugin-copy'
 
 export const env = process.env.NODE_ENV || 'development'
 
-export function copy(from, to) {
-  console.log(`Copy ${from} to ${to}.`)
-  fs.copyFileSync(from, to)
-}
-
-export function plugins() {
+export function plugins(targets) {
   return  [
+    targets && copy({ targets }),
     replace({
       'process.env.NODE_ENV': `"${env}"`,
       'preventAssignment': true
