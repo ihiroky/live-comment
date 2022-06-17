@@ -176,12 +176,22 @@ export const App: FC<AppProps> = (props: AppProps): JSX.Element => {
       goToLoginPage()
     }
 
+    if (rws) {
+      rws.addEventListener('open', onOpen)
+      rws.addEventListener('close', onClose)
+      rws.addEventListener('error', onError)
+      rws.addEventListener('message', onMessage)
+    }
     return (): void => {
       if (rws) {
+        rws.removeEventListener('message', onMessage)
+        rws.removeEventListener('error', onError)
+        rws.removeEventListener('close', onClose)
+        rws.removeEventListener('open', onOpen)
         rws.close()
       }
     }
-  }, [rws])
+  }, [onClose, onError, onMessage, onOpen, rws])
   useEffect((): (() => void)=> {
     const messageListener = (e: MessageEvent<PlaySoundMessage>): void => {
       if (e.origin !== window.location.origin) {

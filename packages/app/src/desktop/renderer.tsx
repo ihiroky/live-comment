@@ -6,7 +6,6 @@ import { createHash } from '@/common/utils'
 import { createReconnectableWebSocket, ReconnectableWebSocket, useReconnectableWebSocket } from '@/wscomp/rws'
 import { Poll } from '@/poll/Poll'
 import { SettingsForm } from './settings/SettingsForm'
-import { useEffect } from 'react'
 
 declare global {
   interface Window {
