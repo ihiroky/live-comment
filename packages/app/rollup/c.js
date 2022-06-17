@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import nodeResolve from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
 import typescript from '@rollup/plugin-typescript'
@@ -12,7 +10,7 @@ export const env = process.env.NODE_ENV || 'development'
 
 export function plugins(targets) {
   return  [
-    targets && copy({ targets }),
+    targets && copy({ targets, verbose: true }),
     replace({
       'process.env.NODE_ENV': `"${env}"`,
       'preventAssignment': true
@@ -45,4 +43,10 @@ export function onwarn(warning, defaultHandler) {
     return
   }
   defaultHandler(warning)
+}
+
+export const watch = {
+  clearScreen: false,
+  exclude: ['node_modules/**', 'dist/**'],
+  include: ['src/**', 'rollup/**'],
 }

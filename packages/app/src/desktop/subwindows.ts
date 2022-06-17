@@ -6,7 +6,7 @@ const log = getLogger('Subwindows')
 const openWindows_: Record<string, electron.BrowserWindow> = {}
 const APP_ROOT_PROTOCOL = 'approot'
 
-function getHtmlDataUrl(title: string, src: string): string {
+function getHtmlDataUrl(title: string, src: string, mainFunc: string): string {
   return `data:text/html;charset=utf-8,
 <html>
  <head>
@@ -14,7 +14,11 @@ function getHtmlDataUrl(title: string, src: string): string {
  </head>
  <body>
   <div id="root"></div>
-  <script type="text/javascript" src="${src}"></script>
+  <script type="module" src="${src}"></script>
+  <script type="module">
+import { ${mainFunc} } from '${src}';
+${mainFunc}();
+  </script>
  </body>
 </html>`
 }
@@ -38,7 +42,7 @@ function createSubWindow(
   id: string,
   width: number,
   height: number,
-  js: string
+  mainFuncName: string
 ): electron.BrowserWindow | null {
   const openWindow = openWindows_[id]
   if (openWindow) {
@@ -53,10 +57,10 @@ function createSubWindow(
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.resolve(`dist/bundle/desktop/preload/${js}`)
+      preload: path.resolve(`dist/desktop/preload.js`)
     },
   })
-  const dataUrl = getHtmlDataUrl(id, js)
+  const dataUrl = getHtmlDataUrl(id, './renderer.js', mainFuncName)
   window.webContents.on('context-menu', contexteMenuEventHandler)
   window.loadURL(dataUrl, {
     // https://github.com/electron/electron/issues/20700
@@ -89,7 +93,7 @@ export function createSettingsWindow(): void {
     'SettingsForm',
     600,
     700,
-    'settings.js'
+    'settingsMain'
   )
 }
 
@@ -98,6 +102,6 @@ export function createPollWindow(): void {
     'Poll',
     900,
     700,
-    'poll.js',
+    'pollMain'
   )
 }

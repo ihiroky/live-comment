@@ -1,29 +1,32 @@
 /* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-var-requires */
-
-import http from 'node:http'
+import concurrently from 'concurrently'
 import fs from 'node:fs'
+import path from 'node:path'
 
-const server = http.createServer(function(request, response) {
-  try {
-    const [text, mimeType] = request.url.endsWith('/main.js')
-      ? [fs.readFileSync('main.js'), 'text/javascript; charset=utf8']
-      : [fs.readFileSync('index.html'), 'text/html; charset=utf8']
-    response.writeHead(200, {
-      'Content-Type': mimeType,
-      'Feature-Policy': "autoplay 'self'"
-    })
-    response.end(text)
-  } catch (e) {
-    response.writeHead(404)
-    response.end(`${request.url} is not found: ${String(e)}}`)
-  }
+function pad(name) {
+  return name.padEnd(16)
+}
+
+function cmd(cmd) {
+  return path.join('node_modules', '.bin', cmd)
+}
+
+const commands = [  {
+  name: pad('comment:serve'),
+  prefixColor: 'yellow',
+  command: `${process.execPath} scripts/servec.mjs`,
+}, {
+  name: pad('stream:serve'),
+  prefixColor: 'magenta',
+  command: `${cmd('nodemon')} -w dist/bundle/server/streaming.js dist/bundle/server/streaming.js -- -l DEBUG -p 8080`,
+},
+{
+  name: pad('api:serve'),
+  prefixColor: 'green',
+  command: `${cmd('nodemon')} -w dist/bundle/server/api.js dist/bundle/server/api.js -- -l DEBUG -p 9080`,
+}]
+
+console.info(`Serving: ${commands.map(c => '\n ' + c.name.trim()).join('')}`)
+concurrently(commands, {
+  prefix: '[{time} {name}({pid})]'
 })
-
-fs.mkdirSync('dist/bundle/comment/', { recursive: true, mode: 0o755 })
-const wd = './dist/bundle/comment/'
-process.chdir(wd)
-server.listen(18080)
-setTimeout(() => {
-  console.info(`Start server on http://localhost:18080/ at ${wd}`)
-}, 1000)

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { getLogger } from '@/common/Logger'
-import { WebSocketControl } from '@/wscomp/WebSocketClient'
+import { ReconnectableWebSocket } from '@/wscomp/rws'
 import { PollEntry, PollMessage } from '@/poll/types'
 import { AppState } from './types'
 import { PollControl } from './PollControl'
@@ -8,7 +8,7 @@ import { PollControl } from './PollControl'
 const log = getLogger('onPoll')
 
 export function useOnPoll(
-  wscRef: React.MutableRefObject<WebSocketControl | null>
+  rws: ReconnectableWebSocket | null,
 ): React.ComponentProps<typeof PollControl>['onPoll'] {
   return React.useCallback((e: React.MouseEvent<HTMLButtonElement>, choice: PollEntry['key'], to: string): void => {
     e.preventDefault()
@@ -19,8 +19,8 @@ export function useOnPoll(
       choice,
     }
     log.debug('[onPoll] ', message)
-    wscRef.current?.send(message)
-  }, [wscRef])
+    rws?.send(message)
+  }, [rws])
 }
 
 export function useOnClosePoll(

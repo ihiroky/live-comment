@@ -1,6 +1,5 @@
-import { plugins, onwarn } from './c.js'
+import { plugins, onwarn, watch } from './c.js'
 import { mkdirSync } from 'fs'
-import copy from 'rollup-plugin-copy'
 
 mkdirSync('dist/bundle/extension/images', { recursive: true, mode: 0o755 })
 
@@ -13,6 +12,7 @@ export default [{
   },
   plugins: plugins(),
   onwarn,
+  watch,
 }, {
   input: 'src/extension/background.ts',
   output: {
@@ -27,4 +27,5 @@ export default [{
     { src: 'resources/icon@[236].png', dest: 'dist/bundle/extension/images/'},
   ]),
   onwarn,
+  watch,
 }]

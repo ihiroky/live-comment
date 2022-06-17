@@ -90,7 +90,7 @@ function applySettings(mainWindow: electron.BrowserWindow, settings: Settings.Se
     settings.general.screen = actualScreen
   }
   mainWindow.setBounds(workArea)
-  mainWindow.loadURL(`file://${path.resolve('resources/main/index.html')}`)
+  mainWindow.loadURL(`file://${path.resolve('resources/screen.html')}`)
   mainWindow.webContents.setZoomFactor(Number(settings.general.zoom) / 100)
 }
 
@@ -154,7 +154,7 @@ async function asyncShowMainWindow(): Promise<void> {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.resolve('dist/bundle/desktop/preload/main.js')
+      preload: path.resolve('dist/desktop/preload.js')
     }
   })
   mainWindow_.setAlwaysOnTop(true, 'screen-saver')
@@ -194,7 +194,7 @@ function onReady(): void {
 
 // ===== MAIN =====
 
-if (process.argv.includes('--debug')) {
+if (process.argv.includes('--verbose')) {
   setDefaultLogLevel(LogLevels.DEBUG)
 }
 const log = getLogger('index')

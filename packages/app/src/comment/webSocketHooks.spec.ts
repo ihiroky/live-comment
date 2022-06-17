@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react-hooks'
 import '@testing-library/jest-dom'
 import { useWebSocketOnOpen, useWebSocketOnClose, useWebSocketOnMessage } from './webSocketHooks'
 import {  ApplicationMessage, CloseCode, CommentMessage } from '@/common/Message'
-import { WebSocketControl } from '@/wscomp/WebSocketClient'
+import { ReconnectableWebSocket } from '@/wscomp/rws'
 import * as React from 'react'
 import { goToLoginPage } from './utils/pages'
 import { AppState } from './types'
@@ -10,13 +10,20 @@ import { PollFinishMessage, PollStartMessage } from '@/poll/types'
 
 jest.mock('./utils/pages')
 
-function createWebSocketControlMock(): WebSocketControl {
+function createReconnectableWebSocket(): ReconnectableWebSocket {
   return {
-    _reconnectTimer: 0,
     send: jest.fn(),
+    close: jest.fn(),
     reconnect: jest.fn(),
     reconnectWithBackoff: jest.fn(),
-    close: jest.fn()
+    get readyState(): number {
+      return 0
+    },
+    get url(): string {
+      return 'dummy_url'
+    },
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
   }
 }
 
@@ -67,44 +74,35 @@ afterEach(() => {
 })
 
 test('onOpen does nothing if no token', () => {
-  const wscRefMock: React.MutableRefObject<WebSocketControl | null> = {
-    current: null
-  }
-  const wsc = createWebSocketControlMock()
+  const rws: ReconnectableWebSocket = createReconnectableWebSocket()
 
-  const { result } = renderHook(() => useWebSocketOnOpen(wscRefMock))
+  const { result } = renderHook(() => useWebSocketOnOpen(rws))
   const onOpen = result.current
-  onOpen(wsc)
+  onOpen()
 
-  expect(wscRefMock.current).toBeNull()
-  expect(wsc.send).not.toBeCalled()
+  expect(rws.send).not.toBeCalled()
 })
 
 test('onOpen sets wscRef and send an acn message', () => {
-  const wscRefMock: React.MutableRefObject<WebSocketControl | null> = {
-    current: null
-  }
-  const wsc = createWebSocketControlMock()
+  const rws: ReconnectableWebSocket = createReconnectableWebSocket()
   const token = 'token'
   window.localStorage.setItem('token', token)
 
-  const { result } = renderHook(() => useWebSocketOnOpen(wscRefMock))
+  const { result } = renderHook(() => useWebSocketOnOpen(rws))
   const onOpen = result.current
-  onOpen(wsc)
+  onOpen()
 
-  expect(wscRefMock.current?.send).toBeCalledWith({
+  expect(rws.send).toBeCalledWith({
     type: 'acn',
     token,
   })
 })
 
 test('onClose with ACN_FAILED goes to login page', () => {
-  const wscRefMock: React.MutableRefObject<WebSocketControl | null> = {
-    current: createWebSocketControlMock()
-  }
+  const rws: ReconnectableWebSocket = createReconnectableWebSocket()
   window.localStorage.setItem('token', 'token')
 
-  const { result } = renderHook(() => useWebSocketOnClose(wscRefMock))
+  const { result } = renderHook(() => useWebSocketOnClose(rws))
   const onClose = result.current
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ev: any = {
@@ -123,11 +121,9 @@ test('onClose with ACN_FAILED goes to login page', () => {
 })
 
 test('onClose with no ACN_FAILED tries to reconnect', () => {
-  const wscRefMock: React.MutableRefObject<WebSocketControl | null> = {
-    current: createWebSocketControlMock()
-  }
+  const rws: ReconnectableWebSocket = createReconnectableWebSocket()
 
-  const { result } = renderHook(() => useWebSocketOnClose(wscRefMock))
+  const { result } = renderHook(() => useWebSocketOnClose(rws))
   const onClose = result.current
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ev: any = {
@@ -136,7 +132,7 @@ test('onClose with no ACN_FAILED tries to reconnect', () => {
   }
   onClose(ev)
 
-  expect(wscRefMock.current?.reconnectWithBackoff).toBeCalled()
+  expect(rws.reconnectWithBackoff).toBeCalled()
 })
 
 test('onMessage ignores non poll application message', () => {

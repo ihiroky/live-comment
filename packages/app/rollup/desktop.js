@@ -1,33 +1,15 @@
-import { plugins, onwarn } from './c.js'
-import copy from 'rollup-plugin-copy'
+import { plugins, onwarn, watch } from './c.js'
 
-export default [{
-  input: 'src/desktop/main/index.tsx',
+export default {
+  input: ['src/desktop/renderer.tsx'],
   output: {
-    file: 'resources/main/index.js',
-    name: 'Screen',
-    format: 'iife'
+    file: 'resources/renderer.js',
+    name: 'Renderer',
+    format: 'es'
   },
   plugins: plugins([
-    { src: 'src/screen/screen.css', dest: 'resources/main/index.css' },
+    { src: 'src/screen/screen.css', dest: 'resources/' },
   ]),
   onwarn,
-}, {
-  input: 'src/desktop/settings/index.tsx',
-  output: {
-    file: 'resources/settings.js',
-    name: 'Settings',
-    format: 'iife'
-  },
-  plugins: plugins(),
-  onwarn,
-}, {
-  input: 'src/desktop/poll/index.tsx',
-  output: {
-    file: 'resources/poll.js',
-    name: 'Poll',
-    format: 'iife'
-  },
-  plugins: plugins(),
-  onwarn,
-}]
+  watch,
+}
