@@ -1,5 +1,4 @@
-import { FC, PropsWithChildren, useState, useMemo, useCallback } from 'react'
-import { WebSocketClient } from '@/wscomp/WebSocketClient'
+import { FC, PropsWithChildren, useState, useMemo, useEffect } from 'react'
 import {
   MarqueePropsGenerator,
   MarqueePropsList
@@ -7,35 +6,59 @@ import {
 import { MarqueeList } from './MarqueeList'
 import { Watermark, WatermarkProps } from './Watermark'
 import { getLogger } from '@/common/Logger'
-
-// TODO data flow should be server -> comment -> screen. A presentater may want to show comment list.
+import { ReconnectableWebSocket } from '@/wscomp/rws'
 
 type ScreenProps = {
-  url: string
   room: string
   hash: string
   duration: number
   color: string
   fontBorderColor: string
   watermark?: WatermarkProps
+  rws: ReconnectableWebSocket | null
 }
 
 const log = getLogger('Screen')
 
+// TODO Need to work with css class screen
+const marqueeHeight = 64 + 8
+
+const errorListener = (ev: Event): void => {
+  log.error('[onError]', ev)
+}
+
 export const Screen: FC<ScreenProps> = (props: PropsWithChildren<ScreenProps>): JSX.Element => {
 
   const [marqueePropsList, setMarqueePropsList] = useState<MarqueePropsList>([])
-  const marqueeGenerator = useMemo((): MarqueePropsGenerator =>
+  const { setRws, onOpen, onClose, onMessage } = useMemo((): MarqueePropsGenerator =>
     new MarqueePropsGenerator(props.room, props.hash, props.duration, (mpl: MarqueePropsList): void => {
       setMarqueePropsList(mpl)
     }), [props]
   )
-  const onError = useCallback((e: Event): void => {
-    log.error('[onError]', e)
-  }, [])
 
-  // TODO Need to work with css class screen
-  const marqueeHeight = 64 + 8
+  useEffect((): (() => void) => {
+    if (!props.rws) {
+      return () => undefined
+    }
+
+    const rws = props.rws
+    setRws(rws)
+    if (rws.readyState !== WebSocket.OPEN) {
+      rws.addEventListener('open', onOpen)
+    } else {
+      setTimeout(onOpen, 0)
+    }
+    rws.addEventListener('close', e => onClose(e))
+    rws.addEventListener('error', errorListener)
+    rws.addEventListener('message', onMessage)
+
+    return (): void => {
+      rws.removeEventListener('message', onMessage)
+      rws.removeEventListener('error', errorListener)
+      rws.removeEventListener('close', onClose)
+      rws.removeEventListener('open', onOpen)
+    }
+  }, [setRws, onOpen, onClose, onMessage, props.rws])
 
   return (
     <div className="screen">
@@ -51,14 +74,6 @@ export const Screen: FC<ScreenProps> = (props: PropsWithChildren<ScreenProps>): 
           ? <Watermark {...props.watermark} />
           : <></>
       }
-      <WebSocketClient
-        url={props.url}
-        noComments={props.watermark?.noComments}
-        onOpen={marqueeGenerator.onOpen}
-        onClose={marqueeGenerator.onClose}
-        onError={onError}
-        onMessage={marqueeGenerator.onMessage}
-      />
     </div>
   )
 }

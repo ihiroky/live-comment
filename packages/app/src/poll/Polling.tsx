@@ -5,7 +5,7 @@ import {
 } from '@mui/material'
 import { getLogger } from '@/common/Logger'
 import { getRandomInteger } from '@/common/utils'
-import { WebSocketClient, WebSocketControl } from '@/wscomp/WebSocketClient'
+import { ReconnectableWebSocket } from '@/wscomp/rws'
 import {
   Progress,
   Update,
@@ -19,29 +19,50 @@ import {
   useOnOpen,
   useOnUnmount,
 } from './pollingHooks'
+import { useEffect } from 'react'
 
 const log = getLogger('poll/Polling')
+const errorListener = (ev: Event): void => {
+  log.debug('[Polling] ws error', ev)
+}
 
-export function Polling({ url, room, hash, title, entries, onChange, onFinished }: {
-  url: string
+export function Polling({ room, hash, title, entries, rws, onChange, onFinished }: {
   room: string
   hash: string
   title: string
   entries: PollEntry[]
+  rws: ReconnectableWebSocket | null
   onChange: (update: Update) => void
   onFinished: () => void
 }): JSX.Element | null {
   log.info('Polling', entries)
-  const wscRef = useRef<WebSocketControl | null>(null)
   const progressRef = useRef<Progress>(new Map())
   const pollIdRef = useRef<number>(getRandomInteger())
-  const acnOk = useAcnOk(pollIdRef, title, wscRef)
+  const acnOk = useAcnOk(pollIdRef, title, rws)
 
   const onMessage = useOnMessage(acnOk, entries, progressRef, onChange)
-  const onOpen = useOnOpen(wscRef, room, hash)
-  const onClose = useOnClose(wscRef)
-  const onClick = useOnClick(progressRef, wscRef, pollIdRef, onFinished)
-  useOnUnmount(progressRef, wscRef, pollIdRef)
+  const onOpen = useOnOpen(rws, room, hash)
+  const onClose = useOnClose(rws)
+  const onClick = useOnClick(progressRef, rws, pollIdRef, onFinished)
+  useOnUnmount(progressRef, rws, pollIdRef)
+
+  useEffect((): (() => void) => {
+    if (!rws) {
+      return () => undefined
+    }
+
+    rws.addEventListener('open', onOpen)
+    rws.addEventListener('close', onClose)
+    rws.addEventListener('error', errorListener)
+    rws.addEventListener('message', onMessage)
+
+    return (): void => {
+      rws.removeEventListener('message', onMessage)
+      rws.removeEventListener('error', errorListener)
+      rws.removeEventListener('close', onClose)
+      rws.removeEventListener('open', onOpen)
+    }
+  }, [rws, onOpen, onClose, onMessage])
 
   return (
     <>
@@ -49,13 +70,6 @@ export function Polling({ url, room, hash, title, entries, onChange, onFinished 
       <Grid item xs={2}>
         <Button variant="outlined" onClick={onClick}>Finish</Button>
       </Grid>
-      <WebSocketClient
-        url={url}
-        onOpen={onOpen}
-        onMessage={onMessage}
-        onClose={onClose}
-        onError={(ev): void => log.debug('[Polling] websocket onError', ev)}
-      />
     </>
   )
 }

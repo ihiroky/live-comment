@@ -1,19 +1,22 @@
 import { renderHook } from '@testing-library/react-hooks'
-import { MutableRefObject } from 'react'
-
-import { WebSocketControl } from '@/wscomp/WebSocketClient'
 import { AppState } from './types'
 import { useOnPoll, useOnClosePoll } from './pollHooks'
+import { ReconnectableWebSocket } from '@/wscomp/rws'
 
-function createWscRefMock(): MutableRefObject<WebSocketControl | null> {
+function createReconnectableWebSocket(): ReconnectableWebSocket {
   return {
-    current: {
-      _reconnectTimer: 0,
-      send: jest.fn(),
-      reconnect: jest.fn(),
-      reconnectWithBackoff: jest.fn(),
-      close: jest.fn()
-    }
+    send: jest.fn(),
+    close: jest.fn(),
+    reconnect: jest.fn(),
+    reconnectWithBackoff: jest.fn(),
+    get readyState(): number {
+      return 0
+    },
+    get url(): string {
+      return 'dummy_url'
+    },
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
   }
 }
 
@@ -60,20 +63,20 @@ function createAppState(): AppState {
 }
 
 test('onPoll send PollMessage', () => {
-  const wscRefMock = createWscRefMock()
+  const rws = createReconnectableWebSocket()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const event: any = {
     preventDefault: jest.fn()
   }
 
-  const { result } = renderHook(() => useOnPoll(wscRefMock))
+  const { result } = renderHook(() => useOnPoll(rws))
   const onPoll = result.current
   const to = 'to'
   const choice = 1
   onPoll(event, choice, to)
 
   expect(event.preventDefault).toBeCalled()
-  expect(wscRefMock.current?.send).toBeCalledWith({
+  expect(rws?.send).toBeCalledWith({
     type: 'app',
     cmd: 'poll/poll',
     to,

@@ -1,4 +1,4 @@
-import { plugins, onwarn } from './c.js'
+import { plugins, onwarn, watch } from './c.js'
 
 export default [
   {
@@ -10,6 +10,7 @@ export default [
     },
     plugins: plugins(),
     onwarn,
+    watch,
   }, {
     input: 'src/server/streaming.ts',
     output: {
@@ -19,5 +20,6 @@ export default [
     },
     plugins: plugins(),
     onwarn,
+    watch,
   }
 ]

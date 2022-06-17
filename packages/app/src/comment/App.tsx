@@ -1,7 +1,7 @@
 import { FC, useState, useCallback, useEffect, useRef } from 'react'
 import { Message } from '@/common/Message'
 import { getLogger } from '@/common/Logger'
-import { WebSocketClient, WebSocketControl } from '@/wscomp/WebSocketClient'
+import { useReconnectableWebSocket } from '@/wscomp/rws'
 import { SendCommentForm } from './SendCommentForm'
 import { AppState } from './types'
 import { isPlaySoundMessage, PlaySoundMessage } from './types'
@@ -142,12 +142,12 @@ export const App: FC<AppProps> = (props: AppProps): JSX.Element => {
   })
   const autoScrollRef = useRef<HTMLDivElement>(null)
   const messageListDivRef = useRef<HTMLDivElement>(null)
-  const wscRef = useRef<WebSocketControl | null>(null)
   const soundPanelRef = useRef<HTMLIFrameElement>(null)
+  const rws = useReconnectableWebSocket(props.url, false)
 
-  const onOpen = useWebSocketOnOpen(wscRef)
-  const onClose = useWebSocketOnClose(wscRef)
-  const onPoll = useOnPoll(wscRef)
+  const onOpen = useWebSocketOnOpen(rws)
+  const onClose = useWebSocketOnClose(rws)
+  const onPoll = useOnPoll(rws)
   const onClosePoll = useOnClosePoll(state, setState)
   const onMessage = useWebSocketOnMessage(
     props.maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef
@@ -156,8 +156,8 @@ export const App: FC<AppProps> = (props: AppProps): JSX.Element => {
     log.error('[onError]', e)
   }, [])
   const onSubmit = useCallback((message: Message): void => {
-    wscRef.current?.send(message)
-  }, [])
+    rws?.send(message)
+  }, [rws])
   const onCheckChangeBox = useCallback((name: OptionKey, value: boolean): void => {
     setBooleanOptionValue(name, value)
     setState({
@@ -176,13 +176,22 @@ export const App: FC<AppProps> = (props: AppProps): JSX.Element => {
       goToLoginPage()
     }
 
+    if (rws) {
+      rws.addEventListener('open', onOpen)
+      rws.addEventListener('close', onClose)
+      rws.addEventListener('error', onError)
+      rws.addEventListener('message', onMessage)
+    }
     return (): void => {
-      if (wscRef.current) {
-        wscRef.current.close()
-        wscRef.current = null
+      if (rws) {
+        rws.removeEventListener('message', onMessage)
+        rws.removeEventListener('error', onError)
+        rws.removeEventListener('close', onClose)
+        rws.removeEventListener('open', onOpen)
+        rws.close()
       }
     }
-  }, [])
+  }, [onClose, onError, onMessage, onOpen, rws])
   useEffect((): (() => void)=> {
     const messageListener = (e: MessageEvent<PlaySoundMessage>): void => {
       if (e.origin !== window.location.origin) {
@@ -193,13 +202,13 @@ export const App: FC<AppProps> = (props: AppProps): JSX.Element => {
         log.warn('[messageListener] Receive an unexpected message:', e.data)
         return
       }
-      wscRef.current?.send(e.data)
+      rws?.send(e.data)
     }
     window.addEventListener('message', messageListener)
     return (): void => {
       window.removeEventListener('message', messageListener)
     }
-  }, [])
+  }, [rws])
 
   const style = useStyles()
 
@@ -218,13 +227,6 @@ export const App: FC<AppProps> = (props: AppProps): JSX.Element => {
         <div>
           { token.value ? (
             <>
-              <WebSocketClient
-                url={props.url}
-                onOpen={onOpen}
-                onClose={onClose}
-                onError={onError}
-                onMessage={onMessage}
-              />
               { state.openSoundPanel ? (
                 <div className={style.sound}>
                   <iframe ref={soundPanelRef} src="/sound" allow="autoplay 'src'" />

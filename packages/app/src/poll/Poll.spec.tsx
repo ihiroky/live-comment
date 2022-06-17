@@ -1,32 +1,29 @@
-import { ComponentProps } from 'react'
 import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Poll } from './Poll'
-import { WebSocketClient } from '@/wscomp/WebSocketClient'
 import { PollMessage } from './types'
 import { mocked } from 'ts-jest/utils'
 import { assertNotNullable } from '@/common/assert'
+import { ReconnectableWebSocket } from '@/wscomp/rws'
 
-jest.mock('@/wscomp/WebSocketClient')
 
-let onMessage: ComponentProps<typeof WebSocketClient>['onMessage'] | null
+let rws: ReconnectableWebSocket
 
 beforeEach(() => {
-  onMessage = null
-  mocked(WebSocketClient).mockImplementation(
-    (props: ComponentProps<typeof WebSocketClient>) => {
-      props.onOpen && props.onOpen({
-        _reconnectTimer: 0,
-        send: jest.fn(),
-        close: jest.fn(),
-        reconnect: jest.fn(),
-        reconnectWithBackoff: jest.fn(),
-      })
-      onMessage = props.onMessage
-      return (
-        <div data-testid="ws"></div>
-      )
-    })
+  rws = {
+    send: jest.fn(),
+    close: jest.fn(),
+    reconnect: jest.fn(),
+    reconnectWithBackoff: jest.fn(),
+    get readyState(): number {
+      return 0
+    },
+    get url(): string {
+      return 'dummy_url'
+    },
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+  }
 })
 
 test('Edit, poll and display result', async () => {
@@ -34,9 +31,10 @@ test('Edit, poll and display result', async () => {
   const onCanceled = jest.fn()
   const onPollClosed = jest.fn()
   const onResultClosed = jest.fn()
-  render(<Poll
-    title="title" wsUrl="wsUrl" room="room" hash="hash"
-    onCanceled={onCanceled}onCreated={onCreated} onPollClosed={onPollClosed} onResultClosed={onResultClosed}
+
+  const { rerender } = render(<Poll
+    title="title" room="room" hash="hash" rws={null}
+    onCanceled={onCanceled} onCreated={onCreated} onPollClosed={onPollClosed} onResultClosed={onResultClosed}
   />)
 
   // Edit poll
@@ -66,10 +64,16 @@ test('Edit, poll and display result', async () => {
   expect(onCreated).toBeCalled()
 
   // Poll
+  rerender(<Poll
+    title="title" room="room" hash="hash" rws={rws}
+    onCanceled={onCanceled} onCreated={onCreated} onPollClosed={onPollClosed} onResultClosed={onResultClosed}
+  />)
+  await waitFor(() => {
+    expect(rws.addEventListener).toHaveBeenCalledWith('message', expect.any(Function))
+  })
+  const onMessage = mocked(rws.addEventListener).mock.calls[3][1]
   screen.getByText('A description one')
   screen.getByText('A description two')
-  const finishButton = screen.getByRole('button', { name: 'Finish' })
-  await waitFor(() => expect(onMessage).not.toBeNull())
   const pollMessage0: PollMessage = {
     type: 'app',
     cmd: 'poll/poll',
@@ -105,6 +109,7 @@ test('Edit, poll and display result', async () => {
     onMessage(pollMessage2)
   })
   // Finish polling
+  const finishButton = screen.getByRole('button', { name: 'Finish' })
   userEvent.click(finishButton)
   expect(onPollClosed).toBeCalled()
 
@@ -112,7 +117,7 @@ test('Edit, poll and display result', async () => {
   const closeButton = screen.getByRole('button', { name: 'Close' })
   userEvent.click(closeButton)
   expect(onResultClosed).toBeCalled()
-})
+}, 10000)
 
 test('Cancel', async () => {
   const onCreated = jest.fn()
@@ -120,7 +125,7 @@ test('Cancel', async () => {
   const onPollClosed = jest.fn()
   const onResultClosed = jest.fn()
   render(<Poll
-    title="title" wsUrl="wsUrl" room="room" hash="hash"
+    title="title" room="room" hash="hash" rws={null}
     onCanceled={onCanceled}onCreated={onCreated} onPollClosed={onPollClosed} onResultClosed={onResultClosed}
   />)
 

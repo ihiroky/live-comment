@@ -7,8 +7,8 @@ import {
 } from '@/common/Message'
 import { getLogger } from '@/common/Logger'
 import { getRandomInteger } from '@/common/utils'
-import { WebSocketControl } from '@/wscomp/WebSocketClient'
 import { createRef, RefObject } from 'react'
+import { ReconnectableWebSocket } from '@/wscomp/rws'
 
 export type MarqueeProps = {
   key: number
@@ -78,32 +78,40 @@ export class MarqueePropsGenerator {
   private readonly duration: number
   private readonly marqueePropsListUpdated: (marqueePropsList: MarqueePropsList) => void
   private marquees: MarqueeProps[]
-  private webSocketControl: WebSocketControl | null
+  private rws: ReconnectableWebSocket | null
 
   constructor(room: string, hash: string, duration: number, listener: (marqueePropsList: MarqueePropsList) => void) {
     this.room = room
     this.hash = hash
     this.duration = duration
     this.marquees = []
-    this.webSocketControl = null
+    this.rws = null
     this.marqueePropsListUpdated = listener
   }
 
   close(): void {
-    if (this.webSocketControl) {
-      this.webSocketControl.close()
+    if (this.rws) {
+      this.rws.close()
     }
   }
 
-  readonly onOpen = (control: WebSocketControl): void => {
-    log.debug('[onOpen]', control)
+  readonly setRws = (rws: ReconnectableWebSocket | null): void => {
+    this.rws = rws
+  }
+
+  readonly onOpen = (): void => {
+    log.debug('[onOpen]')
+    const comment: CommentMessage = {
+      type: 'comment',
+      comment: `Connected to ${this.rws?.url}`,
+    }
+    this.onMessage(comment)
     const message: AcnMessage = {
       type: 'acn',
       room: this.room,
       hash: this.hash
     }
-    control.send(message)
-    this.webSocketControl = control
+    this.rws?.send(message)
   }
 
   readonly onClose = (ev: CloseEvent): void => {
@@ -121,7 +129,7 @@ export class MarqueePropsGenerator {
       comment: `Failed to connect to the server (${ev.code}) (T-T)`
     }
     this.onMessage(comment)
-    this.webSocketControl?.reconnectWithBackoff()
+    this.rws?.reconnectWithBackoff()
   }
 
   readonly onMessage = (message: Message): void => {

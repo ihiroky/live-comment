@@ -8,14 +8,15 @@ import { Choice } from './Choice'
 import { PollEdit } from './PollEdit'
 import { Polling } from './Polling'
 import { PollResult, PollResultProps } from './PollResult'
+import { ReconnectableWebSocket } from '@/wscomp/rws'
 
 const log = getLogger('Poll')
 
 type Props = {
   title: string
-  wsUrl: string
   room: string
   hash: string
+  rws: ReconnectableWebSocket | null
   onCreated?: () => void
   onCanceled?: () => void
   onPollClosed?: () => void
@@ -158,11 +159,11 @@ export const Poll: FC<Props> = (props: Props): JSX.Element => {
             mode === 'poll'
               ? (
                 <Polling
-                  url={props.wsUrl}
                   room={props.room}
                   hash={props.hash}
                   title={title}
                   entries={entries}
+                  rws={props.rws}
                   onChange={onEntryUpdated}
                   onFinished={onFinished}
                 />

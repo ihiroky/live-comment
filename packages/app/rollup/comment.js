@@ -1,4 +1,4 @@
-import { plugins, onwarn } from './c.js'
+import { plugins, onwarn, watch } from './c.js'
 import { mkdirSync } from 'fs'
 
 mkdirSync('dist/bundle/comment/', { recursive: true, mode: 0o755 })
@@ -15,4 +15,5 @@ export default [{
     { src: 'src/public/robots.txt', dest: 'dist/bundle/comment/' },
   ]),
   onwarn,
+  watch,
 }]

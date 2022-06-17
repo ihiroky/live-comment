@@ -1,4 +1,4 @@
-import { useCallback, useRef, MutableRefObject, RefObject, ComponentProps } from 'react'
+import { useCallback, useRef, RefObject } from 'react'
 import {
   AcnTokenMessage,
   CloseCode,
@@ -7,37 +7,33 @@ import {
 } from '@/common/Message'
 import { assertNotNullable } from '@/common/assert'
 import { getLogger } from '@/common/Logger'
-import { WebSocketClient, WebSocketControl } from '@/wscomp/WebSocketClient'
+
 import { goToLoginPage } from './utils/pages'
 import { AppState } from './types'
 import { isPlaySoundMessage } from './types'
 import { isPollFinishMessage, isPollStartMessage } from '@/poll/types'
+import { ReconnectableWebSocket } from '@/wscomp/rws'
 
 const log = getLogger('webSocketHooks')
 
-export function useWebSocketOnOpen(
-  wscRef: MutableRefObject<WebSocketControl | null>,
-): NonNullable<ComponentProps<typeof WebSocketClient>['onOpen']> {
-  return useCallback((wsc: WebSocketControl): void => {
-    log.debug('[onOpen]', wsc)
+export function useWebSocketOnOpen(rws: ReconnectableWebSocket | null): () => void {
+  return useCallback((): void => {
+    log.debug('[onOpen]', rws)
 
     const token = window.localStorage.getItem('token')
     if (!token) {
       return
     }
-    wscRef.current = wsc
     const acn: AcnTokenMessage = {
       type: 'acn',
       token
     }
-    wsc.send(acn)
-  }, [wscRef])
+    rws?.send(acn)
+  }, [rws])
 }
 
 
-export function useWebSocketOnClose(
-  wscRef: MutableRefObject<WebSocketControl | null>
-): NonNullable<ComponentProps<typeof WebSocketClient>['onClose']> {
+export function useWebSocketOnClose(rws: ReconnectableWebSocket | null): (e: CloseEvent) => void {
   return useCallback((ev: CloseEvent): void => {
     switch (ev.code) {
       case CloseCode.ACN_FAILED:
@@ -46,10 +42,10 @@ export function useWebSocketOnClose(
         goToLoginPage()
         break
       default:
-        wscRef.current?.reconnectWithBackoff()
+        rws?.reconnectWithBackoff()
         break
     }
-  }, [wscRef])
+  }, [rws])
 }
 
 export function useWebSocketOnMessage(
@@ -60,7 +56,7 @@ export function useWebSocketOnMessage(
   messageListDivRef: RefObject<HTMLDivElement>,
   autoScrollRef: RefObject<HTMLDivElement>,
   soundPanelRef: RefObject<HTMLIFrameElement>
-): ComponentProps<typeof WebSocketClient>['onMessage'] {
+): (message: Message) => void {
   const counterRef = useRef<number>(0)
   return useCallback((message: Message): void => {
     log.debug('[onMessage]', message)

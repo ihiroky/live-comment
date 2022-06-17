@@ -12,12 +12,14 @@
   "license": "MIT",
   "scripts": {
     "clean": "node scripts/clean.mjs",
-    "watch": "node scripts/clean.mjs && node scripts/watch.mjs",
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/watch.mjs",
+    "serve": "node scripts/serve.mjs",
     "build-comment": "NODE_ENV=production rollup -c rollup/comment.js",
     "build-desktop": "tsc -p tsconfig-desktop.json && rollup -c rollup/desktop.js",
     "build-servers": "NODE_ENV=production rollup -c rollup/server.js",
     "build-extension": "NODE_ENV=production rollup -c rollup/extension.js",
-    "start-desktop": "electron . --open-dev-tools --debug --disable-gpu-sandbox",
+    "start-desktop": "electron . --open-dev-tools --verbose",
     "lint": "eslint --ext ts,tsx --max-warnings 0 src"
   },
   "dependencies": {
@@ -50,6 +52,7 @@
     "@testing-library/react": "^13.3.0",
     "@testing-library/react-hooks": "^8.0.0",
     "@testing-library/user-event": "^13.2.1",
+    "@types/chrome": "^0.0.190",
     "@types/cors": "^2.8.12",
     "@types/dompurify": "^2.2.1",
     "@types/express": "^4.17.13",
@@ -74,7 +77,7 @@
     "rollup-plugin-terser": "^7.0.2",
     "supertest": "^6.1.6",
     "tslib": "^2.0.0",
-    "typescript": "^4.4.2"
+    "typescript": "^4.7.0"
   },
   "optionalDependencies": {
     "@emotion/react": "^11.6.0",

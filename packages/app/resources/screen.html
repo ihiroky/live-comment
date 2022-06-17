@@ -1,7 +1,7 @@
 <html>
  <head>
   <title>Screen</title>
-  <link rel="stylesheet" type="text/css" href="./index.css">
+  <link rel="stylesheet" type="text/css" href="./screen.css">
   <style>
 body {
   margin: 0;
@@ -20,6 +20,10 @@ code {
  </head>
  <body>
   <div id="root"></div>
-  <script type="text/javascript" src="./index.js"></script>
+  <script type="module" src="./renderer.js"></script>
+  <script type="module">
+import { screenMain } from './renderer.js';
+screenMain();
+  </script>
  </body>
 </html>
