@@ -56,7 +56,7 @@ export const Screen: FC<ScreenProps> = (props: PropsWithChildren<ScreenProps>): 
       rws.removeEventListener('message', onMessage)
       rws.removeEventListener('error', errorListener)
       rws.removeEventListener('close', onClose)
-      rws.removeEventListener('open', openListener)
+      rws.removeEventListener('open', onOpen)
     }
   }, [setRws, onOpen, onClose, onMessage, props.rws])
 
