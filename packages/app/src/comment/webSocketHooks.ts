@@ -8,7 +8,7 @@ import {
 import { assertNotNullable } from '@/common/assert'
 import { getLogger } from '@/common/Logger'
 
-import { goToLoginPage } from './utils/pages'
+import { gotoLoginPage } from './utils/pages'
 import { AppState } from './types'
 import { isPlaySoundMessage } from './types'
 import { isPollFinishMessage, isPollStartMessage } from '@/poll/types'
@@ -16,36 +16,43 @@ import { ReconnectableWebSocket } from '@/wscomp/rws'
 
 const log = getLogger('webSocketHooks')
 
-export function useWebSocketOnOpen(rws: ReconnectableWebSocket | null): () => void {
+export function useWebSocketOnOpen(rws: ReconnectableWebSocket | null, cb?: () => void): () => void {
   return useCallback((): void => {
     log.debug('[onOpen]', rws)
 
     const token = window.localStorage.getItem('token')
-    if (!token) {
-      return
+    if (token) {
+      const acn: AcnTokenMessage = {
+        type: 'acn',
+        token
+      }
+      rws?.send(acn)
     }
-    const acn: AcnTokenMessage = {
-      type: 'acn',
-      token
-    }
-    rws?.send(acn)
-  }, [rws])
+
+    cb?.()
+  }, [rws, cb])
 }
 
 
-export function useWebSocketOnClose(rws: ReconnectableWebSocket | null): (e: CloseEvent) => void {
+export function useWebSocketOnClose(rws: ReconnectableWebSocket | null, cb?: (ev: CloseEvent) => void
+): (e: CloseEvent) => void {
   return useCallback((ev: CloseEvent): void => {
     switch (ev.code) {
       case CloseCode.ACN_FAILED:
         window.localStorage.removeItem('token')
-        window.localStorage.setItem('App.notification', JSON.stringify({ message: 'Streaming authentication failed.' }))
-        goToLoginPage()
+        window.localStorage.setItem(
+          'App.notification',
+          JSON.stringify({ message: 'Streaming authentication failed.' })
+        )
+        gotoLoginPage()
         break
       default:
         rws?.reconnectWithBackoff()
         break
     }
-  }, [rws])
+
+    cb?.(ev)
+  }, [rws, cb])
 }
 
 export function useWebSocketOnMessage(
@@ -53,16 +60,21 @@ export function useWebSocketOnMessage(
   state: AppState,
   setState: (state: AppState) => void,
   closePoll: (pollId: string, refresh: boolean) => void,
-  messageListDivRef: RefObject<HTMLDivElement>,
-  autoScrollRef: RefObject<HTMLDivElement>,
-  soundPanelRef: RefObject<HTMLIFrameElement>
+  refs: {
+    messageListDivRef: RefObject<HTMLDivElement>
+    autoScrollRef: RefObject<HTMLDivElement>
+    soundPanelRef: RefObject<HTMLIFrameElement>
+  },
+  cb?: (m: Message) => void
 ): (message: Message) => void {
+  const { messageListDivRef, autoScrollRef, soundPanelRef } = refs
   const counterRef = useRef<number>(0)
   return useCallback((message: Message): void => {
     log.debug('[onMessage]', message)
 
     const polls = state.polls
     const comments = state.comments
+    let updateState = true
     if (isCommentMessage(message)) {
       const comment = message.comment
       const pinned = !!message.pinned
@@ -98,15 +110,19 @@ export function useWebSocketOnMessage(
       } else {
         log.info('[onMessage] iframe of soundPanel is not found.')
       }
-      return
+      updateState = false
     } else {
       log.debug('[onMessage] Unexpected message:', message)
-      return
+      updateState = false
     }
 
-    setState({...state, comments, polls})
-    if (state.autoScroll && autoScrollRef.current && messageListDivRef.current) {
-      messageListDivRef.current.scrollTo(0, autoScrollRef.current.offsetTop)
+    if (updateState) {
+      setState({...state, comments, polls})
+      if (state.autoScroll && autoScrollRef.current && messageListDivRef.current) {
+        messageListDivRef.current.scrollTo(0, autoScrollRef.current.offsetTop)
+      }
     }
-  }, [state, maxMessageCount, closePoll, autoScrollRef, messageListDivRef, setState, soundPanelRef])
+
+    cb?.(message)
+  }, [state, maxMessageCount, closePoll, autoScrollRef, messageListDivRef, setState, soundPanelRef, cb])
 }

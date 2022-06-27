@@ -14,7 +14,8 @@
       "16": "images/icon.png",
       "32": "images/icon@2.png"
     },
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_title": "Live Comment"
   },
 
   "icons": {

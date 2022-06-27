@@ -14,7 +14,7 @@ Server |      [html]    |
 Client | [post comments] [show comments]
 
 [post comments]: Web page to post comments.
-[show comments]: Desktop pplication to show comments.
+[show comments]: Desktop application to show comments.
 ```
 
 ## How to setup

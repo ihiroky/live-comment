@@ -4,27 +4,40 @@ import { mkdirSync } from 'fs'
 mkdirSync('dist/bundle/extension/images', { recursive: true, mode: 0o755 })
 
 export default [{
+  input: 'src/extension/background.ts',
+  output: {
+    file: 'dist/bundle/extension/background.js',
+    name: 'Comment',
+    format: 'iife',
+  },
+  plugins: plugins([
+    { src: 'src/extension/manifest.json', dest: 'dist/bundle/extension/' },
+    { src: 'src/extension/options.html', dest: 'dist/bundle/extension/' },
+    { src: 'resources/icon.png', dest: 'dist/bundle/extension/images/'},
+    { src: 'resources/icon@[236].png', dest: 'dist/bundle/extension/images/'},
+  ]),
+  onwarn,
+  watch,
+}, {
   input: 'src/extension/contentScript.tsx',
   output: {
     file: 'dist/bundle/extension/contentScript.js',
     name: 'Comment',
-    format: 'iife'
+    format: 'iife',
   },
   plugins: plugins(),
   onwarn,
   watch,
 }, {
-  input: 'src/extension/background.ts',
+  input: 'src/extension/popup.tsx',
   output: {
-    file: 'dist/bundle/extension/background.js',
-    name: 'Comment',
-    format: 'iife'
+    file: 'dist/bundle/extension/popup.js',
+    name: 'Popup',
+    format: 'iife',
   },
   plugins: plugins([
-    { src: 'src/extension/manifest.json', dest: 'dist/bundle/extension/' },
-    { src: 'src/extension/*.html', dest: 'dist/bundle/extension/' },
-    { src: 'resources/icon.png', dest: 'dist/bundle/extension/images/'},
-    { src: 'resources/icon@[236].png', dest: 'dist/bundle/extension/images/'},
+    { src: 'src/extension/popup.html', dest: 'dist/bundle/extension/' },
+    { src: 'dist/bundle/comment/', dest: 'dist/bundle/extension/' },
   ]),
   onwarn,
   watch,
