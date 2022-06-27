@@ -4,7 +4,7 @@ import { useWebSocketOnOpen, useWebSocketOnClose, useWebSocketOnMessage } from '
 import {  ApplicationMessage, CloseCode, CommentMessage } from '@/common/Message'
 import { ReconnectableWebSocket } from '@/wscomp/rws'
 import * as React from 'react'
-import { goToLoginPage } from './utils/pages'
+import { gotoLoginPage } from './utils/pages'
 import { AppState } from './types'
 import { PollFinishMessage, PollStartMessage } from '@/poll/types'
 
@@ -98,6 +98,16 @@ test('onOpen sets wscRef and send an acn message', () => {
   })
 })
 
+test('onOpen callback', () => {
+  const rws: ReconnectableWebSocket = createReconnectableWebSocket()
+  const cb = jest.fn()
+
+  const { result } = renderHook(() => useWebSocketOnOpen(rws, cb))
+  result.current()
+
+  expect(cb).toBeCalled()
+})
+
 test('onClose with ACN_FAILED goes to login page', () => {
   const rws: ReconnectableWebSocket = createReconnectableWebSocket()
   window.localStorage.setItem('token', 'token')
@@ -117,7 +127,7 @@ test('onClose with ACN_FAILED goes to login page', () => {
   ).toBe(
     JSON.stringify({ message: 'Streaming authentication failed.' })
   )
-  expect(goToLoginPage).toBeCalled()
+  expect(gotoLoginPage).toBeCalled()
 })
 
 test('onClose with no ACN_FAILED tries to reconnect', () => {
@@ -135,6 +145,17 @@ test('onClose with no ACN_FAILED tries to reconnect', () => {
   expect(rws.reconnectWithBackoff).toBeCalled()
 })
 
+test('onClose callback', () => {
+  const rws: ReconnectableWebSocket = createReconnectableWebSocket()
+  const cb = jest.fn()
+
+  const { result } = renderHook(() => useWebSocketOnClose(rws, cb))
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  result.current({ code: 1001 } as any)
+
+  expect(cb).toBeCalledWith({ code: 1001 })
+})
+
 test('onMessage ignores non poll application message', () => {
   const state = createAppState(false)
   const setState = jest.fn()
@@ -149,8 +170,9 @@ test('onMessage ignores non poll application message', () => {
     current: document.createElement('iframe')
   }
 
+  const refs = { messageListDivRef, autoScrollRef, soundPanelRef }
   const { result } = renderHook(() => {
-    return useWebSocketOnMessage(10, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef)
+    return useWebSocketOnMessage(10, state, setState, onClosePoll, refs)
   })
   const onMessage = result.current
   const someAppMessage: ApplicationMessage = {
@@ -176,8 +198,9 @@ test('onMessage which receives comment message add a comment entry', () => {
     current: document.createElement('iframe')
   }
 
+  const refs = { messageListDivRef, autoScrollRef, soundPanelRef }
   const { result } = renderHook(() => {
-    return useWebSocketOnMessage(10, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef)
+    return useWebSocketOnMessage(10, state, setState, onClosePoll, refs)
   })
   const onMessage = result.current
   const comment: CommentMessage = {
@@ -214,11 +237,10 @@ test('onMessage drop old comment if count of comments exceeds maxMessageCount', 
     current: document.createElement('iframe')
   }
 
+  const maxMessageCount = state.comments.length
+  const refs = { messageListDivRef, autoScrollRef, soundPanelRef }
   const { result } = renderHook(() => {
-    const maxMessageCount = state.comments.length
-    return useWebSocketOnMessage(
-      maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef
-    )
+    return useWebSocketOnMessage(maxMessageCount, state, setState, onClosePoll, refs)
   })
   const onMessage = result.current
   const comment: CommentMessage = {
@@ -255,11 +277,10 @@ test('onMessage which receives PollStartMessage add a poll entry', () => {
     current: document.createElement('iframe')
   }
 
+  const maxMessageCount = state.comments.length
+  const refs = { messageListDivRef, autoScrollRef, soundPanelRef }
   const { result } = renderHook(() => {
-    const maxMessageCount = state.comments.length
-    return useWebSocketOnMessage(
-      maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef
-    )
+    return useWebSocketOnMessage(maxMessageCount, state, setState, onClosePoll, refs)
   })
   const onMessage = result.current
   const message: PollStartMessage = {
@@ -305,11 +326,10 @@ test('onMessage which receives PollFinishMessage removes a poll entry', () => {
     current: document.createElement('iframe')
   }
 
+  const maxMessageCount = state.comments.length
+  const refs = { messageListDivRef, autoScrollRef, soundPanelRef }
   const { result } = renderHook(() => {
-    const maxMessageCount = state.comments.length
-    return useWebSocketOnMessage(
-      maxMessageCount, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef
-    )
+    return useWebSocketOnMessage(maxMessageCount, state, setState, onClosePoll, refs)
   })
   const onMessage = result.current
   const message: PollFinishMessage = {
@@ -344,9 +364,8 @@ test('onMessage scrolls to autoScrollRef if autoScroll is true', () => {
     current: document.createElement('iframe')
   }
 
-  const { result } = renderHook(() => {
-    return useWebSocketOnMessage(10, state, setState, onClosePoll, messageListDivRef, autoScrollRef, soundPanelRef)
-  })
+  const refs = { messageListDivRef, autoScrollRef, soundPanelRef }
+  const { result } = renderHook(() => useWebSocketOnMessage(10, state, setState, onClosePoll, refs))
   const onMessage = result.current
   const comment: CommentMessage = {
     type: 'comment',
@@ -355,4 +374,35 @@ test('onMessage scrolls to autoScrollRef if autoScroll is true', () => {
   onMessage(comment)
 
   expect(messageListDivRef.current?.scrollTo).toBeCalledWith(0, autoScrollRef.current?.offsetTop)
+})
+
+test('onMessage callback', () => {
+  const state = createAppState(true)
+  const setState = jest.fn()
+  const onClosePoll = jest.fn()
+  const messageListDivRef: React.RefObject<HTMLDivElement> = {
+    current: {
+      scrollTo: jest.fn()
+    } as any  // eslint-disable-line @typescript-eslint/no-explicit-any
+  }
+  const autoScrollRef: React.RefObject<HTMLDivElement> = {
+    current: {
+      offsetTop: 123
+    } as any  // eslint-disable-line @typescript-eslint/no-explicit-any
+  }
+  const soundPanelRef: React.RefObject<HTMLIFrameElement> = {
+    current: document.createElement('iframe')
+  }
+
+  const refs = { messageListDivRef, autoScrollRef, soundPanelRef }
+  const cb = jest.fn()
+
+  const { result } = renderHook(() => useWebSocketOnMessage(10, state, setState, onClosePoll, refs, cb))
+  const comment: CommentMessage = {
+    type: 'comment',
+    comment: 'comment',
+  }
+  result.current(comment)
+
+  expect(cb).toBeCalledWith(comment)
 })

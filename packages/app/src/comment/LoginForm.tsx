@@ -14,6 +14,7 @@ import {
 import { getLogger } from '@/common/Logger'
 import { gotoCommentPage } from './utils/pages'
 import { LabeledCheckbox } from './LabeledCheckbox'
+import { NavigateFunction } from 'react-router-dom'
 
 interface TextFieldState {
   value: string
@@ -45,7 +46,12 @@ const useStyles = makeStyles({
 
 const log = getLogger('LoginForm')
 
-export const LoginForm: FC<{ apiUrl: string}> = ({ apiUrl } : { apiUrl: string }): JSX.Element => {
+type LoginFormProps = {
+  apiUrl: string
+  navigate?: NavigateFunction
+}
+
+export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormProps): JSX.Element => {
   const [notification, setNotification] = useState<{ message: string }>({
     message: ''
   })
@@ -62,7 +68,7 @@ export const LoginForm: FC<{ apiUrl: string}> = ({ apiUrl } : { apiUrl: string }
   useEffect((): void => {
     const token = window.localStorage.getItem('token')
     if (token) {
-      gotoCommentPage()
+      gotoCommentPage(navigate)
       return
     }
     const json = window.localStorage.getItem('App.notification')
@@ -103,12 +109,12 @@ export const LoginForm: FC<{ apiUrl: string}> = ({ apiUrl } : { apiUrl: string }
       // TODO stay login if token is invalid
       if (isAcnOkMessage(m)) {
         window.localStorage.setItem('token', m.attrs.token)
-        gotoCommentPage()
+        gotoCommentPage(navigate)
         return
       }
       setNotification({ message: `Login failed (${ isErrorMessage(m) ? m.message : JSON.stringify(m)})` })
     })
-  }, [apiUrl, room.value, password.value, keepLogin])
+  }, [apiUrl, navigate, room.value, password.value, keepLogin])
 
   const onTextFieldChange = useCallback((e: ChangeEvent<HTMLInputElement>): void => {
     log.debug('[onTextFieldChanged]', e.target.name, e.target.value)
