@@ -79,7 +79,7 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
     window.localStorage.removeItem('App.notification')
     const notification = JSON.parse(json)
     setNotification(notification)
-  }, [])
+  }, [navigate])
 
   const onSubmit = useCallback((e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
