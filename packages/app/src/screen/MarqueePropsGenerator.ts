@@ -101,9 +101,10 @@ export class MarqueePropsGenerator {
 
   readonly onOpen = (): void => {
     log.debug('[onOpen]')
+    // TODO show connected message optionally.
     const comment: CommentMessage = {
       type: 'comment',
-      comment: `Connected to ${this.rws?.url}`,
+      comment: `🎉 Connected to ${this.rws?.url} 🎉`,
     }
     this.onMessage(comment)
     const message: AcnMessage = {

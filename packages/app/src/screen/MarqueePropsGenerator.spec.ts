@@ -292,7 +292,7 @@ describe('MarqueePropsGenerator', () => {
     sut.setRws(rws)
     sut.onOpen()
 
-    assertMarqueeProps(sut['marquees'][0], 123, 0, 'Connected to dummy_url')
+    assertMarqueeProps(sut['marquees'][0], 123, 0, '🎉 Connected to dummy_url 🎉')
     expect(rws.send).toBeCalledWith({
       type: 'acn',
       room,

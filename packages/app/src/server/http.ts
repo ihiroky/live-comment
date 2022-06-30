@@ -11,8 +11,6 @@ import { sign, verify } from './jwt'
 import { JwtPayload, TokenExpiredError } from 'jsonwebtoken'
 import { openZipFile, SoundFileDefinition } from '@/sound/file'
 
-// TODO .zip.md5 -> .md5
-
 const log = getLogger('http')
 
 async function verifyToken(headers: Request['headers'], c: Configuration): Promise<JwtPayload | null> {
@@ -326,7 +324,7 @@ export function createApp(configuration: Configuration): Express {
   const app = express()
   const acnAznMiddleware = acnAznMiddlewareBase.bind(null, configuration)
   const corsMiddleware = cors({
-    origin: [/https:\/\/\w+\.live-comment.ga$/, 'http://localhost:18080']
+    origin: [/https:\/\/\w+\.live-comment.ga$/, 'http://localhost:8888']
   })
 
   app.use(express.json())

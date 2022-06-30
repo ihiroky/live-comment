@@ -16,7 +16,7 @@
     "watch": "node scripts/watch.mjs",
     "serve": "node scripts/serve.mjs",
     "build-comment": "NODE_ENV=production rollup -c rollup/comment.js",
-    "build-desktop": "tsc -p tsconfig-desktop.json && rollup -c rollup/desktop.js",
+    "build-desktop": "rollup -c rollup/desktop.js",
     "build-servers": "NODE_ENV=production rollup -c rollup/server.js",
     "build-extension": "NODE_ENV=production rollup -c rollup/extension.js",
     "start-desktop": "electron . --open-dev-tools --verbose",
@@ -39,7 +39,7 @@
     "react-router-dom": "^6.3.0",
     "unzip": "1.0.0",
     "ws": "^8.7.0",
-    "yargs": "^17.2.1"
+    "yargs": "^17.5.1"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^20.0.0",
@@ -69,6 +69,7 @@
     "concurrently": "^6.2.0",
     "electron": "^19.0.4",
     "electron-builder": "^22.10.5",
+    "esbuild": "^0.14.47",
     "jest": "^27",
     "nodemon": "^2.0.16",
     "react-test-renderer": "^18.1.0",

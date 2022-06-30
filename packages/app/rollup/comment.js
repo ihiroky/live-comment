@@ -6,7 +6,7 @@ mkdirSync('dist/bundle/comment/', { recursive: true, mode: 0o755 })
 export default [{
   input: 'src/comment/index.tsx',
   output: {
-    file: 'dist/bundle/comment/main.js',
+    file: 'dist/bundle/comment/index.js',
     name: 'Comment',
     format: 'iife'
   },
