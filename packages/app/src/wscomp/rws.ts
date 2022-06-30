@@ -1,6 +1,6 @@
-import { getLogger } from '@/common/Logger'
+import { getLogger, LogLevels } from '@/common/Logger'
 import { Message } from '@/common/Message'
-import { useEffect, useRef } from 'react'
+import { useEffect,  useState } from 'react'
 
 type ReconnectableWebSocketEventMap = {
   "close": CloseEvent
@@ -27,18 +27,41 @@ export type ReconnectableWebSocket = {
 }
 
 const log = getLogger('ws')
+log.setLevel(LogLevels.INFO)
 
 export function createReconnectableWebSocket(url: string): ReconnectableWebSocket {
   if (!/^wss?:\/\/./.test(url)) {
     throw new Error('Invalid URL')
   }
 
-  let webSocket = new WebSocket(url)
   let reconnectTimer = 0
   const onOpenListeners: Array<(e: ReconnectableWebSocketEventMap['open']) => void> = []
   const onCloseListeners: Array<(e: ReconnectableWebSocketEventMap['close']) => void> = []
   const onErrorListeners: Array<(e: ReconnectableWebSocketEventMap['error']) => void> = []
   const onMessageListeners: Array<(e: ReconnectableWebSocketEventMap['message']) => void> = []
+  const setUpListeners = (ws: WebSocket): void => {
+    ws.addEventListener('open', (): void => {
+      log.debug('[onopen]')
+      onOpenListeners.forEach(f => f())
+    })
+    ws.addEventListener('close', (e: CloseEvent): void => {
+      log.debug('[onclose]', e)
+      onCloseListeners.forEach(f => f(e))
+    })
+    ws.addEventListener('error', (e: Event): void => {
+      log.debug('[onerror]', e)
+      onErrorListeners.forEach(f => f(e))
+    })
+    ws.addEventListener('message', (e: MessageEvent): void => {
+      log.debug('[onmessage]', e)
+      const message: Message = JSON.parse(e.data)
+      onMessageListeners.forEach(f => f(message))
+    })
+  }
+
+  let webSocket = new WebSocket(url)
+  setUpListeners(webSocket)
+
   const rws: ReconnectableWebSocket = {
     send: (message: Message): void => {
       if (webSocket.readyState === WebSocket.OPEN) {
@@ -51,6 +74,7 @@ export function createReconnectableWebSocket(url: string): ReconnectableWebSocke
       log.debug('[WebSocketControl.reconnect] Start.')
       webSocket.close()
       webSocket = new WebSocket(url)
+      setUpListeners(webSocket)
       log.debug('[WebSocketControl.reconnect] End.')
     },
     reconnectWithBackoff: (): void => {
@@ -67,7 +91,7 @@ export function createReconnectableWebSocket(url: string): ReconnectableWebSocke
       log.info(`[reconnectWithBackoff] Reconnect after ${waitMillis}ms.`)
     },
     close: (): void => {
-      log.debug('[WebSocketControl.close]')
+      log.debug('[ReconnectableWebSocket.close]')
       if (reconnectTimer) {
         window.clearTimeout(reconnectTimer)
         reconnectTimer = 0
@@ -123,29 +147,12 @@ export function createReconnectableWebSocket(url: string): ReconnectableWebSocke
     },
   }
 
-  webSocket.addEventListener('open', (): void => {
-    onOpenListeners.forEach(f => f())
-  })
-  webSocket.addEventListener('close', (e: CloseEvent): void => {
-    onCloseListeners.forEach(f => f(e))
-    rws.close()
-  })
-  webSocket.addEventListener('error', (e: Event): void => {
-    log.trace('[onerror]', e)
-    onErrorListeners.forEach(f => f(e))
-  })
-  webSocket.addEventListener('message', (e: MessageEvent): void => {
-    log.trace('[onmessage]', e)
-    const message: Message = JSON.parse(e.data)
-    onMessageListeners.forEach(f => f(message))
-  })
-
   log.info('[createReconnectableWebSocket] Websocket created.', url)
   return rws
 }
 
 export const useReconnectableWebSocket = (url: string, noComment: boolean): ReconnectableWebSocket | null => {
-  const ref = useRef<ReconnectableWebSocket | null>(null)
+  const [rws, setRws] = useState<ReconnectableWebSocket | null>(null)
 
   useEffect((): (() => void) => {
     if (noComment) {
@@ -153,15 +160,27 @@ export const useReconnectableWebSocket = (url: string, noComment: boolean): Reco
       return () => undefined
     }
 
-    ref.current = createReconnectableWebSocket(url)
+    // Add delay to suppress errors on StrictMode.
+    let timeout = 0
+    if (!rws) {
+      timeout = window.setTimeout((): void => {
+        const newRws = createReconnectableWebSocket(url)
+        timeout = 0
+        setRws(newRws)
+      }, 100)
+    }
 
     return (): void => {
-      if (ref.current) {
-        ref.current.close()
-        ref.current = null
+      if (timeout) {
+        window.clearTimeout(timeout)
+      }
+      if (rws) {
+        log.debug('[useEffect] unmount')
+        rws.close()
+        setRws(null)
       }
     }
-  }, [url, noComment])
+  }, [url, noComment, rws])
 
-  return ref.current
+  return rws
 }

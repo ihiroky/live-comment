@@ -194,7 +194,6 @@ export const Comment: FC<CommentProps> = (props: CommentProps): JSX.Element => {
         rws.removeEventListener('error', onError)
         rws.removeEventListener('close', onClose)
         rws.removeEventListener('open', onOpen)
-        rws.close()
       }
     }
   }, [props.navigate, onClose, onError, onMessage, onOpen, rws])

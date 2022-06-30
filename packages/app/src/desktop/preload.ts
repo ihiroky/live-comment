@@ -1,11 +1,11 @@
 import { contextBridge, ipcRenderer, SourcesOptions } from 'electron'
 import { SettingsV1 } from './settings'
-
-// The same constants as ./channel.ts to skip bundle preload script.
-const CHANNEL_REQUEST_SETTINGS = '#request-settings'
-const CHANNEL_POST_SETTINGS = '#post-settings'
-const CHANNEL_REQUEST_SCREEN_PROPS = '#request-screen-props'
-const CHANNEL_DESKTOP_THUMBNAIL = '#desktop-thumbnail'
+import {
+  CHANNEL_REQUEST_SETTINGS,
+  CHANNEL_REQUEST_SCREEN_PROPS,
+  CHANNEL_POST_SETTINGS,
+  CHANNEL_DESKTOP_THUMBNAIL,
+} from './channels'
 
 contextBridge.exposeInMainWorld('main', {
   request: (): Promise<SettingsV1> => {

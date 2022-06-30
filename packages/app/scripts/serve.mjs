@@ -27,16 +27,16 @@ if (!fs.existsSync(apiMain)) {
 const commands = [{
   name: pad('comment:serve'),
   prefixColor: 'yellow',
-  command: `${process.execPath} scripts/servec.mjs`,
+  command: `${process.execPath} scripts/serve_comment.mjs`,
 }, {
   name: pad('stream:serve'),
   prefixColor: 'magenta',
-  command: `${cmd('nodemon')} -w dist/bundle/server/streaming.js dist/bundle/server/streaming.js -- -l DEBUG -p 8080`,
+  command: `${cmd('nodemon')} -w ${streamingMain} ${streamingMain} -- -l DEBUG -p 8080`,
 },
 {
   name: pad('api:serve'),
   prefixColor: 'green',
-  command: `${cmd('nodemon')} -w dist/bundle/server/api.js dist/bundle/server/api.js -- -l DEBUG -p 9080`,
+  command: `${cmd('nodemon')} -w ${apiMain} ${apiMain} -- -l DEBUG -p 9080`,
 }]
 
 console.info(`Serving: ${commands.map(c => '\n ' + c.name.trim()).join('')}`)
