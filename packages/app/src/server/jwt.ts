@@ -1,4 +1,3 @@
-import { Verify } from 'crypto'
 import { sign as jwtSign, verify as jwtVerify, Secret, JwtPayload, VerifyErrors, VerifyCallback } from 'jsonwebtoken'
 
 const JWT_ALG = 'ES256'
