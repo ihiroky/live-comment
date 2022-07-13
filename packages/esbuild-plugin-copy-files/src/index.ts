@@ -1,9 +1,54 @@
-/* eslint-disable no-console */
 import { Plugin, PluginBuild } from 'esbuild'
 import glob from 'glob'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
+
+type Options = {
+  entries: {
+    src: string
+    destFile?: string
+    destDir?: string
+  }[]
+  initialDelayMs?: number
+  debounceTimeoutMs?: number
+  logLevel?: 'debug' | 'info' | 'error'
+}
+
+const LOGLEVEL_DEBUG = 2
+const LOGLEVEL_INFO = 4
+const LOGLEVEL_WARN = 6
+const LOGLEVEL_ERROR = 8
+const log = {
+  level: LOGLEVEL_ERROR,
+  setup(logLevel: Options['logLevel']): void {
+    const logLevelDef = {
+      debug: LOGLEVEL_DEBUG,
+      info: LOGLEVEL_INFO,
+      warn: LOGLEVEL_WARN,
+      error: LOGLEVEL_ERROR,
+    }
+    log.level = logLevel ? logLevelDef[logLevel] : logLevelDef['info']
+  },
+  debug(...msg: unknown[]): void {
+    if (log.level <= LOGLEVEL_DEBUG) {
+      // eslint-disable-next-line no-console
+      console.debug(...msg)
+    }
+  },
+  info(...msg: unknown[]): void {
+    if (log.level <= LOGLEVEL_INFO) {
+      // eslint-disable-next-line no-console
+      console.info(...msg)
+    }
+  },
+  error(...msg: unknown[]): void {
+    if (log.level <= LOGLEVEL_ERROR) {
+      // eslint-disable-next-line no-console
+      console.error(...msg)
+    }
+  }
+}
 
 function digest(file: string): Promise<string> {
   return new Promise((resolve: (digest: string) => void, reject: (err: Error) => void): void => {
@@ -14,76 +59,170 @@ function digest(file: string): Promise<string> {
     src.on('error', (err: Error): void => { reject(err) })
   })
 }
-async function canCopy(src: string, dest: string): Promise<boolean> {
-  const srcDigest = await digest(src)
-  try {
-    await fs.promises.access(dest)
-    const destDigest = await digest(dest)
-    return srcDigest !== destDigest
-  } catch (_: unknown) {
+
+async function canCopy(src: string, dest: string, destStat: fs.Stats | null): Promise<boolean> {
+  if (destStat === null) {
     return true
   }
+  const existsDest = await fs.promises.access(dest)
+    .then(() => true)
+    .catch(() => false)
+  if (!existsDest) {
+    // TODO test
+    return true
+  }
+
+  const srcDigest = await digest(src)
+  const destDigest = await digest(dest)
+  return srcDigest !== destDigest
 }
 
-async function copyIfUpdated(src: string, dest: string): Promise<void> {
-  const copyable = await canCopy(src, dest)
+async function copyIfUpdated(src: string, dest: string, destStat: fs.Stats | null): Promise<void> {
+  log.debug('copyIfUpdated', src, dest)
+  const destFile = destStat && destStat.isDirectory()
+    ? path.join(dest, path.basename(src))
+    : dest
+
+  const copyable = await canCopy(src, destFile, destStat)
   if (copyable) {
-    await fs.promises.copyFile(src, dest)
-    console.info(`Copy ${src} to ${dest}.`)
+    await fs.promises.copyFile(src, destFile)
+    log.info(`Copy ${src} to ${destFile}.`)
   }
 }
 
-type Options = {
-  entries: {
-    src: string
-    destFile?: string
-    destDir?: string
-  }[]
-}
-export const copyFile = (options:Options): Plugin => ({
-  name: 'copy-files',
-  setup: (build: PluginBuild): void => {
-    build.onEnd(async (): Promise<void> => {
-      const entries = options.entries || []
-      for (const e of entries) {
-        const dest = e.destFile ?? e.destDir
-        if (!e.src || !dest) {
-          continue
-        }
+/**
+ * Traverse (src, dest) entries in the options.
+ * Valid entry: (src, dest) = (file, file), (file, directory), (files(glob), directory)
+ */
+async function traverse(
+  options: Options,
+  callback: (src: string, dest: string, destStat: fs.Stats | null) => Promise<void>
+): Promise<void> {
+  for (const e of options.entries || []) {
+    const dest = e.destFile ?? e.destDir
+    if (!e.src || !dest) {
+      continue
+    }
+    try {
+      await fs.promises.access(dest)
+    } catch (_: unknown) {
+      const dir = e.destFile ? path.dirname(e.destFile) : dest
+      await fs.promises.mkdir(dir, { mode: 0o755, recursive: true })
+      log.debug(`Create directory: ${dir}`)
+    }
 
-        if (e.destFile) {
-          await fs.promises.access(dest)
-        } else if (e.destDir) {
-          try {
-            await fs.promises.access(dest)
-          } catch (_: unknown) {
-            await fs.promises.mkdir(e.destDir, { mode: 0o755, recursive: true })
-            console.debug(`Create directory: ${dest}`)
-          }
-        }
-        const destStat = await fs.promises.stat(dest)
-        if ((destStat.isFile() && !e.destFile) || (destStat.isDirectory() && !e.destDir)) {
-          const prefix = e.destFile
-            ? `destFile ${e.destFile} is not a file`
-            : `destDir ${e.destDir} is not a directory`
-          console.error(`${prefix}. Stop copying ${e.src}.`)
-          continue
-        }
-        for (const src of glob.sync(e.src, { nodir: true })) {
-          await fs.promises.access(src)
-          const srcStat = await fs.promises.stat(src)
-          if (!srcStat.isFile()) {
-            console.error(`${src} is not a file. Stop copying it.`)
-            continue
-          }
-          if (destStat.isFile()) {
-            await copyIfUpdated(src, dest)
-          } else if (destStat.isDirectory()) {
-            const destFile = path.join(dest, path.basename(src))
-            await copyIfUpdated(src, destFile)
-          }
-        }
+    const destStat = await fs.promises.stat(dest).catch(() => null)
+
+    const srcList = glob.sync(e.src, { nodir: true })
+    if (srcList.length > 1 && e.destFile) {
+      log.error(`The src are multiple files, but dest is not a directory.`)
+      continue
+    }
+    for (const src of srcList) {
+      await fs.promises.access(src)
+      const srcStat = await fs.promises.stat(src)
+      if (!srcStat.isFile()) {
+        log.error(`${src} is not a file. Stop copying it.`)
+        continue
       }
-    })
-  },
-})
+      await callback(src, dest, destStat)
+    }
+  }
+}
+
+async function createWacher(
+  src: string,
+  dest: string,
+  destStat: fs.Stats | null,
+  debounceTimeoutMs: number
+): Promise<fs.FSWatcher> {
+  let debounceTimeout: NodeJS.Timeout | null = null
+  return fs.watch(src, (eventType: string): void => {
+    log.debug(`${eventType} ${src}`)
+    switch (eventType) {
+      case 'change':
+        if (debounceTimeout) {
+          return
+        }
+        log.debug(`Call copyIfUpdate after ${debounceTimeoutMs}ms.`)
+        debounceTimeout = setTimeout((): void => {
+          copyIfUpdated(src, dest, destStat)
+          debounceTimeout = null
+        }, debounceTimeoutMs)
+        break
+      case 'rename':
+        log.debug(`rename ${src}`)
+        break
+    }
+  })
+}
+
+async function createAllWatchers(options: Options): Promise<fs.FSWatcher[]> {
+  const watchers: fs.FSWatcher[] = []
+  await traverse(options, async (src: string, dest: string, destStat: fs.Stats | null): Promise<void> => {
+    const watcher = await createWacher(src, dest, destStat, options.debounceTimeoutMs ?? 200)
+    log.debug(`Create watcher for ${src}`)
+    watchers.push(watcher)
+  })
+  return watchers
+}
+
+async function copyOnce(options: Options): Promise<void> {
+  await traverse(
+    options,
+    async (src: string, dest: string, destStat: fs.Stats | null): Promise<void> => (
+      await copyIfUpdated(src, dest, destStat)
+    )
+  )
+}
+
+type FSWatcherCloseable = {
+  _watchers: Array<fs.FSWatcher>
+  close: () => void
+}
+
+function changeEnumerable(p: ReturnType<typeof copyFiles>, key: keyof FSWatcherCloseable, enumerable: boolean): void {
+  const desc = Object.getOwnPropertyDescriptor(p, key)
+  if (!desc) {
+    throw new Error(`Unexpected key ${key} for ${p}.`)
+  }
+  desc.enumerable = enumerable
+  Object.defineProperty(p, key, desc)
+}
+
+export const copyFiles = (options: Options): Plugin & FSWatcherCloseable => {
+  const plugin = {
+    name: 'copy-files',
+    setup: (build: PluginBuild): void | Promise<void> => {
+      log.setup(options.logLevel)
+      if (build.initialOptions.watch) {
+        return new Promise<void>((resolve: () => void, reject: (reason: unknown) => void): void => {
+          setTimeout((): void => {
+            copyOnce(options)
+              .then((): Promise<fs.FSWatcher[]> => createAllWatchers(options))
+              .then((watchers: fs.FSWatcher[]): void => {
+                plugin._watchers = watchers
+                resolve()
+              })
+              .catch(reject)
+          }, options.initialDelayMs ?? 3000)
+        })
+      }
+      build.onEnd(async (): Promise<void> => {
+        await copyOnce(options)
+      })
+    },
+    _watchers: new Array<fs.FSWatcher>(),
+    close: (): void => {
+      plugin._watchers.forEach((w: fs.FSWatcher): void => {
+        w.close()
+      })
+    }
+  }
+
+  // Avoiding validation of plugin properties.
+  changeEnumerable(plugin, '_watchers', false)
+  changeEnumerable(plugin, 'close', false)
+
+  return plugin
+}

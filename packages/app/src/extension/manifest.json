@@ -6,7 +6,7 @@
   "version": "1.0",
 
   "options_ui": {
-    "page": "options.html"
+    "page": "options/options.html"
   },
 
   "action": {
@@ -14,7 +14,7 @@
       "16": "images/icon.png",
       "32": "images/icon@2.png"
     },
-    "default_popup": "popup.html",
+    "default_popup": "popup/popup.html",
     "default_title": "Live Comment"
   },
 
@@ -25,19 +25,19 @@
     "128": "images/icon@6.png"
   },
 
-  "content_scripts": [
-      {
-          "matches": ["<all_urls>"],
-          "js": ["contentScript.js"]
-      }
-  ],
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["contentScript.js"]
+  }],
 
   "background": {
     "service_worker": "background.js"
   },
 
   "permissions": [
-    "storage"
+    "storage",
+    "scripting",
+    "tabs"
   ],
 
   "host_permissions": [

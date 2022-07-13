@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { build } from 'esbuild'
-import { copyFile } from 'esbuild-plugin-copy-files'
+import { copyFiles } from 'esbuild-plugin-copy-files'
 
 const dev = process.env['NODE_ENV'] !== 'production'
 
@@ -12,7 +12,7 @@ const printRebuildResult = (name) => ({
   onRebuild: (err, result) => {
     const messages = []
     if (result.errors.length === 0 && result.warnings.length === 0) {
-      messages.push('No errors/warnings')
+      messages.push('Rebuild completed. No errors/warnings.')
     }
     if (result.errors.length > 0) {
       messages.push(`Found ${result.errors.length} error(s).\n`)
@@ -63,15 +63,15 @@ const comment = build({
   watch: dev && printRebuildResult('comment'),
   minify: !dev,
   plugins: [
-    copyFile({ entries: [
+    copyFiles({ entries: [
       { src: 'src/public/*', destDir: 'dist/bundle/comment/' },
     ]})
   ],
 }).then(() => log('comment', 'Watching...'))
 
-const main = build({
-  entryPoints: ['src/desktop/index.ts'],
-  outfile: 'dist/desktop/index.js',
+const desktop = build({
+  entryPoints: ['src/desktop/index.ts', 'src/desktop/preload.ts'],
+  outdir: 'dist/desktop/',
   color: true,
   bundle: true,
   platform: 'node',
@@ -79,17 +79,6 @@ const main = build({
   watch: dev && printRebuildResult('desktop:main'),
   minify: !dev
 }).then(() => log('desktop:main', 'Watching...'))
-
-const preload = build({
-  entryPoints: ['src/desktop/preload.ts'],
-  outfile: 'dist/desktop/preload.js',
-  color: true,
-  bundle: true,
-  platform: 'node',
-  external: ['electron'],
-  watch: dev && printRebuildResult('desktop:preload'),
-  minify: !dev,
-}).then(() => log('desktop:preload', 'Watching...'))
 
 const renderer = build({
   entryPoints: ['src/desktop/renderer.tsx'],
@@ -103,14 +92,19 @@ const renderer = build({
   watch: dev && printRebuildResult('desktop:renderer'),
   minify: !dev,
   plugins: [
-    copyFile({ entries: [
-      { src: 'src/screen/screen.css', dest: 'resources/' },
+    copyFiles({ entries: [
+      { src: 'src/screen/screen.css', destDir: 'resources/' },
     ]})
   ],
 }).then(() => log('desktop:renderer', 'Watching...'))
 
 const extension = build({
-  entryPoints: ['src/extension/background.ts', 'src/extension/contentScript.tsx', 'src/extension/popup.tsx'],
+  entryPoints: [
+    'src/extension/background.ts',
+    'src/extension/contentScript.tsx',
+    'src/extension/popup/popup.tsx',
+    'src/extension/popup/comment.tsx'
+  ],
   inject: ['scripts/react-shim.js'],
   color: true,
   bundle: true,
@@ -120,14 +114,17 @@ const extension = build({
   watch: dev && printRebuildResult('extension'),
   minify: !dev,
   plugins: [
-    copyFile({ entries: [
-      // { src: 'dist/bundle/comment/', dest: 'dist/bundle/extension/' },
-      { src: 'src/extension/manifest.json', destDir: 'dist/bundle/extension/' },
-      { src: 'src/extension/*.html', destDir: 'dist/bundle/extension/' },
-      { src: 'resources/icon.png', destDir: 'dist/bundle/extension/images/'},
-      { src: 'resources/icon@[236].png', destDir: 'dist/bundle/extension/images/'},
-    ]})
+    copyFiles({
+      entries: [
+        { src: 'src/extension/manifest.json', destDir: 'dist/bundle/extension/' },
+        { src: 'src/extension/options/options.html', destDir: 'dist/bundle/extension/options/' },
+        { src: 'src/extension/popup/*.html', destDir: 'dist/bundle/extension/popup/' },
+        { src: 'src/screen/screen.css', destDir: 'dist/bundle/extension/popup/' },
+        { src: 'resources/icon.png', destDir: 'dist/bundle/extension/images/'},
+        { src: 'resources/icon@[236].png', destDir: 'dist/bundle/extension/images/'},
+      ],
+    })
   ]
 }).then(() => log('extension', 'Watching...'))
 
-Promise.all([api, streaming, comment, main, preload, renderer, extension])
+Promise.all([api, streaming, comment, desktop, renderer, extension])

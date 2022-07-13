@@ -2,7 +2,6 @@ import { SoundPlayer } from './SoundPlayer'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { usePlaySound, useSoundMetadata } from './hooks'
-import { mocked } from 'ts-jest/utils'
 import { PlaySoundMessage } from '../types'
 import { sign } from 'jsonwebtoken'
 
@@ -15,8 +14,8 @@ afterEach(() => {
 test('Page title', () => {
   const token = sign({ room: 'room' }, 'hoge')
   window.localStorage.setItem('token', token)
-  mocked(usePlaySound).mockReturnValue(jest.fn())
-  mocked(useSoundMetadata).mockReturnValue([])
+  jest.mocked(usePlaySound).mockReturnValue(jest.fn())
+  jest.mocked(useSoundMetadata).mockReturnValue([])
 
   render(<SoundPlayer url="https://localhost" />)
 
@@ -27,8 +26,8 @@ test('Page title', () => {
 test('Show/hide preferences if switch toggles', async () => {
   const token = sign({ room: 'room' }, 'hoge')
   window.localStorage.setItem('token', token)
-  mocked(usePlaySound).mockReturnValue(jest.fn())
-  mocked(useSoundMetadata).mockReturnValue([])
+  jest.mocked(usePlaySound).mockReturnValue(jest.fn())
+  jest.mocked(useSoundMetadata).mockReturnValue([])
 
   render(<SoundPlayer url="https://localhost" />)
 
@@ -49,10 +48,10 @@ test('Show/hide preferences if switch toggles', async () => {
 })
 
 test('Send message to play sound if icon is clicked', async () => {
-  mocked(usePlaySound).mockReturnValue(jest.fn())
+  jest.mocked(usePlaySound).mockReturnValue(jest.fn())
   const token = sign({ room: 'room' }, 'hoge')
   window.localStorage.setItem('token', token)
-  mocked(useSoundMetadata).mockReturnValue([
+  jest.mocked(useSoundMetadata).mockReturnValue([
     { id0: { id: 'id0', displayName: 'dn0', command: [] }},
     {}
   ])

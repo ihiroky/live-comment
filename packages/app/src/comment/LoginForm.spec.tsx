@@ -5,7 +5,6 @@ import { LoginForm } from './LoginForm'
 import { createHash } from '@/common/utils'
 import { assertNotNullable } from '@/common/assert'
 import { gotoCommentPage } from './utils/pages'
-import { mocked } from 'ts-jest/utils'
 
 jest.mock('./utils/pages')
 
@@ -191,7 +190,7 @@ test('Keep login', async () => {
   userEvent.click(button)
   await waitFor(() => {
     expect(global.fetch).toBeCalled()
-    const init = mocked(global.fetch).mock.calls[0][1]
+    const init = jest.mocked(global.fetch).mock.calls[0][1]
     expect(init?.body).toBe(JSON.stringify({
       type: 'acn',
       room: 'r',

@@ -19,10 +19,10 @@ type CommentProps = {
   url: string
   maxMessageCount: number
   navigate?: NavigateFunction
-  onWsOpen?: () => void
-  onWsClose?: (e: CloseEvent) => void
-  onWsError?: (e: Event) => void
-  onWsMessage?: (m: Message) => void
+  onOpen?: () => void
+  onClose?: (e: CloseEvent) => void
+  onError?: (e: Event) => void
+  onMessage?: (m: Message) => void
 }
 
 // TODO User should be able to restart poll if the poll entry is closed by mistake.
@@ -150,17 +150,17 @@ export const Comment: FC<CommentProps> = (props: CommentProps): JSX.Element => {
   const soundPanelRef = useRef<HTMLIFrameElement>(null)
   const rws = useReconnectableWebSocket(props.url, false)
 
-  const { maxMessageCount, onWsOpen, onWsClose, onWsError, onWsMessage } = props
-  const onOpen = useWebSocketOnOpen(rws, onWsOpen)
-  const onClose = useWebSocketOnClose(rws, onWsClose)
+  const {maxMessageCount, onOpen, onClose, onError, onMessage } = props
+  const onWsOpen = useWebSocketOnOpen(rws, onOpen)
+  const onWsClose = useWebSocketOnClose(rws, onClose)
   const onPoll = useOnPoll(rws)
   const onClosePoll = useOnClosePoll(state, setState)
   const refs = { messageListDivRef, autoScrollRef, soundPanelRef }
-  const onMessage = useWebSocketOnMessage(maxMessageCount, state, setState, onClosePoll, refs, onWsMessage)
-  const onError = useCallback((e: Event): void => {
+  const onWsMessage = useWebSocketOnMessage(maxMessageCount, state, setState, onClosePoll, refs, onMessage)
+  const onWsError = useCallback((e: Event): void => {
     log.error('[onError]', e)
-    onWsError?.(e)
-  }, [onWsError])
+    onError?.(e)
+  }, [onError])
   const onSubmit = useCallback((message: Message): void => {
     rws?.send(message)
   }, [rws])
@@ -183,20 +183,20 @@ export const Comment: FC<CommentProps> = (props: CommentProps): JSX.Element => {
     }
 
     if (rws) {
-      rws.addEventListener('open', onOpen)
-      rws.addEventListener('close', onClose)
-      rws.addEventListener('error', onError)
-      rws.addEventListener('message', onMessage)
+      rws.addEventListener('open', onWsOpen)
+      rws.addEventListener('close', onWsClose)
+      rws.addEventListener('error', onWsError)
+      rws.addEventListener('message', onWsMessage)
     }
     return (): void => {
       if (rws) {
-        rws.removeEventListener('message', onMessage)
-        rws.removeEventListener('error', onError)
-        rws.removeEventListener('close', onClose)
-        rws.removeEventListener('open', onOpen)
+        rws.removeEventListener('message', onWsMessage)
+        rws.removeEventListener('error', onWsError)
+        rws.removeEventListener('close', onWsClose)
+        rws.removeEventListener('open', onWsOpen)
       }
     }
-  }, [props.navigate, onClose, onError, onMessage, onOpen, rws])
+  }, [props.navigate, onWsClose, onWsError, onWsMessage, onWsOpen, rws])
   useEffect((): (() => void)=> {
     const messageListener = (e: MessageEvent<PlaySoundMessage>): void => {
       if (e.origin !== window.location.origin) {

@@ -5,7 +5,6 @@ import fs from 'fs'
 import path from 'path'
 import os from 'os'
 import http from 'http'
-import { mocked } from 'ts-jest/utils'
 import { Socket } from 'net'
 import { AcnMessage, AcnOkMessage, AcnTokenMessage, CloseCode, CommentMessage, ErrorMessage } from '@/common/Message'
 import { assertNotNullable } from '@/common/assert'
@@ -51,20 +50,20 @@ beforeEach(async () => {
 
   configuration = new Configuration(argv, cache.content, cache.stat.mtimeMs)
 
-  mocked(WebSocket.Server).mockImplementation(() => {
+  jest.mocked(WebSocket.Server).mockImplementation(() => {
     return {
       on: jest.fn(),
       emit: jest.fn(),
     } as any // eslint-disable-line @typescript-eslint/no-explicit-any
   })
-  mocked(WebSocket).mockImplementation(() => {
+  jest.mocked(WebSocket).mockImplementation(() => {
     return {
       send: jest.fn(),
       close: jest.fn(),
       on: jest.fn(),
     } as any // eslint-disable-line @typescript-eslint/no-explicit-any
   })
-  mocked(http.IncomingMessage).mockImplementation(() => {
+  jest.mocked(http.IncomingMessage).mockImplementation(() => {
     return {
       socket: {
         remoteAddress: 'remoteAddress',
@@ -72,7 +71,7 @@ beforeEach(async () => {
       }
     } as http.IncomingMessage
   })
-  mocked(HealthCheck).mockImplementation(() => {
+  jest.mocked(HealthCheck).mockImplementation(() => {
     return {
       add: jest.fn(),
       remove: jest.fn(),
@@ -86,7 +85,7 @@ afterEach(() => {
   if (sut) {
     try {
       // WebSocket is mocked, so call onclose directly.
-      const onClose = mocked(sut.on).mock.calls[1][1]
+      const onClose = jest.mocked(sut.on).mock.calls[1][1]
       onClose.bind(sut)()
     } catch (e: unknown) {
       // eslint-disable-next-line no-console
@@ -132,7 +131,7 @@ function withFakeTimers(f: () => void) {
 function callOnConnection() {
   const healthCheck = new HealthCheck()
   const server = createWebSocketServer(http.createServer(), healthCheck, configuration)
-  const onConnection = mocked(server.on).mock.calls[0][1]
+  const onConnection = jest.mocked(server.on).mock.calls[0][1]
   const session = new WebSocket('') as ClientSession
   const req = new http.IncomingMessage({} as Socket)
   onConnection.bind(server)(session, req)
@@ -159,7 +158,7 @@ test('Session initial properties', () => {
 test('Acn OK, and count up before sending and count down after sended', async () => {
   const { session } = callOnConnection()
   expect(session.on).toBeCalledWith('message', expect.any(Function))
-  const onMessage = mocked(session.on).mock.calls[0][1]
+  const onMessage = jest.mocked(session.on).mock.calls[0][1]
 
   session.pendingMessageCount = 0
   session.pendingCharCount = 0
@@ -180,7 +179,7 @@ test('Acn OK, and count up before sending and count down after sended', async ()
     expect(countUpPending).toBeCalledWith(session, charCount)
   })
 
-  const cb0 = mocked(session.send).mock.calls[0][1] as (err?: Error) => void
+  const cb0 = jest.mocked(session.send).mock.calls[0][1] as (err?: Error) => void
   cb0()
   expect(countDownPending).toBeCalledWith(session, charCount)
 })
@@ -188,7 +187,7 @@ test('Acn OK, and count up before sending and count down after sended', async ()
 test('Acn failed, then close the session', () => {
   const { session } = callOnConnection()
   expect(session.on).toBeCalledWith('message', expect.any(Function))
-  const onMessage = mocked(session.on).mock.calls[0][1]
+  const onMessage = jest.mocked(session.on).mock.calls[0][1]
 
   const m: AcnMessage = {
     type: 'acn',
@@ -208,7 +207,7 @@ test('Acn failed, then close the session', () => {
 test('Autorization with token and OK', async () => {
   const { session } = callOnConnection()
   expect(session.on).toBeCalledWith('message', expect.any(Function))
-  const onMessage = mocked(session.on).mock.calls[0][1]
+  const onMessage = jest.mocked(session.on).mock.calls[0][1]
   const token = sign({ room: configuration.rooms[0].room }, configuration.jwtPrivateKey, { expiresIn: '1d', algorithm: 'ES256' })
 
   const m0: AcnTokenMessage = {
@@ -227,7 +226,7 @@ test('Autorization with token and OK', async () => {
     expect(countUpPending).toBeCalledWith(session, charCount)
   })
 
-  const cb0 = mocked(session.send).mock.calls[0][1] as (err?: Error) => void
+  const cb0 = jest.mocked(session.send).mock.calls[0][1] as (err?: Error) => void
   cb0()
   expect(countDownPending).toBeCalledWith(session, charCount)
 })
@@ -235,7 +234,7 @@ test('Autorization with token and OK', async () => {
 test('Authorization with token and verification failed', async () => {
   const { session } = callOnConnection()
   expect(session.on).toBeCalledWith('message', expect.any(Function))
-  const onMessage = mocked(session.on).mock.calls[0][1]
+  const onMessage = jest.mocked(session.on).mock.calls[0][1]
   const token = sign({ room: configuration.rooms[0].room }, configuration.jwtPrivateKey, { expiresIn: '0s', algorithm: 'ES256' })
 
   const m0: AcnTokenMessage = {
@@ -257,7 +256,7 @@ test('Authorization with token and verification failed', async () => {
 test('Authorization with token which has no room', async () => {
   const { session } = callOnConnection()
   expect(session.on).toBeCalledWith('message', expect.any(Function))
-  const onMessage = mocked(session.on).mock.calls[0][1]
+  const onMessage = jest.mocked(session.on).mock.calls[0][1]
   const token = sign({}, configuration.jwtPrivateKey, { expiresIn: '10s', algorithm: 'ES256' })
 
   const m0: AcnTokenMessage = {
@@ -279,7 +278,7 @@ test('Authorization with token which has no room', async () => {
 test('An unauthenticated session is closed if exists on boardcasting', () => {
   const { server, session } = callOnConnection()
   expect(session.on).toBeCalledWith('message', expect.any(Function))
-  const onMessage = mocked(session.on).mock.calls[0][1]
+  const onMessage = jest.mocked(session.on).mock.calls[0][1]
 
   expect(session.room).toBeUndefined()
   const m: CommentMessage = {
@@ -297,7 +296,7 @@ test('An unauthenticated session is closed if exists on boardcasting', () => {
 test('Broardcast in the sender room', () => {
   const { server, session } = callOnConnection()
   expect(session.on).toBeCalledWith('message', expect.any(Function))
-  const onMessage = mocked(session.on).mock.calls[0][1]
+  const onMessage = jest.mocked(session.on).mock.calls[0][1]
 
   session.room = 'room'
   const anotherRoomSession = new WebSocket('') as ClientSession
@@ -324,7 +323,7 @@ test('Write log and remove session from health check on error', () => {
   log.info = jest.fn()
   const { session, healthCheck } = callOnConnection()
   expect(session.on).toBeCalledWith('error', expect.any(Function))
-  const onError = mocked(session.on).mock.calls[1][1]
+  const onError = jest.mocked(session.on).mock.calls[1][1]
 
   const error = new Error('error')
   onError.bind(session)(error)
@@ -337,7 +336,7 @@ test('Write log and remove session from health check on close', () => {
   log.info = jest.fn()
   const { session, healthCheck } = callOnConnection()
   expect(session.on).toBeCalledWith('close', expect.any(Function))
-  const onClose = mocked(session.on).mock.calls[2][1]
+  const onClose = jest.mocked(session.on).mock.calls[2][1]
 
   onClose.bind(session)(1001, 'reason')
   expect(log.info).toBeCalledWith('[onClose]', session.id, 1001, 'reason')
@@ -365,7 +364,7 @@ test('Emit healthcheck event periodically', () => {
   sut = createWebSocketServer(http.createServer(), healthCheck, configuration)
 
   expect(sut.on).toBeCalledWith('close', expect.any(Function))
-  const onClose = mocked(sut.on).mock.calls[1][1]
+  const onClose = jest.mocked(sut.on).mock.calls[1][1]
   onClose.bind(sut)()
 
   expect(healthCheck.stop).toBeCalled()

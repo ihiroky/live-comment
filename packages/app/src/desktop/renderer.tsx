@@ -1,11 +1,12 @@
-import { FC, StrictMode, useCallback, useState } from 'react'
+import { FC, StrictMode, useCallback, useEffect, useMemo, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { Screen } from '@/screen/Screen'
 import { SettingsV1 } from './settings'
 import { createHash } from '@/common/utils'
 import { createReconnectableWebSocket, ReconnectableWebSocket, useReconnectableWebSocket } from '@/wscomp/rws'
 import { Poll } from '@/poll/Poll'
 import { SettingsForm } from './settings/SettingsForm'
+import { MessageScreen, PublishableMessageSource, createMessageSource } from '@/screen/MessageScreen'
+import { onOpen, onClose } from './screenEventListeners'
 
 declare global {
   interface Window {
@@ -22,17 +23,41 @@ export function screenMain(): void {
   window.main.request().then((settings: SettingsV1): void => {
     const App: FC = (): JSX.Element => {
       const rws = useReconnectableWebSocket(settings.general.url, settings.watermark.noComments)
+      const messageSource = useMemo((): PublishableMessageSource => createMessageSource(), [])
+      const onRwsOpen = useCallback((): void => {
+        if (!rws) {
+          return
+        }
+        const hash = createHash(settings.general.password)
+        onOpen(rws, settings.general.room, hash, messageSource)
+      }, [rws, messageSource])
+      const onRwsClose = useCallback((ev: CloseEvent): void => {
+        if (!rws) {
+          return
+        }
+        onClose(rws, ev, messageSource)
+      }, [rws, messageSource])
+
+      useEffect((): (() => void) => {
+        if (!rws) {
+          return () => undefined
+        }
+        rws.addEventListener('open', onRwsOpen)
+        rws.addEventListener('close', onRwsClose)
+        return (): void => {
+          rws.removeEventListener('open', onRwsOpen)
+          rws.removeEventListener('close', onRwsClose)
+        }
+      }, [rws, onRwsOpen, onRwsClose])
 
       return (
         <StrictMode>
-          <Screen
-            room={settings.general.room}
-            hash={createHash(settings.general.password)}
+          <MessageScreen
             duration={settings.general.duration * 1000}
             color={settings.general.fontColor}
             fontBorderColor={settings.general.fontBorderColor}
             watermark={settings.watermark}
-            rws={rws}
+            messageSource={messageSource}
           />
         </StrictMode>
       )

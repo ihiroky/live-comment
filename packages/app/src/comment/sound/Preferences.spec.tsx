@@ -1,7 +1,6 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { render } from '@testing-library/react'
-import { mocked } from 'ts-jest/utils'
 import { sign } from 'jsonwebtoken'
 import { Preferences } from './Preferences'
 import { fetchWithTimeout } from '@/common/utils'
@@ -51,7 +50,7 @@ test('Show alert if fetching sound file failed', async () => {
     ok: false,
     status: 500,
   } as Response)
-  mocked(fetchWithTimeout).mockReturnValue(fetchResult)
+  jest.mocked(fetchWithTimeout).mockReturnValue(fetchResult)
 
   render(<Preferences
     url="http://localhost/"
@@ -79,7 +78,7 @@ test('Show alert if there is no response body', async () => {
     ok: true,
     status: 200,
   } as Response)
-  mocked(fetchWithTimeout).mockReturnValue(fetchResult)
+  jest.mocked(fetchWithTimeout).mockReturnValue(fetchResult)
 
   render(<Preferences
     url="http://localhost/"
@@ -124,7 +123,7 @@ test('Download sound file.', async () => {
       },
     }
   } as Response)
-  mocked(fetchWithTimeout).mockReturnValue(fetchResult)
+  jest.mocked(fetchWithTimeout).mockReturnValue(fetchResult)
 
   render(<Preferences
     url="http://localhost/"
@@ -162,7 +161,7 @@ test('Upload sound file', async () => {
   const token = sign({ room }, 'hoge')
   const volume = 10
   const volumeChanged = jest.fn()
-  mocked(fetchWithTimeout).mockResolvedValue({
+  jest.mocked(fetchWithTimeout).mockResolvedValue({
     ok: true,
     status: 200,
     json: jest.fn().mockResolvedValue({}) as unknown,
@@ -198,7 +197,7 @@ test('Cancel to upload sound file ', async () => {
   const token = sign({ room }, 'hoge')
   const volume = 10
   const volumeChanged = jest.fn()
-  mocked(fetchWithTimeout).mockResolvedValue({
+  jest.mocked(fetchWithTimeout).mockResolvedValue({
     ok: true,
     status: 200,
     json: jest.fn().mockResolvedValue({}) as unknown,
@@ -235,7 +234,7 @@ test('Fetch filed on uploading file', async () => {
   const token = sign({ room }, 'hoge')
   const volume = 10
   const volumeChanged = jest.fn()
-  mocked(fetchWithTimeout).mockRejectedValue(new Error('hoge'))
+  jest.mocked(fetchWithTimeout).mockRejectedValue(new Error('hoge'))
 
   render(<Preferences
     url="http://localhost/"
