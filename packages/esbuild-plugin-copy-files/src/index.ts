@@ -113,9 +113,7 @@ async function traverse(
 
     const destStat = await fs.promises.stat(dest).catch(() => null)
 
-    // glob requires slashes for path separator.
-    // https://github.com/isaacs/node-glob#windows
-    const srcList = glob.sync(e.src.replaceAll('\\', '/'), { nodir: true })
+    const srcList = glob.sync(e.src, { nodir: true })
     if (srcList.length > 1 && e.destFile) {
       log.error(`The src are multiple files, but dest is not a directory.`)
       continue

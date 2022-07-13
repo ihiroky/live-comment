@@ -19,6 +19,12 @@ afterEach(async () => {
   }
 })
 
+function normalize(s: string): string {
+  // path separator must be slash in glob expression even if running on Windows.
+  // https://github.com/isaacs/node-glob#windows
+  return s.replaceAll('\\', '/')
+}
+
 describe('copyOnce', () => {
   async function callCopyOnce(entries: Parameters<typeof copyFiles>[0]['entries']): Promise<void> {
     const plugin = copyFiles({ entries })
@@ -41,7 +47,7 @@ describe('copyOnce', () => {
     await fsp.writeFile(srcFile, 'srcFile')
 
     await callCopyOnce([
-      { src: srcFile, destFile: destFile }
+      { src: normalize(srcFile), destFile: destFile }
     ])
 
     const destContent = await fsp.readFile(destFile, { encoding: 'utf8' })
@@ -55,7 +61,7 @@ describe('copyOnce', () => {
     await fsp.mkdir(destDir, { recursive: true })
 
     await callCopyOnce([
-      { src: srcFile, destDir: destDir }
+      { src: normalize(srcFile), destDir: destDir }
     ])
 
     const destFile = path.join(destDir, path.basename(srcFile))
@@ -74,7 +80,7 @@ describe('copyOnce', () => {
     await fsp.mkdir(destDir, { recursive: true })
 
     await callCopyOnce([
-      { src: `${tempDirPath}/srcFile[012]`, destDir: destDir },
+      { src: normalize(`${tempDirPath}/srcFile[012]`), destDir: destDir },
     ])
 
     for (const i of [0, 1, 2]) {
@@ -92,7 +98,7 @@ describe('copyOnce', () => {
 
     await callCopyOnce([
       { src: '', destDir: destDir }, // Skipped
-      { src: srcFile, destDir: destDir },
+      { src: normalize(srcFile), destDir: destDir },
     ])
 
     const files = await fsp.readdir(destDir)
@@ -107,8 +113,8 @@ describe('copyOnce', () => {
     await fsp.writeFile(srcFile1, 'srcFile1')
 
     await callCopyOnce([
-      { src: srcFile0 },
-      { src: srcFile1, destDir: destDir },
+      { src: normalize(srcFile0) },
+      { src: normalize(srcFile1), destDir: destDir },
     ])
 
     const files = await fsp.readdir(destDir)
@@ -124,7 +130,7 @@ describe('copyOnce', () => {
     await fsp.writeFile(destFile, 'destFile')
 
     await callCopyOnce([
-      { src: path.join(tempDirPath, 'srcFile[01]'), destFile: destFile },
+      { src: normalize(path.join(tempDirPath, 'srcFile[01]')), destFile: destFile },
     ])
 
     const destContent = await fsp.readFile(destFile, { encoding: 'utf8' })
@@ -139,7 +145,7 @@ describe('copyOnce', () => {
     await fsp.utimes(destFile, 0, 0)
 
     await callCopyOnce([
-      { src: srcFile, destFile: destFile }
+      { src: normalize(srcFile), destFile: destFile }
     ])
 
     const destStat = await fsp.stat(destFile)
@@ -189,7 +195,7 @@ describe('Watch', () => {
     const debounceTimeoutMs = 200
     const plugin = copyFiles({
       entries: [
-        { src: path.join(tempDirPath, 'srcFile*'), destDir },
+        { src: normalize(path.join(tempDirPath, 'srcFile*')), destDir },
       ],
       initialDelayMs: 0,
       debounceTimeoutMs,
