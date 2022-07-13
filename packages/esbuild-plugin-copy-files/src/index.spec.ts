@@ -9,7 +9,7 @@ import { PluginBuild } from 'esbuild'
 let tempDirPath: string
 
 beforeEach(async () => {
-  tempDirPath = await fsp.mkdtemp(path.join(os.tmpdir(), 'esbuild-plugin-copy-glob-'))
+  tempDirPath = await fsp.mkdtemp(path.join(os.tmpdir(), 'esbuild-plugin-copy-files-'))
 })
 
 afterEach(async () => {
