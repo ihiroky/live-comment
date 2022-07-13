@@ -13,10 +13,10 @@ const apiUrl = process.env.NODE_ENV === 'production'
   : `http://localhost:9080`
 
 type Props = {
-  onWsOpen?: () => void
-  onWsClose?: (e: CloseEvent) => void
-  onWsError?: (e: Event) => void
-  onWsMessage?: (m: Message) => void
+  onOpen?: () => void
+  onClose?: (e: CloseEvent) => void
+  onError?: (e: Event) => void
+  onMessage?: (m: Message) => void
 }
 
 const AppRoutes = (props: Props): JSX.Element => {
@@ -33,11 +33,11 @@ const AppRoutes = (props: Props): JSX.Element => {
   )
 }
 const Router = window.location.protocol === 'chrome-extension:' ? HashRouter : BrowserRouter
-export const App = (): JSX.Element => {
+export const App = (props: Props): JSX.Element => {
   return (
     <StrictMode>
       <Router>
-        <AppRoutes />
+        <AppRoutes {...props} />
       </Router>
     </StrictMode>
   )

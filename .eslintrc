@@ -44,7 +44,12 @@
     "no-else-return": 1,
     "no-console": 1,
     "no-restricted-imports": [1, {
-      "patterns": ["**/comment/**", "**/desktop/**", "**/server/**"]
+      "patterns": [
+        "**/comment/**",
+        "!**/comment/App",
+        "**/desktop/**",
+        "**/server/**"
+      ]
     }],
     "semi": [1, "never"],
     "space-infix-ops": 1,

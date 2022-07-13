@@ -1,0 +1,43 @@
+const css = `.screen {
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  font-size: 64px;
+  font-weight: bold;
+  font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+  pointer-events: none;
+  z-index: 2147483647;
+}
+.message-list {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin-bottom: 10px;
+}
+.message-list .message {
+  position: absolute;
+  margin: 0px;
+  padding-left: 100%;
+  display: inline-block;
+  white-space: nowrap;
+  animation-name: marquee;
+  animation-timing-function: linear;
+  animation-duration: 5s;
+}
+.message-list .message:after {
+  /*content: "";*/
+  position: absolute;
+  margin: 0px;
+  padding-right: 50px;
+  display: inline-block;
+  white-space: nowrap;
+}
+@keyframes marquee {
+  from   { transform: translate(0%); }
+  99%,to { transform: translate(-100%); }
+}
+`
+
+export function ScreenCSS(): JSX.Element {
+  return <style>{css}</style>
+}

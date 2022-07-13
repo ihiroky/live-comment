@@ -2,7 +2,6 @@ import { HealthCheck, countUpPending, countDownPending } from './HealthCheck'
 import WebSocket from 'ws'
 import { ClientSession } from './websocket'
 import { CloseCode } from '@/common/Message'
-import { mocked } from 'ts-jest/utils'
 
 jest.mock('ws')
 jest.useFakeTimers()
@@ -213,7 +212,7 @@ test('Update alive and lastPongTime if pong packet is received', () => {
   ws.alive = false
   Date.now = () => 1234567890
   expect(ws.on).toBeCalledWith('pong', expect.any(Function))
-  const receivePong = mocked(ws.on).mock.calls[0][1]
+  const receivePong = jest.mocked(ws.on).mock.calls[0][1]
   receivePong.bind(ws)(Buffer.alloc(0))
 
   expect(ws.alive).toBe(true)

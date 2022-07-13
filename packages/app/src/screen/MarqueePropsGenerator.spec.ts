@@ -1,6 +1,5 @@
-import { ApplicationMessage, CloseCode, CommentMessage } from '@/common/Message'
+import { ApplicationMessage, CommentMessage } from '@/common/Message'
 import { createRef, RefObject } from 'react'
-import { ReconnectableWebSocket } from '@/wscomp/rws'
 import {
   MarqueePropsGenerator,
   MarqueeProps,
@@ -15,13 +14,6 @@ function matchMarqueePropsExceptKey(actual: MarqueeProps, expected: Omit<Marquee
   expect(actual.level).toBe(expected.level)
   expect(actual.ref.current).toEqual(expected.ref.current)
   expect(actual.comment).toBe(expected.comment)
-}
-function assertMarqueeProps(p: MarqueeProps, created: number, level: number, comment: string): void {
-  expect(Number.isSafeInteger(p.key)).toBeTruthy()
-  expect(p.created).toBe(created)
-  expect(p.level).toBe(level)
-  expect(p.ref.current).toBeNull()
-  expect(p.comment).toBe(comment)
 }
 
 describe('calcMinimumEmptyLevel', () => {
@@ -259,24 +251,9 @@ describe('findLevelRightSpaceExists', () => {
 })
 
 describe('MarqueePropsGenerator', () => {
-  let rws: ReconnectableWebSocket
   let nowOriginal: () => number
 
   beforeEach(() => {
-    rws = {
-      send: jest.fn(),
-      close: jest.fn(),
-      reconnect: jest.fn(),
-      reconnectWithBackoff: jest.fn(),
-      get readyState(): number {
-        return 0
-      },
-      get url(): string {
-        return 'dummy_url'
-      },
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-    }
     nowOriginal = Date.now
     Date.now = () => 123
   })
@@ -285,63 +262,11 @@ describe('MarqueePropsGenerator', () => {
     Date.now = nowOriginal
   })
 
-  test('onOpen - Send AcnMessage and accept WebSocketControl', () => {
-    const [room, hash] = ['room', 'hash']
-    const sut = new MarqueePropsGenerator(room, hash, 7, jest.fn())
-
-    sut.setRws(rws)
-    sut.onOpen()
-
-    assertMarqueeProps(sut['marquees'][0], 123, 0, '🎉 Connected to dummy_url 🎉')
-    expect(rws.send).toBeCalledWith({
-      type: 'acn',
-      room,
-      hash,
-    })
-    expect(sut['rws']).toBe(rws)
-  })
-
-  test('close - close ReconnectableWebSocket', () => {
-    const sut = new MarqueePropsGenerator('room', 'hash', 7, jest.fn())
-    sut.setRws(rws)
-
-    sut.close()
-
-    expect(rws.close).toBeCalled()
-  })
-
-  describe('onClose', () => {
-    test('Send error message if CloseEvent has ACN_FAILED', () => {
-      const sut = new MarqueePropsGenerator('room', 'hash', 7, jest.fn())
-      sut.setRws(rws)
-
-      sut.onClose({ code: CloseCode.ACN_FAILED } as CloseEvent)
-
-      matchMarqueePropsExceptKey(sut['marquees'][0], {
-        created: 123,
-        level: 0,
-        ref: { current: null },
-        comment:  'Room authentication failed. Please check your setting (._.)'
-      })
-    })
-
-    test('Show error message and try to reconnect if CloseEvnet has no ACN_FAILED', () => {
-      const sut = new MarqueePropsGenerator('room', 'hash', 7, jest.fn())
-      sut.setRws(rws)
-
-      sut.onClose({ code: 1006 } as CloseEvent)
-
-      assertMarqueeProps(sut['marquees'][0], 123, 0, 'Failed to connect to the server (1006) (T-T)')
-      expect(rws.reconnectWithBackoff).toBeCalled()
-    })
-  })
-
   describe('onMessage', () => {
 
     test('Drop message except CommentMessage', () => {
       const onUpdate = jest.fn()
-      const sut = new MarqueePropsGenerator('room', 'hash', 7, onUpdate)
-      sut.setRws(rws)
+      const sut = new MarqueePropsGenerator(7, onUpdate)
 
       const app: ApplicationMessage = {
         type: 'app',
@@ -355,8 +280,7 @@ describe('MarqueePropsGenerator', () => {
     test('Drop message if too many marqueeing messages exists', () => {
       const onUpdate = jest.fn()
       const duration = 7000
-      const sut = new MarqueePropsGenerator('room', 'hash', duration, onUpdate)
-      sut.setRws(rws)
+      const sut = new MarqueePropsGenerator(duration, onUpdate)
 
       for (let i = 0; i < 500; i++) {
         const created = Date.now() + duration + 1
@@ -376,8 +300,7 @@ describe('MarqueePropsGenerator', () => {
     test('Drop out-of-date message', () => {
       const onUpdate = jest.fn()
       const duration = 7000
-      const sut = new MarqueePropsGenerator('room', 'hash', duration, onUpdate)
-      sut.setRws(rws)
+      const sut = new MarqueePropsGenerator(duration, onUpdate)
 
       const m0: MarqueeProps = {
         key: 0, created: Date.now() - (duration + 1), level: 0, comment: 'comment 0', ref: { current: null }
@@ -406,8 +329,7 @@ describe('MarqueePropsGenerator', () => {
 
     test('Minimum empty level exists', () => {
       const onUpdate = jest.fn()
-      const sut = new MarqueePropsGenerator('room', 'hash', 7000, onUpdate)
-      sut.setRws(rws)
+      const sut = new MarqueePropsGenerator(7000, onUpdate)
 
       const message: CommentMessage = {
         type: 'comment',
@@ -427,8 +349,7 @@ describe('MarqueePropsGenerator', () => {
 
     test('No minimum empty level and enough right space exists', () => {
       const onUpdate = jest.fn()
-      const sut = new MarqueePropsGenerator('room', 'hash', 7000, onUpdate)
-      sut.setRws(rws)
+      const sut = new MarqueePropsGenerator(7000, onUpdate)
 
       const p0 = {
         getBoundingClientRect: () => ({ right: window.innerWidth - SPACE_BETWEEN_COMMENTS })
@@ -472,8 +393,7 @@ describe('MarqueePropsGenerator', () => {
 
     test('No minimum empty level and no enough right space exists', () => {
       const onUpdate = jest.fn()
-      const sut = new MarqueePropsGenerator('room', 'hash', 7000, onUpdate)
-      sut.setRws(rws)
+      const sut = new MarqueePropsGenerator(7000, onUpdate)
 
       const p0 = {
         getBoundingClientRect: () => ({ right: window.innerWidth - SPACE_BETWEEN_COMMENTS })
@@ -505,8 +425,7 @@ describe('MarqueePropsGenerator', () => {
 
     test('Insert middle of the marquees', () => {
       const onUpdate = jest.fn()
-      const sut = new MarqueePropsGenerator('room', 'hash', 7000, onUpdate)
-      sut.setRws(rws)
+      const sut = new MarqueePropsGenerator(7000, onUpdate)
 
       // No level 1 marquees
       const p0 = {

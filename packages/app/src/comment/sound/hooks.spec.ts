@@ -1,7 +1,6 @@
 import { useExistsSounds, usePlaySound, useSoundMetadata } from './hooks'
 import { renderHook, act } from '@testing-library/react-hooks'
 import { get, update, getAll } from './db'
-import { mocked } from 'ts-jest/utils'
 import { Zlib } from 'unzip'
 import { basename } from 'path'
 import { assertNotNullable } from '@/common/assert'
@@ -29,7 +28,7 @@ describe('useExistsSounds', () => {
   })
 
   test('Checksum does not exist', async () => {
-    mocked(get).mockResolvedValue('cs')
+    jest.mocked(get).mockResolvedValue('cs')
     window.fetch = jest.fn().mockResolvedValue({
       ok: false,
       text: () => Promise.resolve('')
@@ -56,7 +55,7 @@ describe('useExistsSounds', () => {
   })
 
   test('Checksum exists and no update', async () => {
-    mocked(get).mockResolvedValue('cs')
+    jest.mocked(get).mockResolvedValue('cs')
     window.fetch = jest.fn().mockResolvedValue({
       ok: true,
       text: () => Promise.resolve('cs')
@@ -81,7 +80,7 @@ describe('useExistsSounds', () => {
   })
 
   test('Checksum and update exist, but no sound file exists', async () => {
-    mocked(get).mockResolvedValue('storedChecksum')
+    jest.mocked(get).mockResolvedValue('storedChecksum')
     window.fetch = jest.fn()
       .mockResolvedValueOnce({
         ok: true,
@@ -154,7 +153,7 @@ describe('useExistsSounds', () => {
   }
 
   test('Checksum and update exist, and store sound file', async () => {
-    mocked(get).mockResolvedValue('storedChecksum')
+    jest.mocked(get).mockResolvedValue('storedChecksum')
     window.fetch = jest.fn()
       .mockResolvedValueOnce({
         ok: true,
@@ -165,7 +164,7 @@ describe('useExistsSounds', () => {
         blob: () => Promise.resolve({ arrayBuffer: () => Promise.resolve(new Uint8Array()) }),
       })
     const soundFiles = ['firework000.mp3', 'pegion000.wav', 'quiz000.mp3', 'quiz-correct000.mp3', 'quiz-wrong000.mp3', 'filenameonly.wav']
-    mocked(Zlib.Unzip).mockImplementation(() => {
+    jest.mocked(Zlib.Unzip).mockImplementation(() => {
       return {
         decompress(fn: string): Uint8Array { return decompressImpl(fn) },
         getFilenames(): string[] { return soundFiles.concat('manifest.json') },
@@ -181,7 +180,7 @@ describe('useExistsSounds', () => {
         abort: jest.fn(),
       }
     }
-    mocked(update).mockImplementation((_dbName, _storNames, updater) => {
+    jest.mocked(update).mockImplementation((_dbName, _storNames, updater) => {
       updater(storeOperationMock)
       return Promise.resolve()
     })
@@ -240,14 +239,14 @@ describe('useSoundMetadata', () => {
   })
 
   test('No stored data', async () => {
-    mocked(getAll).mockResolvedValue([])
+    jest.mocked(getAll).mockResolvedValue([])
     const { result, waitFor } = renderHook(() => useSoundMetadata('room', true))
 
     await waitFor(() => expect(result.current).toEqual([{}, {}]))
   })
 
   test('Load stored data', async () => {
-    mocked(getAll).mockImplementation((_dbName, _storeName, receiver) => {
+    jest.mocked(getAll).mockImplementation((_dbName, _storeName, receiver) => {
       const obj0 = receiver('id0', { displayName: 'd00', command: 'c00' })
       const obj1 = receiver('id1', { displayName: 'd01', command: ['c10', 'c11'] })
       const obj2 = receiver('id2', { displayName: 'd02', command: null })
@@ -269,7 +268,7 @@ describe('useSoundMetadata', () => {
   })
 
   test('Skip invalid data', async () => {
-    mocked(getAll).mockImplementation((_dbName, _storeName, receiver) => {
+    jest.mocked(getAll).mockImplementation((_dbName, _storeName, receiver) => {
       // obj1 is Invalid data
       const obj0 = receiver('id0', { displayName: 'd00' })
       const obj1 = receiver('id1', { displayName: 'd01', command: ['c10', 'c11'] })
@@ -314,11 +313,11 @@ describe('usePlaySound', () => {
     } as any // eslint-disable-line @typescript-eslint/no-explicit-any
     audioContext.createGain = jest.fn<GainNode, []>(() => gain)
     audioContext.decodeAudioData = jest.fn()
-    mocked(global.AudioContext).mockImplementation(() => audioContext)
+    jest.mocked(global.AudioContext).mockImplementation(() => audioContext)
   })
 
   test('No sound', async () => {
-    mocked(get).mockResolvedValue(null)
+    jest.mocked(get).mockResolvedValue(null)
     const { result, waitFor } = renderHook(() => usePlaySound('room'))
     const playSound = result.current
     const onFinish = jest.fn()
@@ -329,7 +328,7 @@ describe('usePlaySound', () => {
   })
 
   test('Decode sound and play it', async () => {
-    mocked(get).mockResolvedValue({ data: new Uint8Array() })
+    jest.mocked(get).mockResolvedValue({ data: new Uint8Array() })
     const { result, waitFor } = renderHook(() => usePlaySound('room'))
     const playSound = result.current
     const onFinish = jest.fn()
@@ -338,7 +337,7 @@ describe('usePlaySound', () => {
 
     // Wait for decode
     await waitFor(() => expect(audioContext.decodeAudioData).toBeCalled())
-    const decodeSuccess = mocked(audioContext.decodeAudioData).mock.calls[0][1]
+    const decodeSuccess = jest.mocked(audioContext.decodeAudioData).mock.calls[0][1]
     assertNotNullable(decodeSuccess, 'decodeSuccess must be defined here.')
 
     // Play
@@ -350,7 +349,7 @@ describe('usePlaySound', () => {
     expect(audioBufferSouce.addEventListener).toBeCalledWith('ended', expect.any(Function))
 
     // End
-    const endedListener = mocked(audioBufferSouce.addEventListener).mock.calls[0][1]
+    const endedListener = jest.mocked(audioBufferSouce.addEventListener).mock.calls[0][1]
     if (typeof endedListener === 'object') {
       throw new Error('endedListener must be function.')
     }
@@ -362,7 +361,7 @@ describe('usePlaySound', () => {
   })
 
   test('Decode failed', async () => {
-    mocked(get).mockResolvedValue({ data: new Uint8Array() })
+    jest.mocked(get).mockResolvedValue({ data: new Uint8Array() })
     const { result, waitFor } = renderHook(() => usePlaySound('room'))
     const playSound = result.current
     const onFinish = jest.fn()
@@ -371,7 +370,7 @@ describe('usePlaySound', () => {
 
     // Wait for decode
     await waitFor(() => expect(audioContext.decodeAudioData).toBeCalled())
-    const decodeError = mocked(audioContext.decodeAudioData).mock.calls[0][2]
+    const decodeError = jest.mocked(audioContext.decodeAudioData).mock.calls[0][2]
     assertNotNullable(decodeError, 'decodeError must be defined here.')
 
     // Error handling

@@ -2,7 +2,6 @@ import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Poll } from './Poll'
 import { PollMessage } from './types'
-import { mocked } from 'ts-jest/utils'
 import { assertNotNullable } from '@/common/assert'
 import { ReconnectableWebSocket } from '@/wscomp/rws'
 
@@ -71,7 +70,7 @@ test('Edit, poll and display result', async () => {
   await waitFor(() => {
     expect(rws.addEventListener).toHaveBeenCalledWith('message', expect.any(Function))
   })
-  const onMessage = mocked(rws.addEventListener).mock.calls[3][1]
+  const onMessage = jest.mocked(rws.addEventListener).mock.calls[3][1]
   screen.getByText('A description one')
   screen.getByText('A description two')
   const pollMessage0: PollMessage = {

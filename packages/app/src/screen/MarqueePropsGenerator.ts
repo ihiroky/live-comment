@@ -1,14 +1,10 @@
 import {
   Message,
-  AcnMessage,
-  CommentMessage,
   isCommentMessage,
-  CloseCode,
 } from '@/common/Message'
 import { getLogger } from '@/common/Logger'
 import { getRandomInteger } from '@/common/utils'
 import { createRef, RefObject } from 'react'
-import { ReconnectableWebSocket } from '@/wscomp/rws'
 
 export type MarqueeProps = {
   key: number
@@ -73,64 +69,14 @@ export function findLevelRightSpaceExists(marquees: MarqueeProps[]): number {
 
 export class MarqueePropsGenerator {
 
-  private readonly room: string
-  private readonly hash: string
   private readonly duration: number
   private readonly marqueePropsListUpdated: (marqueePropsList: MarqueePropsList) => void
   private marquees: MarqueeProps[]
-  private rws: ReconnectableWebSocket | null
 
-  constructor(room: string, hash: string, duration: number, listener: (marqueePropsList: MarqueePropsList) => void) {
-    this.room = room
-    this.hash = hash
+  constructor(duration: number, listener: (marqueePropsList: MarqueePropsList) => void) {
     this.duration = duration
     this.marquees = []
-    this.rws = null
     this.marqueePropsListUpdated = listener
-  }
-
-  close(): void {
-    if (this.rws) {
-      this.rws.close()
-    }
-  }
-
-  readonly setRws = (rws: ReconnectableWebSocket | null): void => {
-    this.rws = rws
-  }
-
-  readonly onOpen = (): void => {
-    log.debug('[onOpen]')
-    // TODO show connected message optionally.
-    const comment: CommentMessage = {
-      type: 'comment',
-      comment: `🎉 Connected to ${this.rws?.url} 🎉`,
-    }
-    this.onMessage(comment)
-    const message: AcnMessage = {
-      type: 'acn',
-      room: this.room,
-      hash: this.hash
-    }
-    this.rws?.send(message)
-  }
-
-  readonly onClose = (ev: CloseEvent): void => {
-    if (ev.code === CloseCode.ACN_FAILED) {
-      const comment: CommentMessage = {
-        type: 'comment',
-        comment: 'Room authentication failed. Please check your setting (._.)'
-      }
-      this.onMessage(comment)
-      return
-    }
-
-    const comment: CommentMessage = {
-      type: 'comment',
-      comment: `Failed to connect to the server (${ev.code}) (T-T)`
-    }
-    this.onMessage(comment)
-    this.rws?.reconnectWithBackoff()
   }
 
   readonly onMessage = (message: Message): void => {
