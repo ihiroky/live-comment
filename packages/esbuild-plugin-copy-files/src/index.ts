@@ -137,8 +137,8 @@ async function createWacher(
   debounceTimeoutMs: number
 ): Promise<fs.FSWatcher> {
   let debounceTimeout: NodeJS.Timeout | null = null
-  return fs.watch(src, (eventType: string): void => {
-    log.debug(`${eventType} ${src}`)
+  const watcher = fs.watch(src, (eventType: string, fn: string): void => {
+    log.debug(eventType, src, fn)
     switch (eventType) {
       case 'change':
         if (debounceTimeout) {
@@ -155,6 +155,13 @@ async function createWacher(
         break
     }
   })
+  watcher.on('close', (): void => {
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout)
+      debounceTimeout = null
+    }
+  })
+  return watcher
 }
 
 async function createAllWatchers(options: Options): Promise<fs.FSWatcher[]> {

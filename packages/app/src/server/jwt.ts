@@ -1,4 +1,5 @@
-import { sign as jwtSign, verify as jwtVerify, Secret, JwtPayload, VerifyErrors } from 'jsonwebtoken'
+import { Verify } from 'crypto'
+import { sign as jwtSign, verify as jwtVerify, Secret, JwtPayload, VerifyErrors, VerifyCallback } from 'jsonwebtoken'
 
 const JWT_ALG = 'ES256'
 
@@ -28,14 +29,21 @@ export function sign(
 
 export function verify(token: string, publicKey: Secret): Promise<JwtPayload> {
   return new Promise<JwtPayload>((resolve: (payload: JwtPayload) => void, reject: (reason: unknown) => void): void => {
-    jwtVerify(token, publicKey, { algorithms: [JWT_ALG] },
-      (err: VerifyErrors | null, payload: JwtPayload | undefined): void => {
-        if (err === null && payload) {
+    const callback: VerifyCallback<JwtPayload | string> = (
+      err: VerifyErrors | null,
+      payload: JwtPayload | string | undefined
+    ): void => {
+      if (err === null && payload) {
+        if (typeof payload === 'object') {
           resolve(payload)
         } else {
-          reject(err)
+          reject(new Error(`Unexpected payload ${payload}`))
         }
+      } else {
+        reject(err)
       }
-    )
+    }
+
+    jwtVerify(token, publicKey, { algorithms: [JWT_ALG] }, callback)
   })
 }

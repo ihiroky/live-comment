@@ -4,6 +4,7 @@ import fsp from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { PluginBuild } from 'esbuild'
+import { jest, beforeEach, afterEach, describe, expect, test } from '@jest/globals'
 
 
 let tempDirPath: string
@@ -23,12 +24,15 @@ describe('copyOnce', () => {
     const plugin = copyFiles({ entries })
     const build = {
       initialOptions: {},
-      onEnd: jest.fn(),
+      onEnd: jest.fn<PluginBuild['onEnd']>(),
     }
     plugin.setup(build as any)
     expect(build.onEnd).toBeCalledWith(expect.any(Function))
-    const func = jest.mocked(build.onEnd).mock.calls[0][0]
-    await func()
+    const func = jest.mocked<PluginBuild['onEnd']>(build.onEnd).mock.calls[0][0]
+    await func({
+      errors: [],
+      warnings: [],
+    })
   }
 
   test('Copy a file to a file', async () => {
@@ -182,11 +186,13 @@ describe('Watch', () => {
       await fsp.writeFile(s, s)
     }
 
+    const debounceTimeoutMs = 200
     const plugin = copyFiles({
       entries: [
         { src: path.join(tempDirPath, 'srcFile*'), destDir },
       ],
       initialDelayMs: 0,
+      debounceTimeoutMs,
     })
     const build = {
       initialOptions: {
@@ -209,6 +215,9 @@ describe('Watch', () => {
     } finally {
       plugin.close()
     }
+
+    // plugin.close() is flaky because copyIfUpdated() invocation is asynchronous
+    await new Promise(resolve => setTimeout(resolve, debounceTimeoutMs + 100))
   })
 
 })
