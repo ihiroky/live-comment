@@ -1,9 +1,13 @@
-import { plugins, onwarn, watch } from './c.js'
+import { plugins, onwarn, watch, } from './c.js'
+import { apps, entryPointsToOutFiles } from '../scripts/apps.mjs'
+
+const entryPoints = apps.desktop.entryPoints
+const outFiles = entryPointsToOutFiles(apps.desktop.entryPoints, apps.desktop.outdir)
 
 export default [{
-  input: ['src/desktop/index.ts'],
+  input: entryPoints[0],
   output: {
-    file: 'dist/desktop/index.js',
+    file: outFiles[0],
     name: 'Main',
     format: 'cjs',
   },
@@ -11,9 +15,9 @@ export default [{
   onwarn,
   watch,
 }, {
-  input: ['src/desktop/preload.ts'],
+  input: entryPoints[1],
   output: {
-    file: 'dist/desktop/preload.js',
+    file: outFiles[1],
     name: 'Preload',
     format: 'cjs',
   },
@@ -21,15 +25,13 @@ export default [{
   onwarn,
   watch,
 }, {
-  input: ['src/desktop/renderer.tsx'],
+  input: apps.renderer.entryPoints,
   output: {
-    file: 'resources/renderer.js',
+    file: apps.renderer.outfile,
     name: 'Renderer',
     format: 'es'
   },
-  plugins: plugins([
-    { src: 'src/screen/screen.css', dest: 'resources/' },
-  ]),
+  plugins: plugins(),
   onwarn,
   watch,
 }]
