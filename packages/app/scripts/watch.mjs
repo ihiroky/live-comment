@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import { build } from 'esbuild'
 import { copyFiles } from 'esbuild-plugin-copy-files'
+import { apps } from './apps.mjs'
 
 const dev = process.env['NODE_ENV'] !== 'production'
 
@@ -31,8 +32,8 @@ const printRebuildResult = (name) => ({
 })
 
 const api = build({
-  entryPoints: ['./src/server/api.ts'],
-  outfile: 'dist/bundle/server/api.js',
+  entryPoints: apps.api.entryPoints,
+  outfile: apps.api.outfile,
   color: true,
   bundle: true,
   platform: 'node',
@@ -42,8 +43,8 @@ const api = build({
 }).then(() => log('api', 'Watching...'))
 
 const streaming = build({
-  entryPoints: ['./src/server/streaming.ts'],
-  outfile: 'dist/bundle/server/streaming.js',
+  entryPoints: apps.streaming.entryPoints,
+  outfile: apps.streaming.outfile,
   color: true,
   bundle: true,
   platform: 'node',
@@ -53,8 +54,8 @@ const streaming = build({
 }).then(() => log('streaming', 'Watching...'))
 
 const comment = build({
-  entryPoints: ['src/comment/index.tsx'],
-  outfile: 'dist/bundle/comment/index.js',
+  entryPoints: apps.comment.entryPoints,
+  outfile: apps.comment.outfile,
   inject: ['scripts/react-shim.js'],
   color: true,
   bundle: true,
@@ -63,15 +64,13 @@ const comment = build({
   watch: dev && printRebuildResult('comment'),
   minify: !dev,
   plugins: [
-    copyFiles({ entries: [
-      { src: 'src/public/*', destDir: 'dist/bundle/comment/' },
-    ]})
+    copyFiles({ entries: apps.comment.assets })
   ],
 }).then(() => log('comment', 'Watching...'))
 
 const desktop = build({
-  entryPoints: ['src/desktop/index.ts', 'src/desktop/preload.ts'],
-  outdir: 'dist/desktop/',
+  entryPoints: apps.desktop.entryPoints,
+  outdir: apps.desktop.outdir,
   color: true,
   bundle: true,
   platform: 'node',
@@ -81,8 +80,8 @@ const desktop = build({
 }).then(() => log('desktop:main', 'Watching...'))
 
 const renderer = build({
-  entryPoints: ['src/desktop/renderer.tsx'],
-  outfile: 'resources/renderer.js',
+  entryPoints: apps.renderer.entryPoints,
+  outfile: apps.renderer.outfile,
   inject: ['scripts/react-shim.js'],
   format: 'esm',
   color: true,
@@ -91,39 +90,20 @@ const renderer = build({
   target: ['es2020'],
   watch: dev && printRebuildResult('desktop:renderer'),
   minify: !dev,
-  plugins: [
-    copyFiles({ entries: [
-      { src: 'src/screen/screen.css', destDir: 'resources/' },
-    ]})
-  ],
 }).then(() => log('desktop:renderer', 'Watching...'))
 
 const extension = build({
-  entryPoints: [
-    'src/extension/background.ts',
-    'src/extension/contentScript.tsx',
-    'src/extension/popup/popup.tsx',
-    'src/extension/popup/comment.tsx'
-  ],
+  entryPoints: apps.extension.entryPoints,
+  outdir: apps.extension.outdir,
   inject: ['scripts/react-shim.js'],
   color: true,
   bundle: true,
   platform: 'browser',
   target: ['es2020', 'es2020'],
-  outdir: 'dist/bundle/extension/',
   watch: dev && printRebuildResult('extension'),
   minify: !dev,
   plugins: [
-    copyFiles({
-      entries: [
-        { src: 'src/extension/manifest.json', destDir: 'dist/bundle/extension/' },
-        { src: 'src/extension/options/options.html', destDir: 'dist/bundle/extension/options/' },
-        { src: 'src/extension/popup/*.html', destDir: 'dist/bundle/extension/popup/' },
-        { src: 'src/screen/screen.css', destDir: 'dist/bundle/extension/popup/' },
-        { src: 'resources/icon.png', destDir: 'dist/bundle/extension/images/'},
-        { src: 'resources/icon@[236].png', destDir: 'dist/bundle/extension/images/'},
-      ],
-    })
+    copyFiles({ entries: apps.extension.assets })
   ]
 }).then(() => log('extension', 'Watching...'))
 

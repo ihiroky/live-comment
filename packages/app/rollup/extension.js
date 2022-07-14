@@ -1,27 +1,25 @@
 import { plugins, onwarn, watch } from './c.js'
 import { mkdirSync } from 'fs'
+import { apps, toRollupCopyPluginFormat, entryPointsToOutFiles } from '../scripts/apps.mjs'
 
 mkdirSync('dist/bundle/extension/images', { recursive: true, mode: 0o755 })
+const entryPoints = apps.extension.entryPoints
+const outFiles = entryPointsToOutFiles(apps.extension.entryPoints, apps.extension.outdir)
 
 export default [{
-  input: 'src/extension/background.ts',
+  input: entryPoints[0],
   output: {
-    file: 'dist/bundle/extension/background.js',
+    file: outFiles[0],
     name: 'Comment',
     format: 'iife',
   },
-  plugins: plugins([
-    { src: 'src/extension/manifest.json', dest: 'dist/bundle/extension/' },
-    { src: 'src/extension/options.html', dest: 'dist/bundle/extension/' },
-    { src: 'resources/icon.png', dest: 'dist/bundle/extension/images/'},
-    { src: 'resources/icon@[236].png', dest: 'dist/bundle/extension/images/'},
-  ]),
+  plugins: plugins(toRollupCopyPluginFormat(apps.extension.assets)),
   onwarn,
   watch,
 }, {
-  input: 'src/extension/contentScript.tsx',
+  input: entryPoints[1],
   output: {
-    file: 'dist/bundle/extension/contentScript.js',
+    file: outFiles[1],
     name: 'Comment',
     format: 'iife',
   },
@@ -29,16 +27,23 @@ export default [{
   onwarn,
   watch,
 }, {
-  input: 'src/extension/popup.tsx',
+  input: entryPoints[2],
   output: {
-    file: 'dist/bundle/extension/popup.js',
+    file: outFiles[2],
     name: 'Popup',
     format: 'iife',
   },
-  plugins: plugins([
-    { src: 'src/extension/popup.html', dest: 'dist/bundle/extension/' },
-    { src: 'dist/bundle/comment/', dest: 'dist/bundle/extension/' },
-  ]),
+  plugins: plugins(),
+  onwarn,
+  watch,
+}, {
+  input: entryPoints[3],
+  output: {
+    file: outFiles[3],
+    name: 'Comment',
+    format: 'iife',
+  },
+  plugins: plugins(),
   onwarn,
   watch,
 }]

@@ -34,7 +34,8 @@
     "node_modules/",
     "**/node_modules/**",
     "**/node_modules/**/.eslintrc",
-    "**/*.css"
+    "**/*.css",
+    "**/dist/**"
   ],
   "rules": {
     "react/react-in-jsx-scope": "off",

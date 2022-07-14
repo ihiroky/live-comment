@@ -1,10 +1,11 @@
 import { plugins, onwarn, watch } from './c.js'
+import { apps } from '../scripts/apps.mjs'
 
 export default [
   {
-    input: 'src/server/api.ts',
+    input: apps.api.entryPoints,
     output: {
-      file: 'dist/bundle/server/api.js',
+      file: apps.api.outfile,
       name: 'Api',
       format: 'cjs'
     },
@@ -12,9 +13,9 @@ export default [
     onwarn,
     watch,
   }, {
-    input: 'src/server/streaming.ts',
+    input: apps.streaming.entryPoints,
     output: {
-      file: 'dist/bundle/server/streaming.js',
+      file: apps.streaming.outfile,
       name: 'Streaming',
       format: 'cjs'
     },

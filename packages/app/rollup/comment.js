@@ -1,19 +1,17 @@
 import { plugins, onwarn, watch } from './c.js'
 import { mkdirSync } from 'fs'
+import { apps, toRollupCopyPluginFormat } from '../scripts/apps.mjs'
 
 mkdirSync('dist/bundle/comment/', { recursive: true, mode: 0o755 })
 
 export default [{
-  input: 'src/comment/index.tsx',
+  input: apps.comment.entryPoints,
   output: {
-    file: 'dist/bundle/comment/index.js',
+    file: apps.comment.outfile,
     name: 'Comment',
     format: 'iife'
   },
-  plugins: plugins([
-    { src: 'src/public/index.html', dest: 'dist/bundle/comment/' },
-    { src: 'src/public/robots.txt', dest: 'dist/bundle/comment/' },
-  ]),
+  plugins: plugins(toRollupCopyPluginFormat(apps.comment.assets)),
   onwarn,
   watch,
 }]
