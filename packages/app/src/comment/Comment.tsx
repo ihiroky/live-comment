@@ -152,7 +152,7 @@ export const Comment: FC<CommentProps> = (props: CommentProps): JSX.Element => {
 
   const {maxMessageCount, onOpen, onClose, onError, onMessage } = props
   const onWsOpen = useWebSocketOnOpen(rws, onOpen)
-  const onWsClose = useWebSocketOnClose(rws, onClose)
+  const onWsClose = useWebSocketOnClose(rws, props.navigate, onClose)
   const onPoll = useOnPoll(rws)
   const onClosePoll = useOnClosePoll(state, setState)
   const refs = { messageListDivRef, autoScrollRef, soundPanelRef }

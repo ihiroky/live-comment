@@ -11,13 +11,13 @@ const KEY_SHOWN_COMMENTS_TAB_IDS = 'lc.shown-comemnts-tab.ids'
 
 const log = getLogger('popup')
 
-type Store<T, S> = {
-  get cache(): S
+type Store<T> = {
+  get cache(): Readonly<T>
   subscribe: (callback: () => void) => (() => void)
   update: (values: T) => Promise<void>
 }
 
-type StoreImpl<T, S> = Store<T, S> & {
+type StoreImpl<T> = Store<T> & {
   _cache: T
 }
 
@@ -29,7 +29,7 @@ function isLogWindowStoreValues(v: unknown): v is LogWindowStoreValues {
   return isObject(v) && typeof v.tabId === 'number'
 }
 
-const logWindowStore: StoreImpl<LogWindowStoreValues, Readonly<LogWindowStoreValues>> = {
+const logWindowStore: StoreImpl<LogWindowStoreValues> = {
   _cache: {
     tabId: 0,
   },
@@ -89,7 +89,7 @@ function isCommentsShowTabIdsStoreValues(v: unknown): v is CommentsShownTabIdsSt
   return isObject(v) && isObject(v.tabIds)
 }
 
-const commentsShownTabIdStore: StoreImpl<CommentsShownTabIdsStoreValues, Readonly<CommentsShownTabIdsStoreValues>> = {
+const commentsShownTabIdStore: StoreImpl<CommentsShownTabIdsStoreValues> = {
   _cache: {
     tabIds: {},
   },
@@ -145,10 +145,15 @@ function createOnLogTabRemoved(logTabId: number): ((tabId: number, removeInfo: c
 }
 
 async function showLogWindow(): Promise<void> {
+  const width = 800
+  const height = 600
   const options: chrome.windows.CreateData = {
+    type: 'panel',
     url: 'chrome-extension://' + chrome.runtime.id + '/popup/comment.html',
-    width: 1024,
-    height: 768,
+    top: window.screen.availHeight - height,
+    left: window.screen.availWidth - width,
+    width,
+    height,
   }
   const w = await chrome.windows.create(options)
   const tabId = w.tabs?.[0].id
@@ -198,6 +203,8 @@ function showCommentsOn(currentTabId: number, checked: boolean): void {
     status: checked ? 'added' : 'removed'
   }
   chrome.tabs.sendMessage(currentTabId, message)
+
+  // tab URL変わったときにaddedを送ることができるようにタブにリスナーを仕掛ける
 }
 
 const App = (): JSX.Element => {

@@ -13,6 +13,7 @@ import { AppState } from './types'
 import { isPlaySoundMessage } from './types'
 import { isPollFinishMessage, isPollStartMessage } from '@/poll/types'
 import { ReconnectableWebSocket } from '@/wscomp/rws'
+import { NavigateFunction } from 'react-router-dom'
 
 const log = getLogger('webSocketHooks')
 
@@ -33,8 +34,10 @@ export function useWebSocketOnOpen(rws: ReconnectableWebSocket | null, cb?: () =
   }, [rws, cb])
 }
 
-
-export function useWebSocketOnClose(rws: ReconnectableWebSocket | null, cb?: (ev: CloseEvent) => void
+export function useWebSocketOnClose(
+  rws: ReconnectableWebSocket | null,
+  navigate?: NavigateFunction,
+  cb?: (ev: CloseEvent) => void
 ): (e: CloseEvent) => void {
   return useCallback((ev: CloseEvent): void => {
     switch (ev.code) {
@@ -44,7 +47,7 @@ export function useWebSocketOnClose(rws: ReconnectableWebSocket | null, cb?: (ev
           'App.notification',
           JSON.stringify({ message: 'Streaming authentication failed.' })
         )
-        gotoLoginPage()
+        gotoLoginPage(navigate)
         break
       default:
         rws?.reconnectWithBackoff()
@@ -52,7 +55,7 @@ export function useWebSocketOnClose(rws: ReconnectableWebSocket | null, cb?: (ev
     }
 
     cb?.(ev)
-  }, [rws, cb])
+  }, [rws, navigate, cb])
 }
 
 export function useWebSocketOnMessage(
