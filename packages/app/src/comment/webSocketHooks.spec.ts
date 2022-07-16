@@ -149,7 +149,7 @@ test('onClose callback', () => {
   const rws: ReconnectableWebSocket = createReconnectableWebSocket()
   const cb = jest.fn()
 
-  const { result } = renderHook(() => useWebSocketOnClose(rws, cb))
+  const { result } = renderHook(() => useWebSocketOnClose(rws, undefined, cb))
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   result.current({ code: 1001 } as any)
 
