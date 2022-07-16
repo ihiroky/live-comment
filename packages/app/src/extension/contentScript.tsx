@@ -7,15 +7,10 @@ import { MessageScreen, createMessageSource } from '@/screen/MessageScreen'
 
 const log = getLogger('contentScript')
 
-log.info('Content script loaded.')
-
 const useStyles = makeStyles({
   app: {
     position: 'fixed',
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
+    inset: 0,
   }
 })
 
@@ -25,6 +20,8 @@ function getRootElement(): Element | DocumentFragment {
     div.id = '_lc_root'
     div.style.position = 'fixed'
     div.style.inset = '0px'
+    div.style.zIndex = '2147483647'
+    div.style.pointerEvents = 'none'
     document.documentElement.appendChild(div)
   }
   const shadowRoot = div.attachShadow({ mode: 'open' })
@@ -91,6 +88,23 @@ async function main(): Promise<void> {
       }
     }
   })
+
+  if (document.readyState !== 'complete') {
+    const queryStatus: TargetTab = {
+      type: 'target-tab',
+    }
+    log.info('SEND', queryStatus)
+    chrome.runtime.sendMessage(queryStatus)
+  } else {
+    document.addEventListener('DOMContentLoaded', (): void => {
+      const queryStatus: TargetTab = {
+        type: 'target-tab',
+      }
+      log.info('SEND at DOMContentLoaded', queryStatus)
+      chrome.runtime.sendMessage(queryStatus)
+    })
+  }
 }
 
 main()
+log.info('Content script loaded.')
