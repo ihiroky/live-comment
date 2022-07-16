@@ -32,6 +32,6 @@ export type OpenLogWindow = {
 
 export type TargetTab = {
   type: 'target-tab'
-  status: 'added' | 'removed'
-  tabId: number
+  status?: 'added' | 'removed'
+  tabId?: number
 }

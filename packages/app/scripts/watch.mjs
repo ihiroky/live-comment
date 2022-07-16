@@ -31,80 +31,82 @@ const printRebuildResult = (name) => ({
   }
 })
 
-const api = build({
-  entryPoints: apps.api.entryPoints,
-  outfile: apps.api.outfile,
-  color: true,
-  bundle: true,
-  platform: 'node',
-  target: ['es2020'],
-  watch: dev && printRebuildResult('api'),
-  minify: !dev,
-}).then(() => log('api', 'Watching...'))
+const optionsList = {
+  api: {
+    entryPoints: apps.api.entryPoints,
+    outfile: apps.api.outfile,
+    color: true,
+    bundle: true,
+    platform: 'node',
+    target: ['es2020'],
+    watch: dev && printRebuildResult('api'),
+    minify: !dev,
+  },
+  streaming: {
+    entryPoints: apps.streaming.entryPoints,
+    outfile: apps.streaming.outfile,
+    color: true,
+    bundle: true,
+    platform: 'node',
+    target: ['es2020'],
+    watch: dev && printRebuildResult('streaming'),
+    minify: !dev,
+  },
+  comment: {
+    entryPoints: apps.comment.entryPoints,
+    outfile: apps.comment.outfile,
+    inject: ['scripts/react-shim.js'],
+    color: true,
+    bundle: true,
+    platform: 'browser',
+    target: ['es2020'],
+    watch: dev && printRebuildResult('comment'),
+    minify: !dev,
+    plugins: [
+      copyFiles({ entries: apps.comment.assets })
+    ],
+  },
+  desktop: {
+    entryPoints: apps.desktop.entryPoints,
+    outdir: apps.desktop.outdir,
+    color: true,
+    bundle: true,
+    platform: 'node',
+    external: ['electron'],
+    watch: dev && printRebuildResult('desktop:main'),
+    minify: !dev
+  },
+  renderer: {
+    entryPoints: apps.renderer.entryPoints,
+    outfile: apps.renderer.outfile,
+    inject: ['scripts/react-shim.js'],
+    format: 'esm',
+    color: true,
+    bundle: true,
+    platform: 'browser',
+    target: ['es2020'],
+    watch: dev && printRebuildResult('desktop:renderer'),
+    minify: !dev,
+  },
+  extension: {
+    entryPoints: apps.extension.entryPoints,
+    outdir: apps.extension.outdir,
+    inject: ['scripts/react-shim.js'],
+    color: true,
+    bundle: true,
+    platform: 'browser',
+    target: ['es2020', 'es2020'],
+    watch: dev && printRebuildResult('extension'),
+    minify: !dev,
+    plugins: [
+      copyFiles({ entries: apps.extension.assets })
+    ]
+  }
+}
 
-const streaming = build({
-  entryPoints: apps.streaming.entryPoints,
-  outfile: apps.streaming.outfile,
-  color: true,
-  bundle: true,
-  platform: 'node',
-  target: ['es2020'],
-  watch: dev && printRebuildResult('streaming'),
-  minify: !dev,
-}).then(() => log('streaming', 'Watching...'))
-
-const comment = build({
-  entryPoints: apps.comment.entryPoints,
-  outfile: apps.comment.outfile,
-  inject: ['scripts/react-shim.js'],
-  color: true,
-  bundle: true,
-  platform: 'browser',
-  target: ['es2020'],
-  watch: dev && printRebuildResult('comment'),
-  minify: !dev,
-  plugins: [
-    copyFiles({ entries: apps.comment.assets })
-  ],
-}).then(() => log('comment', 'Watching...'))
-
-const desktop = build({
-  entryPoints: apps.desktop.entryPoints,
-  outdir: apps.desktop.outdir,
-  color: true,
-  bundle: true,
-  platform: 'node',
-  external: ['electron'],
-  watch: dev && printRebuildResult('desktop:main'),
-  minify: !dev
-}).then(() => log('desktop:main', 'Watching...'))
-
-const renderer = build({
-  entryPoints: apps.renderer.entryPoints,
-  outfile: apps.renderer.outfile,
-  inject: ['scripts/react-shim.js'],
-  format: 'esm',
-  color: true,
-  bundle: true,
-  platform: 'browser',
-  target: ['es2020'],
-  watch: dev && printRebuildResult('desktop:renderer'),
-  minify: !dev,
-}).then(() => log('desktop:renderer', 'Watching...'))
-
-const extension = build({
-  entryPoints: apps.extension.entryPoints,
-  outdir: apps.extension.outdir,
-  inject: ['scripts/react-shim.js'],
-  color: true,
-  bundle: true,
-  platform: 'browser',
-  target: ['es2020', 'es2020'],
-  watch: dev && printRebuildResult('extension'),
-  minify: !dev,
-  plugins: [
-    copyFiles({ entries: apps.extension.assets })
-  ]
-}).then(() => log('extension', 'Watching...'))
-
-Promise.all([api, streaming, comment, desktop, renderer, extension])
+console.info('Targets:', Object.keys(optionsList).join(', '))
+await Promise.all(
+  Object
+    .entries(optionsList)
+    .map(entry => build(entry[1]).then(() => log(entry[0], 'Watching...')))
+)
