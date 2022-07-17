@@ -13,6 +13,7 @@ const apiUrl = process.env.NODE_ENV === 'production'
   : `http://localhost:9080`
 
 type Props = {
+  useUserDomain?: boolean
   onOpen?: () => void
   onClose?: (e: CloseEvent) => void
   onError?: (e: Event) => void
