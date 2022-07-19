@@ -4,7 +4,7 @@ import makeStyles from '@mui/styles/makeStyles'
 import { createRoot } from 'react-dom/client'
 import { getLogger } from '@/common/Logger'
 import { TargetTab } from '../types'
-import { logWindowStore, commentsShownTabIdStore } from '../stores'
+import { store } from '../store'
 
 
 const log = getLogger('popup')
@@ -12,7 +12,8 @@ const log = getLogger('popup')
 function createOnLogTabRemoved(logTabId: number): ((tabId: number, removeInfo: chrome.tabs.TabRemoveInfo) => void) {
   const listener = (tabId: number): void => {
     if (tabId === logTabId) {
-      logWindowStore.update({ tabId: 0 })
+      store.update('lc.log-tab', { tabId: 0 })
+      //logWindowStore.update({ tabId: 0 })
       chrome.tabs.onRemoved.removeListener(listener)
     }
   }
@@ -36,15 +37,18 @@ async function showLogWindow(): Promise<void> {
     throw new Error('Failed to create log window')
   }
 
-  logWindowStore.update({ tabId })
+  store.update('lc.log-tab', { tabId })
+  //logWindowStore.update({ tabId })
   const listener = createOnLogTabRemoved(tabId)
   chrome.tabs.onRemoved.addListener(listener)
 }
 
 async function closeLogWindow(): Promise<void> {
-  const tabId = logWindowStore.cache.tabId
+  const tabId = store.cache['lc.log-tab'].tabId
+  //const tabId = logWindowStore.cache.tabId
   if (tabId) {
-    logWindowStore.update({ tabId: 0 })
+    store.update('lc.log-tab', { tabId: 0 })
+    //logWindowStore.update({ tabId: 0 })
     const tab = await chrome.tabs.get(tabId)
     if (tab && tab.id) {
       await chrome.tabs.remove(tabId)
@@ -59,40 +63,45 @@ const useStyles = makeStyles({
   },
 })
 
-function showCommentsOn(currentTabId: number, checked: boolean): void {
+function toggleCommentsOnTab(logWindowShown: boolean, showOnTab: boolean, currentTabId: number) {
+  if (!logWindowShown && showOnTab) {
+    return
+  }
   if (!currentTabId) {
     return
   }
 
-  const newTabIds: Record<number, true> = { ...commentsShownTabIdStore.cache.tabIds }
-  if (checked) {
+  const newTabIds: Record<number, true> = { ...store.cache['lc.shown-comemnts-tab'].tabIds }
+  //const newTabIds: Record<number, true> = { ...commentsShownTabIdStore.cache.tabIds }
+  if (showOnTab) {
     newTabIds[currentTabId] = true
   } else {
     delete newTabIds[currentTabId]
   }
-  commentsShownTabIdStore.update({ tabIds: newTabIds })
+  store.update('lc.shown-comemnts-tab', { tabIds: newTabIds })
+  //commentsShownTabIdStore.update({ tabIds: newTabIds })
 
   const message: TargetTab = {
     type: 'target-tab',
     tabId: currentTabId,
-    status: checked ? 'added' : 'removed'
+    status: showOnTab ? 'added' : 'removed'
   }
   chrome.tabs.sendMessage(currentTabId, message)
 }
 
 const App = (): JSX.Element => {
   const [currentTabId, setCurrentTabId] = useState<number>(0)
-  const logWindowShown = useSyncExternalStore(logWindowStore.subscribe, () => !!logWindowStore.cache.tabId)
-  const commentsShownTabIds = useSyncExternalStore(
-    commentsShownTabIdStore.subscribe,
-    () => commentsShownTabIdStore.cache.tabIds
-  )
+  const storeCache = useSyncExternalStore(store.subscribe, () => store.cache)
+  const logWindowShown = !!storeCache['lc.log-tab'].tabId
+  const commentsShownTabIds = storeCache['lc.shown-comemnts-tab'].tabIds
+
   log.info(logWindowShown, currentTabId, commentsShownTabIds)
 
   const style = useStyles()
 
   useEffect((): (() => void) => {
     log.info('App: useEffect mount')
+
     chrome.windows.getCurrent()
       .then((window: chrome.windows.Window): Promise<chrome.tabs.Tab[]> => {
         return chrome.tabs.query({ active: true, windowId: window.id })
@@ -105,20 +114,25 @@ const App = (): JSX.Element => {
         return 0
       })
       .then((currentTabId: number): void => {
-        if (logWindowStore.cache.tabId) {
-          chrome.tabs.get(logWindowStore.cache.tabId)
+        const tabId = store.cache['lc.log-tab'].tabId
+        //const tabId = logWindowStore.cache.tabId
+        if (tabId) {
+          chrome.tabs.get(tabId)
             .catch(() => null)
             .then((tab: chrome.tabs.Tab | null): void => {
               if (tab && tab.id) {
                 const listener = createOnLogTabRemoved(tab.id)
                 chrome.tabs.onRemoved.addListener(listener)
               } else {
-                logWindowStore.update({ tabId: 0 })
-                showCommentsOn(currentTabId, false)
+                store.update('lc.log-tab', { tabId: 0 })
+                //logWindowStore.update({ tabId: 0 })
+                //showCommentsOn(currentTabId, false)
+                toggleCommentsOnTab(true, false, currentTabId)
               }
             })
         } else {
-          showCommentsOn(currentTabId, false)
+          //showCommentsOn(currentTabId, false)
+          toggleCommentsOnTab(true, false, currentTabId)
         }
       })
 
@@ -128,31 +142,15 @@ const App = (): JSX.Element => {
   }, [])
 
   const toggleShowComments = useCallback((_: ChangeEvent<HTMLInputElement>, checked: boolean): void => {
-    if (!logWindowShown && checked) {
-      return
-    }
-
-    const newTabIds: Record<number, true> = { ...commentsShownTabIdStore.cache.tabIds }
-    if (checked) {
-      newTabIds[currentTabId] = true
-    } else {
-      delete newTabIds[currentTabId]
-    }
-    commentsShownTabIdStore.update({ tabIds: newTabIds })
-
-    const message: TargetTab = {
-      type: 'target-tab',
-      tabId: currentTabId,
-      status: checked ? 'added' : 'removed'
-    }
-    chrome.tabs.sendMessage(currentTabId, message)
+    toggleCommentsOnTab(logWindowShown, checked, currentTabId)
   }, [logWindowShown, currentTabId])
   const toggleLogWindow = useCallback((_: ChangeEvent<HTMLInputElement>, checked: boolean): void => {
     if (checked) {
       showLogWindow()
     } else {
       closeLogWindow()
-      showCommentsOn(currentTabId, false)
+      toggleCommentsOnTab(true, false, currentTabId)
+      //showCommentsOn(currentTabId, false)
     }
   }, [currentTabId])
 
@@ -172,9 +170,15 @@ const App = (): JSX.Element => {
   )
 }
 
-const rootElement = document.getElementById('root')
-if (!rootElement) {
-  throw new Error('Root element not found')
+async function main(): Promise<void> {
+  await store.sync()
+
+  const rootElement = document.getElementById('root')
+  if (!rootElement) {
+    throw new Error('Root element not found')
+  }
+  const root = createRoot(rootElement)
+  root.render(<App />)
 }
-const root = createRoot(rootElement)
-root.render(<App />)
+
+main()
