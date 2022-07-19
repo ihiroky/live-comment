@@ -47,7 +47,7 @@ const useStyles = makeStyles({
 const log = getLogger('LoginForm')
 
 type LoginFormProps = {
-  apiUrl: string
+  apiUrl?: string
   navigate?: NavigateFunction
 }
 
@@ -62,6 +62,10 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
   const [password, setPassword] = useState<TextFieldState>({
     value: '',
     helperText: 'Input password of the room',
+  })
+  const [url, setUrl] = useState<TextFieldState>({
+    value: apiUrl ?? '',
+    helperText: 'Input URL',
   })
   const [keepLogin, setKeepLogin] = useState<boolean>(false)
 
@@ -83,6 +87,9 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
 
   const onSubmit = useCallback((e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
+    if (url.value === undefined) {
+      return
+    }
     const message: AcnMessage = {
       type: 'acn',
       room: room.value,
@@ -90,7 +97,7 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
       hash: createHash(password.value)
     }
     fetchWithTimeout(
-      `${apiUrl.replace(/\/+$/, '')}/login`,
+      `${url.value.replace(/\/+$/, '')}/login`,
       {
         method: 'POST',
         cache: 'no-store',
@@ -114,16 +121,16 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
       }
       setNotification({ message: `Login failed (${ isErrorMessage(m) ? m.message : JSON.stringify(m)})` })
     })
-  }, [apiUrl, navigate, room.value, password.value, keepLogin])
+  }, [url, navigate, room.value, password.value, keepLogin])
 
   const onTextFieldChange = useCallback((e: ChangeEvent<HTMLInputElement>): void => {
     log.debug('[onTextFieldChanged]', e.target.name, e.target.value)
     if (notification.message.length > 0) {
       setNotification({ message: '' })
     }
+    const error = e.target.value.length === 0
     switch (e.target.name) {
       case 'room': {
-        const error = e.target.value.length === 0
         setRoom({
           value: e.target.value,
           helperText: error ? 'Input room name.' : ''
@@ -131,10 +138,16 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
         break
       }
       case 'password': {
-        const error = e.target.value.length === 0
         setPassword({
           value: e.target.value,
           helperText: error ? 'Input password' : ''
+        })
+        break
+      }
+      case 'url': {
+        setUrl({
+          value: e.target.value,
+          helperText: error ? 'Input URL' : ''
         })
         break
       }
@@ -150,6 +163,18 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
     <form className={classes.root} onSubmit={onSubmit}>
       <div className={classes.texts}>
         <div role="status" className={classes.notification}>{notification.message}</div>
+        {
+          (apiUrl === undefined)
+            ? <TextField
+              fullWidth
+              label="URL"
+              name="url"
+              value={url.value}
+              error={url.value.length === 0}
+              margin="normal"
+              onChange={onTextFieldChange} />
+            : <></>
+        }
         <TextField
           fullWidth
           label="Room"
@@ -175,7 +200,7 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
       <div className={classes.options}>
         <LabeledCheckbox
           label="Login enabled for 30 days" name="login_30_days" checked={keepLogin}
-          onChange={checked => { setKeepLogin(checked) }}
+          onChange={setKeepLogin}
         />
       </div>
       <div className={classes.buttons}>

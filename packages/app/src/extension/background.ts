@@ -1,5 +1,5 @@
 import { getLogger } from '@/common/Logger'
-import { commentsShownTabIdStore } from './stores'
+import { store } from './store'
 import { TargetTab } from './types'
 
 const log = getLogger('background')
@@ -14,7 +14,7 @@ function addMessageListener(): void {
       return
     }
 
-    const status = commentsShownTabIdStore.cache.tabIds[tabId] ? 'added' : undefined
+    const status = store.cache['lc.shown-comemnts-tab'].tabIds[tabId] ? 'added' : undefined
     const response: TargetTab = {
       type: 'target-tab',
       status,
@@ -25,7 +25,10 @@ function addMessageListener(): void {
   })
 }
 
-commentsShownTabIdStore.subscribe(() => undefined)
-addMessageListener()
+async function main(): Promise<void> {
+  addMessageListener()
+  await store.sync()
+  log.info('background loaded.')
+}
 
-log.info('background loaded.')
+main()
