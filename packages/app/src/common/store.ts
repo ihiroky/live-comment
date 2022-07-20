@@ -17,6 +17,7 @@ type StoreObj<T extends Record<string, unknown>> = {
   get cache(): Readonly<T>
   subscribe: (callback: () => void) => (() => void)
   update: <K extends keyof T>(key: K, value: T[K]) => Promise<void>
+  delete: <K extends keyof T>(key: K) => Promise<void>
   sync: () => Promise<void>
 }
 
@@ -38,9 +39,19 @@ function createStoreBase<T extends Record<string, unknown>>(): StoreObj<T> {
       }
     },
     update: () => Promise.reject(new Error('Unimplemented: StoreObj.update()')),
+    delete: () => Promise.reject(new Error('Unimplemented: StoreObj.delete()')),
     sync: () => Promise.reject(new Error('Unimplemented: StoreObj.sync()')),
   }
   return store
+}
+
+function parseJSONOrDefault<V>(key: unknown, v: string | null, dv: V): V {
+  try {
+    return (v !== null) ? JSON.parse(v) : dv
+  } catch (e: unknown) {
+    log.error(`Failed to load [${key}]. Use initial value:`, e)
+    return dv
+  }
 }
 
 export function createWindowStore<T extends Record<string, unknown>>(
@@ -52,15 +63,40 @@ export function createWindowStore<T extends Record<string, unknown>>(
     return new Promise<void>(resolve => {
       const s = JSON.stringify(value)
       storage.setItem(key.toString(), s)
+      // Trigger StorageEvent for this window
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: key.toString(),
+        newValue: s,
+        storageArea: storage,
+      }))
+      resolve()
+    })
+  }
+  // TODO test
+  store.delete = <K extends keyof T>(key: K): Promise<void> => {
+    return new Promise<void>(resolve => {
+      storage.removeItem(key.toString())
+      // Trigger StorageEvent for this window
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: key.toString(),
+        newValue: null,
+        storageArea: storage,
+      }))
       resolve()
     })
   }
 
-  const keys = Object.keys(empty)
+  const keys = Object.keys(empty) as (keyof T)[]
   const syncPromise = new Promise<void>(resolve => {
+    let updated = false
     for (const key of keys) {
       const s = storage.getItem(key.toString())
-      store._cache[key as (keyof T)] = (s !== null) ? JSON.parse(s) : empty[key]
+      store._cache[key] = parseJSONOrDefault(key, s, empty[key])
+      updated = (s !== null)
+    }
+    // TODO test
+    if (updated) {
+      store._callbacks.forEach(f => f())
     }
     resolve()
   })
@@ -76,10 +112,11 @@ export function createWindowStore<T extends Record<string, unknown>>(
     }
     store._cache = {
       ...store._cache,
-      [ev.key]: (ev.newValue !== null) ? JSON.parse(ev.newValue) : empty[ev.key]
+      [ev.key]: parseJSONOrDefault(ev.key, ev.newValue, empty[ev.key]),
     }
     store._callbacks.forEach(f => f())
   }
+  // This listener is called from another window in the same origin.
   window.addEventListener('storage', listener)
 
   return store
@@ -97,15 +134,24 @@ export function createChromeStore<T extends Record<string, unknown>>(
       [key]: value
     })
   }
+  // TODO test
+  store.delete = <K extends keyof T>(key: K): Promise<void> => {
+    return storage.remove(key.toString())
+  }
 
   const keys = Object.keys(empty)
   const syncPromise = storage.get(keys).then(values => {
+    let updated = false
     for (const k of keys) {
       const value = values[k.toString()]
       store._cache = {
         ...store._cache,
         [k]: (value !== undefined) ? value : empty[k]
       }
+      updated = (value !== undefined)
+    }
+    if (updated) {
+      store._callbacks.forEach(f => f())
     }
   })
   store.sync = (): Promise<void> => syncPromise

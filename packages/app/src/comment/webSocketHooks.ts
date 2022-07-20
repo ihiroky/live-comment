@@ -121,9 +121,12 @@ export function useWebSocketOnMessage(
 
     if (updateState) {
       setState({...state, comments, polls})
-      if (state.autoScroll && autoScrollRef.current && messageListDivRef.current) {
-        messageListDivRef.current.scrollTo(0, autoScrollRef.current.offsetTop)
-      }
+      // Wait for last message is renderered
+      window.setTimeout((): void => {
+        if (state.autoScroll && autoScrollRef.current && messageListDivRef.current) {
+          messageListDivRef.current.scrollTo(0, autoScrollRef.current.offsetTop)
+        }
+      }, 100)
     }
 
     cb?.(message)
