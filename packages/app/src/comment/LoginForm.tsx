@@ -15,6 +15,7 @@ import { getLogger } from '@/common/Logger'
 import { gotoCommentPage } from './utils/pages'
 import { LabeledCheckbox } from './LabeledCheckbox'
 import { NavigateFunction } from 'react-router-dom'
+import jwtDecode, { JwtPayload } from 'jwt-decode'
 
 interface TextFieldState {
   value: string
@@ -72,8 +73,11 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
   useEffect((): void => {
     const token = window.localStorage.getItem('token')
     if (token) {
-      gotoCommentPage(navigate)
-      return
+      const payload = jwtDecode<JwtPayload & { room: string }>(token)
+      if ((payload.exp !== undefined) && (payload.exp > Date.now() / 1000)) {
+        gotoCommentPage(navigate)
+        return
+      }
     }
     const json = window.localStorage.getItem('App.notification')
     if (!json) {

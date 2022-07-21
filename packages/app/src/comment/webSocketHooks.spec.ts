@@ -7,6 +7,7 @@ import * as React from 'react'
 import { gotoLoginPage } from './utils/pages'
 import { AppState } from './types'
 import { PollFinishMessage, PollStartMessage } from '@/poll/types'
+import { waitFor } from '@testing-library/react'
 
 jest.mock('./utils/pages')
 
@@ -346,7 +347,7 @@ test('onMessage which receives PollFinishMessage removes a poll entry', () => {
   })
 })
 
-test('onMessage scrolls to autoScrollRef if autoScroll is true', () => {
+test('onMessage scrolls to autoScrollRef if autoScroll is true', async () => {
   const state = createAppState(true)
   const setState = jest.fn()
   const onClosePoll = jest.fn()
@@ -373,7 +374,9 @@ test('onMessage scrolls to autoScrollRef if autoScroll is true', () => {
   }
   onMessage(comment)
 
-  expect(messageListDivRef.current?.scrollTo).toBeCalledWith(0, autoScrollRef.current?.offsetTop)
+  await waitFor(() => {
+    expect(messageListDivRef.current?.scrollTo).toBeCalledWith(0, autoScrollRef.current?.offsetTop)
+  })
 })
 
 test('onMessage callback', () => {

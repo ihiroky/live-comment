@@ -3,35 +3,13 @@ import { jest, describe } from '@jest/globals'
 
 describe('WindowStore', () => {
 
-  function spySetItemAndRemoveItem(storage: Storage): void {
-    jest.spyOn(storage.__proto__, 'setItem').mockImplementation((k, v) => {
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: k as string,
-        newValue: v as string,
-        storageArea: storage
-      }))
-    })
-    jest.spyOn(storage.__proto__, 'removeItem').mockImplementation((k) => {
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: k as string,
-        storageArea: storage
-      }))
-    })
-  }
+  afterEach(() => {
+    window.localStorage.clear()
+  })
 
   test('Load initial values from storage', async () => {
-    spySetItemAndRemoveItem(window.localStorage)
-
-    jest.spyOn(window.localStorage.__proto__, 'getItem').mockImplementation(k => {
-      switch (k) {
-        case 'k0':
-          return JSON.stringify({ s: 's0', n: 123 })
-        case 'k1':
-          return JSON.stringify('s1')
-        default:
-          throw new Error('Unpexpecet key:' + k)
-      }
-    })
+    window.localStorage.setItem('k0', JSON.stringify({s: 's0', n: 123}))
+    window.localStorage.setItem('k1', JSON.stringify('s1'))
 
     const store = createWindowStore<{
       k0: { s: string , n: number }
@@ -49,8 +27,6 @@ describe('WindowStore', () => {
   })
 
   test('subscribe and update', async () => {
-    spySetItemAndRemoveItem(window.localStorage)
-
     const store = createWindowStore<{
       k0: { s: string , n: number }
       k1: string
@@ -81,8 +57,6 @@ describe('WindowStore', () => {
   })
 
   test('independent key does not have an effect.', async () => {
-    spySetItemAndRemoveItem(window.localStorage)
-
     const store = createWindowStore<{
       k0: { s: string , n: number }
       k1: string
@@ -101,9 +75,7 @@ describe('WindowStore', () => {
   })
 
   test('independent storage does not have an effect.', async () => {
-    // Assume that window.dispatchEvent is invoked on sessionStorage.
-    spySetItemAndRemoveItem(window.sessionStorage)
-
+    window.addEventListener = jest.fn<typeof window.addEventListener>()
     const store = createWindowStore<{
       k0: { s: string , n: number }
       k1: string
@@ -116,14 +88,20 @@ describe('WindowStore', () => {
     const callback = jest.fn<() => void>()
     store.subscribe(callback)
 
-    window.sessionStorage.setItem('k1', 'v11')
+    const listener = jest.mocked(window.addEventListener).mock.calls[0][1]
+    if (typeof listener !== 'function') {
+      throw new Error()
+    }
+    listener(new StorageEvent('storage', {
+      key: 'k0',
+      newValue: '0',
+      storageArea: window.sessionStorage,
+    }))
 
     expect(callback).not.toBeCalled()
   })
 
   test('Clear cache if removed', async () => {
-    spySetItemAndRemoveItem(window.localStorage)
-
     const store = createWindowStore<{
       k0: { s: string , n: number }
       k1: string
@@ -131,8 +109,9 @@ describe('WindowStore', () => {
       k0: { s: '', n: 0 },
       k1: ''
     })
+    await store.sync()
 
-    window.localStorage.removeItem('k0')
+    await store.delete('k0')
 
     expect(store.cache.k0).toEqual({ s: '', n: 0 })
   })

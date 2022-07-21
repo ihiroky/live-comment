@@ -77,8 +77,9 @@ test('Login button is disabled if password is empty', async () => {
   await waitFor(() => { expect(button).toBeDisabled() })
 })
 
-test('Go to comment page if token already exists', async () => {
-  window.localStorage.setItem('token', 'token')
+test('Go to comment page if valid token exists', async () => {
+  // exp: 9999999999999
+  window.localStorage.setItem('token', 'ewogICJhbGciOiAiSFMyNTYiLAogICJ0eXAiOiAiSldUIgp9.ewogICJyb29tIjogInJvb20iLAogICJleHAiOiA5OTk5OTk5OTk5OTk5Cn0')
 
   render(<LoginForm apiUrl="" />)
 
