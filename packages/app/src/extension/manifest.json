@@ -12,7 +12,11 @@
   "action": {
     "default_icon": {
       "16": "images/icon.png",
-      "32": "images/icon@2.png"
+      "32": "images/icon@2.png",
+      "48": "images/icon@3.png",
+      "64": "images/icon@4.png",
+      "80": "images/icon@5.png",
+      "128": "images/icon@6.png"
     },
     "default_popup": "popup/popup.html",
     "default_title": "Live Comment"
@@ -22,6 +26,8 @@
     "16": "images/icon.png",
     "32": "images/icon@2.png",
     "48": "images/icon@3.png",
+    "64": "iamges/icon@4.png",
+    "80": "images/icon@5.png",
     "128": "images/icon@6.png"
   },
 

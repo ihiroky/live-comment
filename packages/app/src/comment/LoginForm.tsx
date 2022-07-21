@@ -29,7 +29,16 @@ const useStyles = makeStyles({
     minHeight: '300px',
     height: '600px',
     margin: 'auto',
-    padding: '8px'
+    padding: '8px',
+  },
+  logo: {
+    display: 'flex',
+    margin: 'auto',
+  },
+  logoCredit: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    fontSize: 'x-small',
   },
   notification: {
     color: 'red'
@@ -48,7 +57,7 @@ const useStyles = makeStyles({
 const log = getLogger('LoginForm')
 
 type LoginFormProps = {
-  apiUrl?: string
+  apiUrl: string
   navigate?: NavigateFunction
 }
 
@@ -63,10 +72,6 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
   const [password, setPassword] = useState<TextFieldState>({
     value: '',
     helperText: 'Input password of the room',
-  })
-  const [url, setUrl] = useState<TextFieldState>({
-    value: apiUrl ?? '',
-    helperText: 'Input URL',
   })
   const [keepLogin, setKeepLogin] = useState<boolean>(false)
 
@@ -91,9 +96,6 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
 
   const onSubmit = useCallback((e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
-    if (url.value === undefined) {
-      return
-    }
     const message: AcnMessage = {
       type: 'acn',
       room: room.value,
@@ -101,7 +103,7 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
       hash: createHash(password.value)
     }
     fetchWithTimeout(
-      `${url.value.replace(/\/+$/, '')}/login`,
+      `${apiUrl.replace(/\/+$/, '')}/login`,
       {
         method: 'POST',
         cache: 'no-store',
@@ -125,7 +127,7 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
       }
       setNotification({ message: `Login failed (${ isErrorMessage(m) ? m.message : JSON.stringify(m)})` })
     })
-  }, [url, navigate, room.value, password.value, keepLogin])
+  }, [apiUrl, navigate, room.value, password.value, keepLogin])
 
   const onTextFieldChange = useCallback((e: ChangeEvent<HTMLInputElement>): void => {
     log.debug('[onTextFieldChanged]', e.target.name, e.target.value)
@@ -148,13 +150,6 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
         })
         break
       }
-      case 'url': {
-        setUrl({
-          value: e.target.value,
-          helperText: error ? 'Input URL' : ''
-        })
-        break
-      }
     }
   }, [notification.message.length])
 
@@ -165,20 +160,24 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
   const classes = useStyles()
   return (
     <form className={classes.root} onSubmit={onSubmit}>
+      <div>
+        <img
+          className={classes.logo}
+          src="./assets/logo.png"
+        />
+        <div className={classes.logoCredit}>
+          Image by
+          <a href="https://www.sasagawa-brand.co.jp/tada/detail.php?id=1145&cid=4&cid2=14"
+            target="_blank"
+            rel="noreferrer">TADAira</a>.
+          Change of
+          <a href="https://github.com/ihiroky/live-comment"
+            target="_blank"
+            rel="noreferrer">Live Comment</a>.
+        </div>
+      </div>
       <div className={classes.texts}>
         <div role="status" className={classes.notification}>{notification.message}</div>
-        {
-          (apiUrl === undefined)
-            ? <TextField
-              fullWidth
-              label="URL"
-              name="url"
-              value={url.value}
-              error={url.value.length === 0}
-              margin="normal"
-              onChange={onTextFieldChange} />
-            : <></>
-        }
         <TextField
           fullWidth
           label="Room"

@@ -57,7 +57,9 @@ export function findLevelRightSpaceExists(marquees: MarqueeProps[]): number {
     if (element) {
       const rect = element.getBoundingClientRect()
       existsNoRightSpaceMarquee =
-        existsNoRightSpaceMarquee || (rect.right + SPACE_BETWEEN_COMMENTS >= windowInnerWidth)
+        existsNoRightSpaceMarquee || // Any another marquee is 'no right space'
+        rect.right === 0 ||          // This element is not displayed yet.
+        (rect.right + SPACE_BETWEEN_COMMENTS >= windowInnerWidth)
     } else {
       // Not rendered yet.
       existsNoRightSpaceMarquee = true

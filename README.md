@@ -40,3 +40,9 @@ yarn --cwd packages/app/ serve
 yarn --cwd packages/app/ start-desktop
 # And change Server URL to the streaming server (ws://localhost:8080/app) in its settings.
 ```
+
+### License
+
+This repository is under [MIT license](https://opensource.org/licenses/MIT).
+
+Images (whale) are designed by [TADAira](https://www.sasagawa-brand.co.jp/tada/detail.php?id=1145&cid=4&cid2=14), change of live-comment.
