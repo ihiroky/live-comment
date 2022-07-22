@@ -10,8 +10,10 @@ const log = getLogger('popup')
 function createOnLogTabRemoved(logTabId: number): ((tabId: number, removeInfo: chrome.tabs.TabRemoveInfo) => void) {
   const listener = (tabId: number): void => {
     if (tabId === logTabId) {
+      Object.keys(store.cache.showCommentTabs).forEach(scTabId => {
+        toggleCommentsOnTab(false, false, Number(scTabId))
+      })
       store.update('logTab', { tabId: 0 })
-      //logWindowStore.update({ tabId: 0 })
       chrome.tabs.onRemoved.removeListener(listener)
     }
   }
@@ -37,7 +39,6 @@ async function showLogWindow(): Promise<void> {
   }
 
   await store.update('logTab', { tabId: tab.id })
-  //logWindowStore.update({ tabId })
   const listener = createOnLogTabRemoved(tab.id)
   chrome.tabs.onRemoved.addListener(listener)
   if (tab.status !== 'complete') {
@@ -65,10 +66,8 @@ async function showLogWindow(): Promise<void> {
 
 async function closeLogWindow(): Promise<void> {
   const tabId = store.cache.logTab.tabId
-  //const tabId = logWindowStore.cache.tabId
   if (tabId) {
     await store.update('logTab', { tabId: 0 })
-    //logWindowStore.update({ tabId: 0 })
     const tab = await chrome.tabs.get(tabId)
     if (tab && tab.id) {
       await chrome.tabs.remove(tabId)
@@ -77,30 +76,28 @@ async function closeLogWindow(): Promise<void> {
   // logWindowStore is cleanup by chrome.tabs.onRemoved.
 }
 
-async function toggleCommentsOnTab(logWindowShown: boolean, showOnTab: boolean, currentTabId: number): Promise<void> {
+async function toggleCommentsOnTab(logWindowShown: boolean, showOnTab: boolean, targetTabId: number): Promise<void> {
   if (!logWindowShown && showOnTab) {
     return
   }
-  if (!currentTabId) {
+  if (!targetTabId) {
     return
   }
 
   const newTabIds: Record<number, true> = { ...store.cache.showCommentTabs.tabIds }
-  //const newTabIds: Record<number, true> = { ...commentsShownTabIdStore.cache.tabIds }
   if (showOnTab) {
-    newTabIds[currentTabId] = true
+    newTabIds[targetTabId] = true
   } else {
-    delete newTabIds[currentTabId]
+    delete newTabIds[targetTabId]
   }
   await store.update('showCommentTabs', { tabIds: newTabIds })
-  //commentsShownTabIdStore.update({ tabIds: newTabIds })
 
   const message: TargetTab = {
     type: 'target-tab',
-    tabId: currentTabId,
+    tabId: targetTabId,
     status: showOnTab ? 'added' : 'removed'
   }
-  chrome.tabs.sendMessage(currentTabId, message)
+  chrome.tabs.sendMessage(targetTabId, message)
 }
 
 const App = (): JSX.Element => {
@@ -127,7 +124,6 @@ const App = (): JSX.Element => {
       })
       .then((currentTabId: number): void => {
         const tabId = store.cache.logTab.tabId
-        //const tabId = logWindowStore.cache.tabId
         if (tabId) {
           chrome.tabs.get(tabId)
             .catch(() => null)
@@ -137,13 +133,10 @@ const App = (): JSX.Element => {
                 chrome.tabs.onRemoved.addListener(listener)
               } else {
                 store.update('logTab', { tabId: 0 })
-                //logWindowStore.update({ tabId: 0 })
-                //showCommentsOn(currentTabId, false)
                 toggleCommentsOnTab(true, false, currentTabId)
               }
             })
         } else {
-          //showCommentsOn(currentTabId, false)
           toggleCommentsOnTab(true, false, currentTabId)
         }
       })
@@ -167,7 +160,6 @@ const App = (): JSX.Element => {
       toggleCommentsOnTab(true, false, currentTabId).then((): void => {
         closeLogWindow()
       })
-      //showCommentsOn(currentTabId, false)
     }
   }, [currentTabId, storeCache.aggressive])
   const toggleAggressiveMode = useCallback((_: ChangeEvent<HTMLInputElement>, checked: boolean): void => {

@@ -6,6 +6,7 @@ import { ComponentProps, StrictMode } from 'react'
 import { MessageScreen, createMessageSource } from '@/screen/MessageScreen'
 
 const log = getLogger('contentScript')
+const ROOT_ID = '_lc_root'
 
 const useStyles = makeStyles({
   app: {
@@ -15,15 +16,13 @@ const useStyles = makeStyles({
 })
 
 function createRootElement(): Element | DocumentFragment {
-  const ID = '_lc_root'
-
-  const oldDiv = document.getElementById(ID)
+  const oldDiv = document.getElementById(ROOT_ID)
   if (oldDiv) {
     document.documentElement.removeChild(oldDiv)
   }
 
   const div = document.createElement('div')
-  div.id = ID
+  div.id = ROOT_ID
   div.style.position = 'fixed'
   div.style.inset = '0px'
   div.style.zIndex = '2147483647'
@@ -56,11 +55,14 @@ function createContext(): Context {
   log.debug('[createContext] Connected port:', port.name)
 
   const messageSource = createMessageSource()
+  // TODO Stop listening if this tab is not active
   port.onMessage.addListener((message: CommentEvent): void => {
-    // TODO Drop message ? if this tab is not active
     log.info(port?.name, 'onMessage', message)
-    if (message.type === 'comment-message') {
-      messageSource.publish(message.message)
+    switch (message.type) {
+      case 'comment-message': {
+        messageSource.publish(message.message)
+        break
+      }
     }
   })
 
@@ -87,6 +89,10 @@ async function main(): Promise<void> {
           if (context) {
             context.port.disconnect()
             context.root.unmount()
+            const div = document.getElementById(ROOT_ID)
+            if (div) {
+              document.documentElement.removeChild(div)
+            }
             context = null
           }
       }
