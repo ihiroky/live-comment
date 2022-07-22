@@ -39,8 +39,7 @@ export const apps = {
     outdir: 'dist/bundle/extension/',
     assets: [
       { src: 'src/extension/manifest.json', destDir: 'dist/bundle/extension/' },
-      { src: 'resources/icon.png', destDir: 'dist/bundle/extension/images/'},
-      { src: 'resources/icon@[236].png', destDir: 'dist/bundle/extension/images/'},
+      { src: 'resources/icon*.png', destDir: 'dist/bundle/extension/images/'},
       { src: 'src/extension/options/options.html', destDir: 'dist/bundle/extension/options/' },
       { src: 'src/extension/popup/*.html', destDir: 'dist/bundle/extension/popup/' },
     ]

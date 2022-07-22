@@ -6,10 +6,10 @@ import { LoginForm } from './LoginForm'
 import { SoundPlayer } from './sound/SoundPlayer'
 
 const wsUrl = process.env.NODE_ENV === 'production'
-  ? `wss://${window.location.hostname}/app`
+  ? (process.env.LC_WS_URL || `wss://${window.location.hostname}/app`)
   : `ws://localhost:8080`
 const apiUrl = process.env.NODE_ENV === 'production'
-  ? `https://${window.location.hostname}/api`
+  ? (process.env.LC_API_URL || `https://${window.location.hostname}/api`)
   : `http://localhost:9080`
 
 type Props = {
