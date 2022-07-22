@@ -1,18 +1,16 @@
 import { ChangeEvent, StrictMode, useCallback, useEffect, useSyncExternalStore, useState } from 'react'
-import { FormControl, FormControlLabel, FormGroup, Switch } from '@mui/material'
-import makeStyles from '@mui/styles/makeStyles'
+import { Divider, FormControl, FormControlLabel, FormGroup, Switch, Typography } from '@mui/material'
 import { createRoot } from 'react-dom/client'
 import { getLogger } from '@/common/Logger'
 import { TargetTab } from '../types'
 import { store } from '../store'
-
 
 const log = getLogger('popup')
 
 function createOnLogTabRemoved(logTabId: number): ((tabId: number, removeInfo: chrome.tabs.TabRemoveInfo) => void) {
   const listener = (tabId: number): void => {
     if (tabId === logTabId) {
-      store.update('lc.log-tab', { tabId: 0 })
+      store.update('logTab', { tabId: 0 })
       //logWindowStore.update({ tabId: 0 })
       chrome.tabs.onRemoved.removeListener(listener)
     }
@@ -22,7 +20,7 @@ function createOnLogTabRemoved(logTabId: number): ((tabId: number, removeInfo: c
 
 async function showLogWindow(): Promise<void> {
   const width = 800
-  const height = 600
+  const height = 800
   const options: chrome.windows.CreateData = {
     type: 'panel',
     url: 'chrome-extension://' + chrome.runtime.id + '/popup/comment.html',
@@ -31,23 +29,45 @@ async function showLogWindow(): Promise<void> {
     width,
     height,
   }
+  await store.update('showCommentTabs', { tabIds: {} })
   const w = await chrome.windows.create(options)
-  const tabId = w.tabs?.[0].id
-  if (!tabId) {
+  const tab = w.tabs?.[0]
+  if (!tab || !tab.id) {
     throw new Error('Failed to create log window')
   }
 
-  store.update('lc.log-tab', { tabId })
+  await store.update('logTab', { tabId: tab.id })
   //logWindowStore.update({ tabId })
-  const listener = createOnLogTabRemoved(tabId)
+  const listener = createOnLogTabRemoved(tab.id)
   chrome.tabs.onRemoved.addListener(listener)
+  if (tab.status !== 'complete') {
+    return new Promise<void>(resolve => {
+      const listener = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo): void => {
+        if (tabId !== tab.id) {
+          return
+        }
+        if (changeInfo.status === 'complete') {
+          chrome.tabs.onUpdated.removeListener(listener)
+          log.debug('Tab status gets complete:', tabId)
+          resolve()
+        }
+      }
+      chrome.tabs.onUpdated.addListener(listener)
+      setTimeout((): void => {
+        chrome.tabs.onUpdated.removeListener(listener)
+        log.debug('No status change found for tab', tab.id, tab.status)
+        resolve()
+      }, 1000)
+    })
+  }
+
 }
 
 async function closeLogWindow(): Promise<void> {
-  const tabId = store.cache['lc.log-tab'].tabId
+  const tabId = store.cache.logTab.tabId
   //const tabId = logWindowStore.cache.tabId
   if (tabId) {
-    store.update('lc.log-tab', { tabId: 0 })
+    await store.update('logTab', { tabId: 0 })
     //logWindowStore.update({ tabId: 0 })
     const tab = await chrome.tabs.get(tabId)
     if (tab && tab.id) {
@@ -57,13 +77,7 @@ async function closeLogWindow(): Promise<void> {
   // logWindowStore is cleanup by chrome.tabs.onRemoved.
 }
 
-const useStyles = makeStyles({
-  App: {
-    backgroundColor: '#ccffcc',
-  },
-})
-
-function toggleCommentsOnTab(logWindowShown: boolean, showOnTab: boolean, currentTabId: number) {
+async function toggleCommentsOnTab(logWindowShown: boolean, showOnTab: boolean, currentTabId: number): Promise<void> {
   if (!logWindowShown && showOnTab) {
     return
   }
@@ -71,14 +85,14 @@ function toggleCommentsOnTab(logWindowShown: boolean, showOnTab: boolean, curren
     return
   }
 
-  const newTabIds: Record<number, true> = { ...store.cache['lc.shown-comemnts-tab'].tabIds }
+  const newTabIds: Record<number, true> = { ...store.cache.showCommentTabs.tabIds }
   //const newTabIds: Record<number, true> = { ...commentsShownTabIdStore.cache.tabIds }
   if (showOnTab) {
     newTabIds[currentTabId] = true
   } else {
     delete newTabIds[currentTabId]
   }
-  store.update('lc.shown-comemnts-tab', { tabIds: newTabIds })
+  await store.update('showCommentTabs', { tabIds: newTabIds })
   //commentsShownTabIdStore.update({ tabIds: newTabIds })
 
   const message: TargetTab = {
@@ -92,12 +106,10 @@ function toggleCommentsOnTab(logWindowShown: boolean, showOnTab: boolean, curren
 const App = (): JSX.Element => {
   const [currentTabId, setCurrentTabId] = useState<number>(0)
   const storeCache = useSyncExternalStore(store.subscribe, () => store.cache)
-  const logWindowShown = !!storeCache['lc.log-tab'].tabId
-  const commentsShownTabIds = storeCache['lc.shown-comemnts-tab'].tabIds
+  const logWindowShown = !!storeCache.logTab.tabId
+  const commentsShownTabIds = storeCache.showCommentTabs.tabIds
 
   log.info(logWindowShown, currentTabId, commentsShownTabIds)
-
-  const style = useStyles()
 
   useEffect((): (() => void) => {
     log.info('App: useEffect mount')
@@ -114,7 +126,7 @@ const App = (): JSX.Element => {
         return 0
       })
       .then((currentTabId: number): void => {
-        const tabId = store.cache['lc.log-tab'].tabId
+        const tabId = store.cache.logTab.tabId
         //const tabId = logWindowStore.cache.tabId
         if (tabId) {
           chrome.tabs.get(tabId)
@@ -124,7 +136,7 @@ const App = (): JSX.Element => {
                 const listener = createOnLogTabRemoved(tab.id)
                 chrome.tabs.onRemoved.addListener(listener)
               } else {
-                store.update('lc.log-tab', { tabId: 0 })
+                store.update('logTab', { tabId: 0 })
                 //logWindowStore.update({ tabId: 0 })
                 //showCommentsOn(currentTabId, false)
                 toggleCommentsOnTab(true, false, currentTabId)
@@ -146,24 +158,36 @@ const App = (): JSX.Element => {
   }, [logWindowShown, currentTabId])
   const toggleLogWindow = useCallback((_: ChangeEvent<HTMLInputElement>, checked: boolean): void => {
     if (checked) {
-      showLogWindow()
+      showLogWindow().then((): void => {
+        if (storeCache.aggressive) {
+          toggleCommentsOnTab(true, true, currentTabId)
+        }
+      })
     } else {
-      closeLogWindow()
-      toggleCommentsOnTab(true, false, currentTabId)
+      toggleCommentsOnTab(true, false, currentTabId).then((): void => {
+        closeLogWindow()
+      })
       //showCommentsOn(currentTabId, false)
     }
-  }, [currentTabId])
+  }, [currentTabId, storeCache.aggressive])
+  const toggleAggressiveMode = useCallback((_: ChangeEvent<HTMLInputElement>, checked: boolean): void => {
+    store.update('aggressive', checked)
+  }, [])
 
   return (
     <StrictMode>
-      <FormControl className={style.App} component="fieldset" variant="standard">
+      <FormControl component="fieldset" variant="standard">
         <FormGroup>
           <FormControlLabel control={
-            <Switch checked={logWindowShown} onChange={toggleLogWindow}/>
-          } label="ON" />
+            <Switch checked={logWindowShown} onChange={toggleLogWindow} />
+          } label={<Typography variant="body1">Feed comments</Typography>} />
+          <Divider />
           <FormControlLabel control={
             <Switch checked={commentsShownTabIds[currentTabId] ?? false} onChange={toggleShowComments} />
-          } label="Show" />
+          } label={<Typography variant="body2">In this tab</Typography>} />
+          <FormControlLabel control={
+            <Switch checked={storeCache.aggressive} onChange={toggleAggressiveMode} />
+          } label={<Typography variant="body2">As soon as a tab opens</Typography>} />
         </FormGroup>
       </FormControl>
     </StrictMode>

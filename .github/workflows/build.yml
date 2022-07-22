@@ -103,7 +103,7 @@ jobs:
           mkdir -p build/apps/server
           cp -a packages/app/dist/bundle/comment  build/apps/comment
           cp -a packages/app/resources/icon@4.png build/apps/comment/favicon.ico
-          cp -a packages/app/resources/kujira.png build/apps/comment/logo.png
+          cp -a packages/app/resources/logo.png   build/apps/comment/logo.png
           cp -a packages/app/src/server/scripts/* build/apps/server/
           cp -a packages/app/dist/bundle/server/* build/apps/server/
         shell: bash

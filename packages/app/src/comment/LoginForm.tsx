@@ -163,7 +163,7 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
       <div>
         <img
           className={classes.logo}
-          src="./assets/logo.png"
+          src="./logo.png"
         />
         <div className={classes.logoCredit}>
           Image by

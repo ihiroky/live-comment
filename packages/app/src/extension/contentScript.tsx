@@ -14,16 +14,22 @@ const useStyles = makeStyles({
   }
 })
 
-function getRootElement(): Element | DocumentFragment {
-  const div = document.getElementById('_lc_root') || document.createElement('div')
-  if (!div.id) {
-    div.id = '_lc_root'
-    div.style.position = 'fixed'
-    div.style.inset = '0px'
-    div.style.zIndex = '2147483647'
-    div.style.pointerEvents = 'none'
-    document.documentElement.appendChild(div)
+function createRootElement(): Element | DocumentFragment {
+  const ID = '_lc_root'
+
+  const oldDiv = document.getElementById(ID)
+  if (oldDiv) {
+    document.documentElement.removeChild(oldDiv)
   }
+
+  const div = document.createElement('div')
+  div.id = ID
+  div.style.position = 'fixed'
+  div.style.inset = '0px'
+  div.style.zIndex = '2147483647'
+  div.style.pointerEvents = 'none'
+  document.documentElement.appendChild(div)
+
   const shadowRoot = div.attachShadow({ mode: 'open' })
   return shadowRoot
 }
@@ -47,19 +53,18 @@ type Context = {
 function createContext(): Context {
   // TODO receive properties to render Screen.
   const port = chrome.runtime.connect({ name: 'popup-comments' })
-  if (!port) {
-    throw new Error('Failed to connect port: popup-commnents')
-  }
+  log.debug('[createContext] Connected port:', port.name)
 
   const messageSource = createMessageSource()
   port.onMessage.addListener((message: CommentEvent): void => {
+    // TODO Drop message ? if this tab is not active
     log.info(port?.name, 'onMessage', message)
     if (message.type === 'comment-message') {
       messageSource.publish(message.message)
     }
   })
 
-  const rootElement = getRootElement()
+  const rootElement = createRootElement()
   const root = createRoot(rootElement)
   root.render(<App duration={7000} color={'red'} fontBorderColor={'white'} watermark={undefined} messageSource={messageSource} />)
   log.info('Content script main loaded.')
@@ -67,43 +72,32 @@ function createContext(): Context {
   return{ port, root }
 }
 
-function releaseContext(context: Context | null): void {
-  if (context) {
-    context.port.disconnect()
-    context.root.unmount()
-  }
-}
-
 async function main(): Promise<void> {
   let context: Context | null = null
   chrome.runtime.onMessage.addListener((message: TargetTab): void => {
-    log.info('chrome.runtime.onMessage', message)
+    log.info('chrome.runtime.onMessage', message, context)
     if (message.type === 'target-tab') {
       switch (message.status) {
         case 'added':
-          context = createContext()
+          if (context === null) {
+            context = createContext()
+          }
           break
         case 'removed':
-          releaseContext(context)
+          if (context) {
+            context.port.disconnect()
+            context.root.unmount()
+            context = null
+          }
       }
     }
   })
 
-  if (document.readyState !== 'complete') {
-    const queryStatus: TargetTab = {
-      type: 'target-tab',
-    }
-    log.info('SEND', queryStatus)
-    chrome.runtime.sendMessage(queryStatus)
-  } else {
-    document.addEventListener('DOMContentLoaded', (): void => {
-      const queryStatus: TargetTab = {
-        type: 'target-tab',
-      }
-      log.info('SEND at DOMContentLoaded', queryStatus)
-      chrome.runtime.sendMessage(queryStatus)
-    })
+  const queryStatus: TargetTab = {
+    type: 'target-tab',
   }
+  log.info('SEND', queryStatus)
+  chrome.runtime.sendMessage(queryStatus)
 }
 
 main()

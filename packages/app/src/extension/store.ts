@@ -1,22 +1,21 @@
 import { createChromeStore } from '@/common/store'
 
-const KEY_LOG_TAB = 'lc.log-tab'
-const KEY_SHOWN_COMMENTS = 'lc.shown-comemnts-tab'
-
 export const store = createChromeStore<
   {
-    [KEY_LOG_TAB]: {
+    logTab: {
       tabId: number
     }
-    [KEY_SHOWN_COMMENTS]: {
+    showCommentTabs: {
       tabIds: Record<number, true>
     }
+    aggressive: boolean
   }
 >(chrome.storage.local, {
-  [KEY_LOG_TAB]: {
+  logTab: {
     tabId: 0,
   },
-  [KEY_SHOWN_COMMENTS]: {
-    tabIds: {}
-  }
+  showCommentTabs: {
+    tabIds: {},
+  },
+  aggressive: true,
 })

@@ -42,6 +42,7 @@ export const apps = {
       { src: 'resources/icon*.png', destDir: 'dist/bundle/extension/images/'},
       { src: 'src/extension/options/options.html', destDir: 'dist/bundle/extension/options/' },
       { src: 'src/extension/popup/*.html', destDir: 'dist/bundle/extension/popup/' },
+      { src: 'resources/logo.png', destDir: 'dist/bundle/extension/popup/'},
     ]
   }
 }
