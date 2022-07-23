@@ -55,8 +55,7 @@ function createContext(): Context {
   log.debug('[createContext] Connected port:', port.name)
 
   const messageSource = createMessageSource()
-  // TODO Stop listening if this tab is not active
-  port.onMessage.addListener((message: CommentEvent): void => {
+  const messageListener = (message: CommentEvent): void => {
     log.info(port?.name, 'onMessage', message)
     switch (message.type) {
       case 'comment-message': {
@@ -64,11 +63,39 @@ function createContext(): Context {
         break
       }
     }
+  }
+
+  if (document.visibilityState === 'visible') {
+    port.onMessage.addListener(messageListener)
+  }
+  document.addEventListener('visibilitychange', (): void => {
+    if (document.visibilityState === 'visible') {
+      port.onMessage.addListener(messageListener)
+    } else {
+      port.onMessage.removeListener(messageListener)
+    }
   })
 
   const rootElement = createRootElement()
   const root = createRoot(rootElement)
-  root.render(<App duration={7000} color={'red'} fontBorderColor={'white'} watermark={undefined} messageSource={messageSource} />)
+
+  const watermark: ComponentProps<typeof App>['watermark'] = {
+    html: `🐳`,
+    opacity: 0.33,
+    color: '#333333',
+    fontSize: '64px',
+    position: 'bottom-right',
+    offset: '3%',
+    noComments: false
+  }
+  root.render(
+    <App
+      duration={7000}
+      color={'#111111'}
+      fontBorderColor={'#cccccc'}
+      watermark={watermark}
+      messageSource={messageSource}
+    />)
   log.info('Content script main loaded.')
 
   return{ port, root }

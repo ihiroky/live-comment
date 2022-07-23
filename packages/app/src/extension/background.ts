@@ -6,7 +6,6 @@ const log = getLogger('background')
 
 function canShowComments(tabId: number): boolean {
   // Can't show comments if log window is not open.
-  log.info(store.cache.logTab.tabId, !store.cache.logTab.tabId)
   if (!store.cache.logTab.tabId) {
     return false
   }
@@ -53,6 +52,22 @@ function addMessageListener(): void {
 async function main(): Promise<void> {
   addMessageListener()
   await store.sync()
+  chrome.tabs.onRemoved.addListener((tabId: number): void => {
+    log.info(tabId, store.cache.logTab.tabId)
+    if (tabId === store.cache.logTab.tabId) {
+      Object.keys(store.cache.showCommentTabs.tabIds).forEach(scTabId => {
+        const targetTabId = Number(scTabId)
+        const message: TargetTab = {
+          type: 'target-tab',
+          tabId: targetTabId,
+          status: 'removed'
+        }
+        chrome.tabs.sendMessage(targetTabId, message)
+      })
+      store.update('showCommentTabs', { tabIds: {} })
+      store.update('logTab', { tabId: 0 })
+    }
+  })
   log.info('background loaded.')
 }
 

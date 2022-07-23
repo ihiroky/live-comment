@@ -7,19 +7,6 @@ import { store } from '../store'
 
 const log = getLogger('popup')
 
-function createOnLogTabRemoved(logTabId: number): ((tabId: number, removeInfo: chrome.tabs.TabRemoveInfo) => void) {
-  const listener = (tabId: number): void => {
-    if (tabId === logTabId) {
-      Object.keys(store.cache.showCommentTabs).forEach(scTabId => {
-        toggleCommentsOnTab(false, false, Number(scTabId))
-      })
-      store.update('logTab', { tabId: 0 })
-      chrome.tabs.onRemoved.removeListener(listener)
-    }
-  }
-  return listener
-}
-
 async function showLogWindow(): Promise<void> {
   const width = 800
   const height = 800
@@ -39,29 +26,6 @@ async function showLogWindow(): Promise<void> {
   }
 
   await store.update('logTab', { tabId: tab.id })
-  const listener = createOnLogTabRemoved(tab.id)
-  chrome.tabs.onRemoved.addListener(listener)
-  if (tab.status !== 'complete') {
-    return new Promise<void>(resolve => {
-      const listener = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo): void => {
-        if (tabId !== tab.id) {
-          return
-        }
-        if (changeInfo.status === 'complete') {
-          chrome.tabs.onUpdated.removeListener(listener)
-          log.debug('Tab status gets complete:', tabId)
-          resolve()
-        }
-      }
-      chrome.tabs.onUpdated.addListener(listener)
-      setTimeout((): void => {
-        chrome.tabs.onUpdated.removeListener(listener)
-        log.debug('No status change found for tab', tab.id, tab.status)
-        resolve()
-      }, 1000)
-    })
-  }
-
 }
 
 async function closeLogWindow(): Promise<void> {
@@ -73,7 +37,7 @@ async function closeLogWindow(): Promise<void> {
       await chrome.tabs.remove(tabId)
     }
   }
-  // logWindowStore is cleanup by chrome.tabs.onRemoved.
+  // logWindowStore is cleanup by chrome.tabs.onRemoved. see background.ts
 }
 
 async function toggleCommentsOnTab(logWindowShown: boolean, showOnTab: boolean, targetTabId: number): Promise<void> {
@@ -115,29 +79,9 @@ const App = (): JSX.Element => {
       .then((window: chrome.windows.Window): Promise<chrome.tabs.Tab[]> => {
         return chrome.tabs.query({ active: true, windowId: window.id })
       })
-      .then((tabs: chrome.tabs.Tab[]): number => {
+      .then((tabs: chrome.tabs.Tab[]): void => {
         if (tabs && tabs[0] && tabs[0].id) {
           setCurrentTabId(tabs[0].id)
-          return tabs[0].id
-        }
-        return 0
-      })
-      .then((currentTabId: number): void => {
-        const tabId = store.cache.logTab.tabId
-        if (tabId) {
-          chrome.tabs.get(tabId)
-            .catch(() => null)
-            .then((tab: chrome.tabs.Tab | null): void => {
-              if (tab && tab.id) {
-                const listener = createOnLogTabRemoved(tab.id)
-                chrome.tabs.onRemoved.addListener(listener)
-              } else {
-                store.update('logTab', { tabId: 0 })
-                toggleCommentsOnTab(true, false, currentTabId)
-              }
-            })
-        } else {
-          toggleCommentsOnTab(true, false, currentTabId)
         }
       })
 
