@@ -1,5 +1,5 @@
 import { getLogger } from '@/common/Logger'
-import { checkTargetTabStatus, cleanUpExtensionTabs } from './backgroundListeners'
+import { checkTargetTabStatus, cleanUpExtensionTabs } from './background/listeners'
 import { store } from './store'
 
 const log = getLogger('background/index')
