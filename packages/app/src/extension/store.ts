@@ -1,16 +1,18 @@
 import { createChromeStore } from '@/common/store'
 
-export const store = createChromeStore<
-  {
-    logTab: {
-      tabId: number
-    }
-    showCommentTabs: {
-      tabIds: Record<number, true>
-    }
-    aggressive: boolean
+type StoreObj = {
+  logTab: {
+    tabId: number
   }
->(chrome.storage.local, {
+  showCommentTabs: {
+    tabIds: Record<number, true>
+  }
+  aggressive: boolean
+}
+
+export type StoreType = ReturnType<typeof createChromeStore<StoreObj>>
+
+export const store = createChromeStore<StoreObj>(chrome.storage.local, {
   logTab: {
     tabId: 0,
   },
