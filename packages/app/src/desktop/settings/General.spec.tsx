@@ -3,6 +3,7 @@ import '@testing-library/jest-dom'
 import userEvent from '@testing-library/user-event'
 import { General } from './General'
 import { ScreenProps } from './types'
+import { jest, test, expect } from '@jest/globals'
 
 function prepare() {
   const props = {
@@ -28,8 +29,8 @@ function prepare() {
         ])
       })
     },
-    requestSettings: jest.fn(),
-    postSettings: jest.fn(),
+    requestSettings: jest.fn<typeof window.settings.requestSettings>(),
+    postSettings: jest.fn<typeof window.settings.postSettings>(),
   }
 
   return props

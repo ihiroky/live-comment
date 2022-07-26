@@ -5,6 +5,7 @@ import { sign } from 'jsonwebtoken'
 import { Preferences } from './Preferences'
 import { fetchWithTimeout } from '@/common/utils'
 import { Deffered } from '@/common/Deffered'
+import { jest, test, expect, beforeEach } from '@jest/globals'
 
 
 
@@ -12,7 +13,7 @@ jest.mock('@/common/utils')
 
 beforeEach(() => {
   if (!URL.createObjectURL) {
-    URL.createObjectURL = jest.fn().mockImplementation(() => 'data://')
+    URL.createObjectURL = jest.fn<typeof URL.createObjectURL>().mockImplementation(() => 'data://')
   }
   if (!URL.revokeObjectURL) {
     URL.revokeObjectURL = jest.fn()
@@ -114,10 +115,10 @@ test('Download sound file.', async () => {
       getReader: (): ReadableStreamDefaultReader<Uint8Array> => {
         return {
           closed: Promise.resolve(undefined),
-          read: jest.fn()
+          read: jest.fn<ReadableStreamDefaultReader<Uint8Array>['read']>()
             .mockResolvedValueOnce(firstRead)
-            .mockResolvedValueOnce(secondReadDeffered.promise),
-          cancel: jest.fn(),
+            .mockReturnValueOnce(secondReadDeffered.promise),
+          cancel: jest.fn<ReadableStreamDefaultReader<Uint8Array>['cancel']>(),
           releaseLock: jest.fn(),
         }
       },
@@ -164,7 +165,7 @@ test('Upload sound file', async () => {
   jest.mocked(fetchWithTimeout).mockResolvedValue({
     ok: true,
     status: 200,
-    json: jest.fn().mockResolvedValue({}) as unknown,
+    json: () => Promise.resolve({}),
   } as Response)
 
   render(<Preferences
@@ -200,7 +201,7 @@ test('Cancel to upload sound file ', async () => {
   jest.mocked(fetchWithTimeout).mockResolvedValue({
     ok: true,
     status: 200,
-    json: jest.fn().mockResolvedValue({}) as unknown,
+    json: () => Promise.resolve({}),
   } as Response)
 
   render(<Preferences

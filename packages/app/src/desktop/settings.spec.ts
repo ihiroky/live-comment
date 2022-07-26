@@ -1,4 +1,5 @@
 import { loadDefault, parse } from './settings'
+import { test, expect } from '@jest/globals'
 
 test('loadDefault', () => {
   const settings = loadDefault()

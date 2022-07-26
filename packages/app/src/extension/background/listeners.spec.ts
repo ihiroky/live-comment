@@ -1,5 +1,5 @@
 import { checkTargetTabStatus, cleanUpExtensionTabs } from './listeners'
-import { jest, test, beforeEach } from '@jest/globals'
+import { jest, test, expect, beforeEach } from '@jest/globals'
 import { store } from '../store'
 import { TargetTab } from '../types'
 

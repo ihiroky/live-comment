@@ -1,5 +1,6 @@
 import './Deffered'
 import { Deffered } from './Deffered'
+import { jest, test, expect } from '@jest/globals'
 
 test('Resolve calls resolved', async () => {
   const sut = new Deffered()

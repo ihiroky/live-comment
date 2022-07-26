@@ -3,6 +3,7 @@ import '@testing-library/jest-dom'
 import userEvent from '@testing-library/user-event'
 import { Watermark } from './Watermark'
 import { WatermarkPosition } from './types'
+import { jest, test, expect } from '@jest/globals'
 
 function createProps() {
   const position: WatermarkPosition = 'bottom-right'

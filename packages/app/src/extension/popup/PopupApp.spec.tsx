@@ -2,7 +2,7 @@ import { App } from './PopupApp'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { store } from '../store'
-import { jest, test } from '@jest/globals'
+import { jest, test, expect } from '@jest/globals'
 
 jest.mock('../store', () => {
   const callbacks: (() => void)[] = []

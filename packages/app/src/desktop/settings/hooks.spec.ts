@@ -1,12 +1,13 @@
 import { renderHook } from '@testing-library/react-hooks'
 import { useOnGeneralSettingsUpdate, useOnSubmit, useOnWatermarkSettingsUpdate, useSettingsState } from './hooks'
 import { GeneralSettingsState, Settings, SettingsState, WatermarkSettingsState } from './types'
+import { jest, test, expect, beforeEach } from '@jest/globals'
 
 beforeEach(() => {
   window.settings = {
-    requestSettings: jest.fn(),
-    postSettings: jest.fn().mockImplementation(() => Promise.resolve()),
-    getScreenPropsList: jest.fn(),
+    requestSettings: jest.fn<typeof window.settings.requestSettings>(),
+    postSettings: jest.fn<typeof window.settings.postSettings>().mockImplementation(() => Promise.resolve()),
+    getScreenPropsList: jest.fn<typeof window.settings.getScreenPropsList>(),
   }
   window.close = jest.fn()
 })

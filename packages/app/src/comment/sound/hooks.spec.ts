@@ -4,6 +4,7 @@ import { get, update, getAll } from './db'
 import { Zlib } from 'unzip'
 import { basename } from 'path'
 import { assertNotNullable } from '@/common/assert'
+import { jest, describe, test, expect, beforeEach } from '@jest/globals'
 
 jest.mock('./db')
 jest.mock('unzip')
@@ -29,7 +30,7 @@ describe('useExistsSounds', () => {
 
   test('Checksum does not exist', async () => {
     jest.mocked(get).mockResolvedValue('cs')
-    window.fetch = jest.fn().mockResolvedValue({
+    window.fetch = jest.fn<typeof window.fetch>().mockResolvedValue({
       ok: false,
       text: () => Promise.resolve('')
     } as Response)
@@ -56,10 +57,10 @@ describe('useExistsSounds', () => {
 
   test('Checksum exists and no update', async () => {
     jest.mocked(get).mockResolvedValue('cs')
-    window.fetch = jest.fn().mockResolvedValue({
+    window.fetch = jest.fn<typeof window.fetch>().mockResolvedValue({
       ok: true,
       text: () => Promise.resolve('cs')
-    })
+    } as Response)
 
     const { result, waitFor } = renderHook(() => useExistsSounds('https://host/', 'token', 'room'))
     await waitFor(() => expect(result.current).toBe(true))
@@ -81,15 +82,15 @@ describe('useExistsSounds', () => {
 
   test('Checksum and update exist, but no sound file exists', async () => {
     jest.mocked(get).mockResolvedValue('storedChecksum')
-    window.fetch = jest.fn()
+    window.fetch = jest.fn<typeof window.fetch>()
       .mockResolvedValueOnce({
         ok: true,
         text: () => Promise.resolve('newChecksum'),
-      })
+      } as Response)
       .mockResolvedValueOnce({
         ok: false,
         text: () => Promise.resolve(''),
-      })
+      } as Response)
 
     const { result } = renderHook(() => useExistsSounds('https://host/', 'token', 'room'))
     await new Promise<void>((resolve: () => void): void => {
@@ -154,15 +155,15 @@ describe('useExistsSounds', () => {
 
   test('Checksum and update exist, and store sound file', async () => {
     jest.mocked(get).mockResolvedValue('storedChecksum')
-    window.fetch = jest.fn()
+    window.fetch = jest.fn<typeof window.fetch>()
       .mockResolvedValueOnce({
         ok: true,
         text: () => Promise.resolve('newChecksum'),
-      })
+      } as Response)
       .mockResolvedValueOnce({
         ok: true,
-        blob: () => Promise.resolve({ arrayBuffer: () => Promise.resolve(new Uint8Array()) }),
-      })
+        blob: () => Promise.resolve({ arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)) }),
+      } as Response)
     const soundFiles = ['firework000.mp3', 'pegion000.wav', 'quiz000.mp3', 'quiz-correct000.mp3', 'quiz-wrong000.mp3', 'filenameonly.wav']
     jest.mocked(Zlib.Unzip).mockImplementation(() => {
       return {
@@ -246,7 +247,7 @@ describe('useSoundMetadata', () => {
   })
 
   test('Load stored data', async () => {
-    jest.mocked(getAll).mockImplementation((_dbName, _storeName, receiver) => {
+    jest.mocked(getAll<unknown>).mockImplementation((_dbName, _storeName, receiver) => {
       const obj0 = receiver('id0', { displayName: 'd00', command: 'c00' })
       const obj1 = receiver('id1', { displayName: 'd01', command: ['c10', 'c11'] })
       const obj2 = receiver('id2', { displayName: 'd02', command: null })
@@ -268,7 +269,7 @@ describe('useSoundMetadata', () => {
   })
 
   test('Skip invalid data', async () => {
-    jest.mocked(getAll).mockImplementation((_dbName, _storeName, receiver) => {
+    jest.mocked(getAll<unknown>).mockImplementation((_dbName, _storeName, receiver) => {
       // obj1 is Invalid data
       const obj0 = receiver('id0', { displayName: 'd00' })
       const obj1 = receiver('id1', { displayName: 'd01', command: ['c10', 'c11'] })
@@ -294,7 +295,7 @@ describe('usePlaySound', () => {
   let audioBufferSouce: AudioBufferSourceNode
   let gain: GainNode
   beforeEach(() => {
-    global.AudioContext = jest.fn<AudioContext, []>()
+    global.AudioContext = jest.fn<() => AudioContext>()
     audioContext = new global.AudioContext()
     audioBufferSouce = {
       connect: jest.fn(),
@@ -303,7 +304,7 @@ describe('usePlaySound', () => {
       stop: jest.fn(),
       addEventListener: jest.fn()
     } as any // eslint-disable-line @typescript-eslint/no-explicit-any
-    audioContext.createBufferSource = jest.fn<AudioBufferSourceNode, []>(() => audioBufferSouce)
+    audioContext.createBufferSource = jest.fn<typeof audioContext.createBufferSource>(() => audioBufferSouce)
     gain = {
       gain: {
         value: 0
@@ -311,8 +312,8 @@ describe('usePlaySound', () => {
       connect: jest.fn(),
       disconnect: jest.fn(),
     } as any // eslint-disable-line @typescript-eslint/no-explicit-any
-    audioContext.createGain = jest.fn<GainNode, []>(() => gain)
-    audioContext.decodeAudioData = jest.fn()
+    audioContext.createGain = jest.fn<typeof audioContext.createGain>(() => gain)
+    audioContext.decodeAudioData = jest.fn<typeof audioContext.decodeAudioData>()
     jest.mocked(global.AudioContext).mockImplementation(() => audioContext)
   })
 

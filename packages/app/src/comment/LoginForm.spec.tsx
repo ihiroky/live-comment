@@ -5,6 +5,7 @@ import { LoginForm } from './LoginForm'
 import { createHash } from '@/common/utils'
 import { assertNotNullable } from '@/common/assert'
 import { gotoCommentPage } from './utils/pages'
+import { jest, test } from '@jest/globals'
 
 jest.mock('./utils/pages')
 
@@ -99,15 +100,15 @@ test('Show notification if message is stored', async () => {
 })
 
 test('Submit crednetail then OK', async () => {
-  global.fetch = jest.fn().mockResolvedValue({
+  window.fetch = jest.fn<typeof window.fetch>().mockResolvedValue({
     ok: true,
-    json: jest.fn().mockResolvedValue({
+    json: () => Promise.resolve({
       type: 'acn',
       attrs: {
         token: 'token'
       }
     })
-  })
+  } as Response)
   render(<LoginForm apiUrl="" />)
 
   const roomInput = screen.getByRole('textbox')
@@ -125,14 +126,14 @@ test('Submit crednetail then OK', async () => {
 
 test('Submit credential then failed', async () => {
   const message = 'message'
-  global.fetch = jest.fn().mockResolvedValue({
+  window.fetch = jest.fn<typeof window.fetch>().mockResolvedValue({
     ok: true,
-    json: jest.fn().mockResolvedValue({
+    json: () => Promise.resolve({
       type: 'error',
       error: 'ACN_FAILED',
       message,
     })
-  })
+  } as Response)
   render(<LoginForm apiUrl="" />)
 
   const roomInput = screen.getByRole('textbox')
@@ -151,10 +152,10 @@ test('Submit credential then failed', async () => {
 
 test('Submit credential and unexpected message', async () => {
   const unexpected = { type: 'hoge' }
-  global.fetch = jest.fn().mockResolvedValue({
+  window.fetch = jest.fn<typeof window.fetch>().mockResolvedValue({
     ok: true,
-    json: jest.fn().mockResolvedValue(unexpected)
-  })
+    json: () => Promise.resolve(unexpected)
+  } as Response)
   render(<LoginForm apiUrl="" />)
 
   const roomInput = screen.getByRole('textbox')
@@ -173,10 +174,10 @@ test('Submit credential and unexpected message', async () => {
 
 test('Keep login', async () => {
   const unexpected = { type: 'hoge' }
-  global.fetch = jest.fn().mockResolvedValue({
+  window.fetch = jest.fn<typeof window.fetch>().mockResolvedValue({
     ok: true,
-    json: jest.fn().mockResolvedValue(unexpected)
-  })
+    json: () => Promise.resolve(unexpected)
+  } as Response)
   render(<LoginForm apiUrl="" />)
 
   const roomInput = screen.getByRole('textbox')

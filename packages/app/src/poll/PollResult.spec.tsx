@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import userEvent from '@testing-library/user-event'
 import { PollResult } from './PollResult'
+import { jest, test } from '@jest/globals'
 
 test('Render children only if mode is poll', () => {
   const data: ComponentProps<typeof PollResult>['data'] = {

@@ -11,6 +11,7 @@ import { assertNotNullable } from '@/common/assert'
 import { getLogger, LogLevels } from '@/common/Logger'
 import { HealthCheck, countUpPending, countDownPending } from './HealthCheck'
 import { sign } from 'jsonwebtoken'
+import { jest, test, expect, beforeEach, afterEach } from '@jest/globals'
 
 jest.mock('http')
 jest.mock('ws')

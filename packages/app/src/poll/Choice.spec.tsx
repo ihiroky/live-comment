@@ -5,6 +5,7 @@ import '@testing-library/jest-dom'
 import { Choice, useBlinkCountedUpEntries } from './Choice'
 import { PollEntry } from './types'
 import { assertNotNullable } from '@/common/assert'
+import { jest, test, expect, beforeEach, afterEach } from '@jest/globals'
 
 let entries: PollEntry[]
 

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
 import { PollControl } from './PollControl'
 import { AppState } from './types'
+import { jest, test, expect, beforeEach } from '@jest/globals'
 
 let poll: AppState['polls'][number]
 

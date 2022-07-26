@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
 import { LabeledCheckbox } from './LabeledCheckbox'
+import { jest, test } from '@jest/globals'
 
 test('Label, name, and checked', () => {
   render(<LabeledCheckbox label="LABEL" name="NAME" checked onChange={() => undefined} />)
