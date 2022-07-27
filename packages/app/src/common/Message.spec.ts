@@ -11,6 +11,7 @@ import {
   isCommentMessage,
   isErrorMessage,
 } from './Message'
+import { test, expect } from '@jest/globals'
 
 test('isAcnMessage', () => {
   const msg: AcnMessage = {

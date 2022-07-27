@@ -4,7 +4,7 @@ import { Poll } from './Poll'
 import { PollMessage } from './types'
 import { assertNotNullable } from '@/common/assert'
 import { ReconnectableWebSocket } from '@/wscomp/rws'
-
+import { jest, test, beforeEach } from '@jest/globals'
 
 let rws: ReconnectableWebSocket
 

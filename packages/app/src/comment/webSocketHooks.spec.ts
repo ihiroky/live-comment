@@ -8,6 +8,7 @@ import { gotoLoginPage } from './utils/pages'
 import { AppState } from './types'
 import { PollFinishMessage, PollStartMessage } from '@/poll/types'
 import { waitFor } from '@testing-library/react'
+import { jest, test, expect } from '@jest/globals'
 
 jest.mock('./utils/pages')
 

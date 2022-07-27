@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { ReconnectableWebSocket } from '@/wscomp/rws'
 import { Polling } from './Polling'
 import { PollEntry } from './types'
+import { jest, test, expect, beforeEach } from '@jest/globals'
 
 let rws: ReconnectableWebSocket
 

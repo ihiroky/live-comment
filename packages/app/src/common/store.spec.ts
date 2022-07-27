@@ -1,5 +1,5 @@
 import { createChromeStore, createWindowStore } from './store'
-import { jest, describe } from '@jest/globals'
+import { jest, describe, expect } from '@jest/globals'
 import { mockChromeStorage } from './mockChromeStorage'
 
 describe('WindowStore', () => {

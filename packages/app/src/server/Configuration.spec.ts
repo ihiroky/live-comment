@@ -5,6 +5,7 @@ import path from 'path'
 import { assertNotNullable } from '@/common/assert'
 import { LogLevels } from '@/common/Logger'
 import { Argv } from './argv'
+import { test, expect, beforeEach, afterEach } from '@jest/globals'
 
 let testDataRoot: string
 let argv: Argv

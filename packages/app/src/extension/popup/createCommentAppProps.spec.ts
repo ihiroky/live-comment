@@ -1,5 +1,5 @@
 import { createCommentAppProps } from './createCommentAppProps'
-import { jest, test, beforeEach } from '@jest/globals'
+import { jest, test, expect, beforeEach } from '@jest/globals'
 import { CommentMessage } from '@/common/Message'
 
 beforeEach(() => {

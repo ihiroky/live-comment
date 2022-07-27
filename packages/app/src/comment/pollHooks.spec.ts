@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react-hooks'
 import { AppState } from './types'
 import { useOnPoll, useOnClosePoll } from './pollHooks'
 import { ReconnectableWebSocket } from '@/wscomp/rws'
+import { jest, test, expect } from '@jest/globals'
 
 function createReconnectableWebSocket(): ReconnectableWebSocket {
   return {

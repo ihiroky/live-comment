@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { usePlaySound, useSoundMetadata } from './hooks'
 import { PlaySoundMessage } from '../types'
 import { sign } from 'jsonwebtoken'
-import { jest, test, afterEach } from '@jest/globals'
+import { jest, test, expect, afterEach } from '@jest/globals'
 
 jest.mock('./hooks')
 

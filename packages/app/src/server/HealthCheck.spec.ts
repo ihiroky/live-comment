@@ -2,6 +2,7 @@ import { HealthCheck, countUpPending, countDownPending } from './HealthCheck'
 import WebSocket from 'ws'
 import { ClientSession } from './websocket'
 import { CloseCode } from '@/common/Message'
+import { jest, test, expect, beforeAll } from '@jest/globals'
 
 jest.mock('ws')
 jest.useFakeTimers()

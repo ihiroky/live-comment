@@ -1,4 +1,5 @@
 import { isObject } from './utils'
+import { test, expect } from '@jest/globals'
 
 test('null is not "Object"', () => {
   const actual = isObject(null)

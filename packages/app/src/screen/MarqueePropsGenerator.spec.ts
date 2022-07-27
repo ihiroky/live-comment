@@ -6,6 +6,7 @@ import {
   calcMinimumEmptyLevel,
   findLevelRightSpaceExists,
 } from './MarqueePropsGenerator'
+import { jest, test, expect, beforeEach, afterEach, describe } from '@jest/globals'
 
 const SPACE_BETWEEN_COMMENTS = 384
 

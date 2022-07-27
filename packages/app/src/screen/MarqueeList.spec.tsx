@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import { MarqueeProps } from './MarqueePropsGenerator'
 import { createRef } from 'react'
+import { test, expect } from '@jest/globals'
 
 test('Draw', () => {
   const marquees: MarqueeProps[] = [

@@ -4,6 +4,7 @@ import { AcnMessage, AcnOkMessage, CommentMessage } from '@/common/Message'
 import { PollEntry, PollMessage, PollStartMessage, Progress, Update } from './types'
 import { MutableRefObject } from 'react'
 import { ReconnectableWebSocket } from '@/wscomp/rws'
+import { jest, test, expect } from '@jest/globals'
 
 function createPollEntries(): PollEntry[] {
   return [
