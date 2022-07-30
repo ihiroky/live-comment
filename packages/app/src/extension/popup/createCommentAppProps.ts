@@ -31,6 +31,7 @@ export function createCommentAppProps(): ComponentProps<typeof App> {
         type: 'comment-open',
       }
       ports.forEach(p => p.postMessage(m))
+      chrome.runtime.sendMessage(m)
     },
     onClose: (event: CloseEvent): void => {
       const m: CommentCloseEvent = {

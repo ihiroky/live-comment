@@ -61,10 +61,31 @@ export function toRollupCopyPluginFormat(entries) {
   })
 }
 
+function findCommonRootDirectory(entryPoints) {
+  const splitPaths = entryPoints
+    .map(ep => path.dirname(ep))
+    .map(epDir => epDir.split(path.sep))
+  const shortestDepth = Math.min(...splitPaths.map(sp => sp.length))
+  const commonPathElements = []
+
+  DEPTH_LOOP:
+  for (let i = 0; i < shortestDepth; i++) {
+    const target = splitPaths[0][i]
+    for (let ii = 1; ii < splitPaths.length; ii++) {
+      if (splitPaths[ii][i] !== target) {
+        break DEPTH_LOOP
+      }
+    }
+    commonPathElements.push(target)
+  }
+
+  return commonPathElements.join(path.sep)
+}
+
 export function entryPointsToOutFiles(entryPoints, outdir) {
-  return entryPoints.map(ep => {
-    const ext = path.extname(ep)
-    const bn = path.basename(ep, ext)
-    return path.join(outdir, `${bn}.js`)
-  })
+  const srcRootDir = findCommonRootDirectory(entryPoints)
+  return entryPoints
+    .map(ep => ep.substring(srcRootDir.length))
+    .map(s => s.replace(/tsx?$/, 'js'))
+    .map(s => path.join(outdir, s))
 }

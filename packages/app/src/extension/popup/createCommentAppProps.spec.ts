@@ -8,6 +8,7 @@ beforeEach(() => {
       onConnect: {
         addListener: jest.fn<typeof chrome.runtime.onConnect.addListener>(),
       },
+      sendMessage: jest.fn<typeof chrome.runtime.sendMessage>(),
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any
@@ -31,6 +32,9 @@ test('Each event', () => {
 
   props.onOpen?.()
   expect(port.postMessage).toBeCalledWith({
+    type: 'comment-open',
+  })
+  expect(chrome.runtime.sendMessage).toBeCalledWith({
     type: 'comment-open',
   })
 

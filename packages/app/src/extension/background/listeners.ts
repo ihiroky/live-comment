@@ -29,6 +29,7 @@ function canShowComments(tabId: number): boolean {
 }
 
 export const checkTargetTabStatus = (message: TargetTab, sender: chrome.runtime.MessageSender): void => {
+  log.debug('[checkTargetTabStatus]', message, sender)
   if (message.type !== 'target-tab') {
     return
   }
@@ -48,6 +49,7 @@ export const checkTargetTabStatus = (message: TargetTab, sender: chrome.runtime.
 }
 
 export const cleanUpExtensionTabs = (tabId: number): void => {
+  log.debug('[cleanupExtensionTab]', tabId)
   if (tabId === store.cache.logTab.tabId) {
     Object.keys(store.cache.showCommentTabs.tabIds).forEach(scTabId => {
       const targetTabId = Number(scTabId)
