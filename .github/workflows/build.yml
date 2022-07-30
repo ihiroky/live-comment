@@ -144,7 +144,7 @@ jobs:
 #
 # Buid browser extension
 #
-  browser-extension-for-live-comment.ga:
+  browser-extension-for-live-comment_ga:
     needs: check
     runs-on: ubuntu-latest
     steps:
