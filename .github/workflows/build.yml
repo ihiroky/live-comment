@@ -116,7 +116,7 @@ jobs:
 
       - name: Gets latest release info
         id: latest_release
-        uses: octokit/request-action@v2
+        uses: octokit/request-action@v2.1.6
         with:
           route: GET /repos/ihiroky/live-comment/releases?per_page=1&page=1"
           owner: octokit
@@ -177,7 +177,7 @@ jobs:
 
       - name: Gets latest release info
         id: latest_release
-        uses: octokit/request-action@v2
+        uses: octokit/request-action@v2.1.6
         with:
           route: GET /repos/ihiroky/live-comment/releases?per_page=1&page=1"
           owner: octokit
