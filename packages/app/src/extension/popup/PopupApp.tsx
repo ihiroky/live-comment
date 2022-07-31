@@ -1,24 +1,39 @@
 import { ChangeEvent, StrictMode, useCallback, useEffect, useSyncExternalStore } from 'react'
 import { Divider, FormControl, FormControlLabel, FormGroup, Switch, Typography } from '@mui/material'
 import { getLogger } from '@/common/Logger'
-import { TargetTab } from '../types'
+import { CommentOpenEvent, TargetTab } from '../types'
 import { StoreType } from '../store'
 
 const log = getLogger('popup')
 
-
+/*
 async function showLogWindow(store: StoreType): Promise<void> {
+  const commentOpenPromise = new Promise<void>(resolve => {
+    const listener = (m: CommentOpenEvent): void => {
+      // TODO Timeout.
+      if (m.type !== 'comment-open') {
+        return
+      }
+      log.info('[PopupApp] Receive', m)
+      resolve()
+      chrome.runtime.onMessage.removeListener(listener)
+    }
+    chrome.runtime.onMessage.addListener(listener)
+  })
+
+  await store.update('showCommentTabs', { tabIds: {} })
+
   const width = 800
   const height = 800
   const options: chrome.windows.CreateData = {
     type: 'panel',
+
     url: 'chrome-extension://' + chrome.runtime.id + '/popup/comment.html',
     top: window.screen.availHeight - height,
     left: window.screen.availWidth - width,
     width,
     height,
   }
-  await store.update('showCommentTabs', { tabIds: {} })
   const w = await chrome.windows.create(options)
   const tab = w.tabs?.[0]
   if (!tab || !tab.id) {
@@ -26,7 +41,72 @@ async function showLogWindow(store: StoreType): Promise<void> {
   }
 
   await store.update('logTab', { tabId: tab.id })
+  await commentOpenPromise
 }
+*/
+
+async function showLogWindow(store: StoreType): Promise<void> {
+
+  await store.update('showCommentTabs', { tabIds: {} })
+
+  const logWindow = await new Promise(
+    (
+      resolve: (w: chrome.windows.Window) => void,
+      reject: (e: Error) => void
+    ): void => {
+      let logWindow: chrome.windows.Window | undefined = undefined
+      let commentOpenArrived = false
+      let commentOpenTimeout = 0
+
+      const listener = (m: CommentOpenEvent): void => {
+        // TODO Timeout.
+        if (m.type !== 'comment-open') {
+          return
+        }
+        log.info('[PopupApp] Receive', m)
+        if (logWindow) {
+          resolve(logWindow)
+        }
+        commentOpenArrived = true
+        window.clearTimeout(commentOpenTimeout)
+        chrome.runtime.onMessage.removeListener(listener)
+      }
+      chrome.runtime.onMessage.addListener(listener)
+
+      commentOpenTimeout = window.setTimeout(() => {
+        reject(new Error('CommentOpenEvent: timeout'))
+      }, 3000)
+
+      const width = 800
+      const height = 800
+      const options: chrome.windows.CreateData = {
+        type: 'panel',
+
+        url: 'chrome-extension://' + chrome.runtime.id + '/popup/comment.html',
+        top: window.screen.availHeight - height,
+        left: window.screen.availWidth - width,
+        width,
+        height,
+      }
+      chrome.windows.create(options).then((w: chrome.windows.Window): void => {
+        if (!commentOpenArrived) {
+          logWindow = w
+        } else {
+          resolve(w)
+          window.clearTimeout(commentOpenTimeout)
+        }
+      })
+    }
+  )
+
+  const tab = logWindow.tabs?.[0]
+  if (!tab || !tab.id) {
+    throw new Error('Failed to create log window')
+  }
+
+  await store.update('logTab', { tabId: tab.id })
+}
+
 
 async function closeLogWindow(store: StoreType): Promise<void> {
   const tabId = store.cache.logTab.tabId

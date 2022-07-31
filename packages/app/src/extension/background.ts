@@ -4,7 +4,9 @@ import { store } from './store'
 
 const log = getLogger('background/index')
 
-await store.sync()
-chrome.runtime.onMessage.addListener(checkTargetTabStatus)
-chrome.tabs.onRemoved.addListener(cleanUpExtensionTabs)
-log.info('background loaded.')
+;(async function(): Promise<void> {
+  await store.sync()
+  chrome.runtime.onMessage.addListener(checkTargetTabStatus)
+  chrome.tabs.onRemoved.addListener(cleanUpExtensionTabs)
+  log.info('background loaded.')
+})()

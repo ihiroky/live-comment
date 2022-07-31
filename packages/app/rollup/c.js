@@ -7,12 +7,15 @@ import json from '@rollup/plugin-json'
 import copy from 'rollup-plugin-copy'
 
 export const env = process.env.NODE_ENV || 'development'
+console.info('************', process.env.LC_WS_URL, process.env.LC_API_URL)
 
 export function plugins(targets) {
   return  [
     targets && copy({ targets, verbose: true }),
     replace({
       'process.env.NODE_ENV': `"${env}"`,
+      'process.env.LC_WS_URL': `"${process.env.LC_WS_URL}"`,
+      'process.env.LC_API_URL': `"${process.env.LC_API_URL}"`,
       'preventAssignment': true
     }),
     nodeResolve({
