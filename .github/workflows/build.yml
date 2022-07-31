@@ -124,23 +124,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Print release info
-        run: |
-          echo ${{ toJSON(steps.latest_release.outputs.data) }}
-          echo ${{        steps.latest_release.outputs.data }}
-          echo ${{        steps.latest_release.outputs.data[0] }}
-          echo ${{        steps.latest_release.outputs.data[0].draft }}
-          echo ${{        steps.latest_release.outputs.data[0].upload_url }}
-
-
       - name: Upload asset to github release if draft release exists.
         id: upload-release-asset
-        if: ${{ steps.latest_release.outputs.data[0].draft == true }}
+        if: ${{ fromJson(steps.latest_release.outputs.data)[0].draft == true }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          upload_url: ${{ steps.latest_release_info.outputs.upload_url }}
+          upload_url: ${{ fromJson(steps.latest_release.outputs.data)[0].upload_url }}
           asset_path: build/server-apps.zip
           asset_name: server-apps.zip
           asset_content_type: application/zip
@@ -194,22 +185,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Print release info
-        run: |
-          echo ${{ toJSON(steps.latest_release.outputs.data) }}
-          echo ${{        steps.latest_release.outputs.data }}
-          echo ${{        steps.latest_release.outputs.data[0] }}
-          echo ${{        steps.latest_release.outputs.data[0].draft }}
-          echo ${{        steps.latest_release.outputs.data[0].upload_url }}
-
       - name: Upload asset to github release if draft release exists.
         id: upload-release-asset
-        if: ${{ steps.latest_release.outputs.data[0].draft == true }}
+        if: ${{ fromJson(steps.latest_release.outputs.data)[0].draft == true }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          upload_url: ${{ steps.latest_release.outputs.data[0].upload_url }}
+          upload_url: ${{ fromJson(steps.latest_release.outputs.data)[0].upload_url }}
           asset_path: build/browser-extension.zip
           asset_name: browser-extension.zip
           asset_content_type: application/zip
