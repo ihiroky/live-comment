@@ -116,7 +116,7 @@ jobs:
 
       - name: Gets latest release info
         id: latest_release
-        uses: octokit/request-action@v2.1.6
+        uses: octokit/request-action@v2.x
         with:
           route: GET /repos/ihiroky/live-comment/releases?per_page=1&page=1
           owner: octokit
@@ -126,8 +126,12 @@ jobs:
 
       - name: Print release info
         run: |
-          echo ${{ steps.latest_release.outputs.data[0].draft }}
-          echo ${{ steps.latest_release_info.outputs.upload_url }}
+          echo ${{ toJSON(steps.latest_release.outputs.data) }}
+          echo ${{        steps.latest_release.outputs.data }}
+          echo ${{        steps.latest_release.outputs.data[0] }}
+          echo ${{        steps.latest_release.outputs.data[0].draft }}
+          echo ${{        steps.latest_release.outputs.data[0].upload_url }}
+
 
       - name: Upload asset to github release if draft release exists.
         id: upload-release-asset
@@ -182,7 +186,7 @@ jobs:
 
       - name: Gets latest release info
         id: latest_release
-        uses: octokit/request-action@v2.1.6
+        uses: octokit/request-action@v2.x
         with:
           route: GET /repos/ihiroky/live-comment/releases?per_page=1&page=1
           owner: octokit
@@ -192,8 +196,11 @@ jobs:
 
       - name: Print release info
         run: |
-          echo ${{ steps.latest_release.outputs.data[0].draft }}
-          echo ${{ steps.latest_release_info.outputs.upload_url }}
+          echo ${{ toJSON(steps.latest_release.outputs.data) }}
+          echo ${{        steps.latest_release.outputs.data }}
+          echo ${{        steps.latest_release.outputs.data[0] }}
+          echo ${{        steps.latest_release.outputs.data[0].draft }}
+          echo ${{        steps.latest_release.outputs.data[0].upload_url }}
 
       - name: Upload asset to github release if draft release exists.
         id: upload-release-asset

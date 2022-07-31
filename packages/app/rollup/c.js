@@ -7,7 +7,6 @@ import json from '@rollup/plugin-json'
 import copy from 'rollup-plugin-copy'
 
 export const env = process.env.NODE_ENV || 'development'
-console.info('************', process.env.LC_WS_URL, process.env.LC_API_URL)
 
 export function plugins(targets) {
   return  [
