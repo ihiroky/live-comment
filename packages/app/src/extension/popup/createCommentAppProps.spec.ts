@@ -8,13 +8,37 @@ beforeEach(() => {
       onConnect: {
         addListener: jest.fn<typeof chrome.runtime.onConnect.addListener>(),
       },
-      sendMessage: jest.fn<typeof chrome.runtime.sendMessage>(),
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any
 })
 
-test('Each event', () => {
+test('Mount and unmount evnets', () => {
+  global.chrome = {
+    ...global.chrome,
+    runtime: {
+      ...global.chrome.runtime,
+      sendMessage: jest.fn<typeof chrome.runtime.sendMessage>(),
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any
+
+  const props = createCommentAppProps()
+
+  props.onMount()
+  expect(chrome.runtime.sendMessage).toBeCalledWith({
+    type: 'log-window-event',
+    status: 'open',
+  })
+
+  props.onUnmount()
+  expect(chrome.runtime.sendMessage).toBeCalledWith({
+    type: 'log-window-event',
+    status: 'close',
+  })
+})
+
+test('Each comment events', () => {
   const props = createCommentAppProps()
 
   const port: chrome.runtime.Port = {
@@ -32,9 +56,6 @@ test('Each event', () => {
 
   props.onOpen?.()
   expect(port.postMessage).toBeCalledWith({
-    type: 'comment-open',
-  })
-  expect(chrome.runtime.sendMessage).toBeCalledWith({
     type: 'comment-open',
   })
 

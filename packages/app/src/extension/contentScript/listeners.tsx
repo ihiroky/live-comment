@@ -87,7 +87,7 @@ function createContext(): Context {
     html: `🐳`,
     opacity: 0.33,
     color: '#333333',
-    fontSize: '64px',
+    fontSize: '48px',
     position: 'bottom-right',
     offset: '3%',
     noComments: false
@@ -100,7 +100,6 @@ function createContext(): Context {
       watermark={watermark}
       messageSource={messageSource}
     />)
-  log.info('Content script main loaded.')
 
   return{ port, root }
 }
