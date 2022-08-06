@@ -3,7 +3,7 @@
 
   "name": "Live Comment",
   "description": "Show comments on your browser",
-  "version": "1.0",
+  "version": "0.5.0",
 
   "options_ui": {
     "page": "options/options.html"
@@ -43,7 +43,6 @@
 
   "permissions": [
     "storage",
-    "scripting",
     "tabs"
   ],
 

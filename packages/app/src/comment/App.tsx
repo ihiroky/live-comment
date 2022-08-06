@@ -1,5 +1,5 @@
 import { Message } from '@/common/Message'
-import { StrictMode } from 'react'
+import { StrictMode, useEffect } from 'react'
 import { BrowserRouter, HashRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { Comment } from './Comment'
 import { LoginForm } from './LoginForm'
@@ -13,6 +13,8 @@ const apiUrl = process.env.NODE_ENV === 'production'
   : `http://localhost:9080`
 
 type Props = {
+  onMount?: () => void
+  onUnmount?: () => void
   onOpen?: () => void
   onClose?: (e: CloseEvent) => void
   onError?: (e: Event) => void
@@ -33,7 +35,14 @@ const AppRoutes = (props: Props): JSX.Element => {
   )
 }
 const Router = window.location.protocol === 'chrome-extension:' ? HashRouter : BrowserRouter
-export const App = (props: Props): JSX.Element => {
+export const App = ({ onMount, onUnmount, ...props}: Props): JSX.Element => {
+  useEffect((): (() => void) => {
+    onMount?.()
+    return (): void => {
+      onUnmount?.()
+    }
+  }, [onMount, onUnmount])
+
   return (
     <StrictMode>
       <Router>

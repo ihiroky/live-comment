@@ -1,12 +1,12 @@
 import { App } from '@/comment/App'
 import { getLogger } from '@/common/Logger'
 import { Message } from '@/common/Message'
-import { CommentCloseEvent, CommentErrorEvent, CommentMessageEvent, CommentOpenEvent } from '../types'
+import { CommentCloseEvent, CommentErrorEvent, CommentMessageEvent, CommentOpenEvent, LogWindowEvent } from '../types'
 import { ComponentProps } from 'react'
 
 const log = getLogger('commentProps')
 
-export function createCommentAppProps(): ComponentProps<typeof App> {
+export function createCommentAppProps(): Required<ComponentProps<typeof App>> {
   const ports: chrome.runtime.Port[] = []
   chrome.runtime.onConnect.addListener((port: chrome.runtime.Port): void => {
     log.info('comment onConnect', port)
@@ -20,18 +20,26 @@ export function createCommentAppProps(): ComponentProps<typeof App> {
     })
   })
 
-  const props: {
-    onOpen: ComponentProps<typeof App>['onOpen']
-    onClose: ComponentProps<typeof App>['onClose']
-    onMessage: ComponentProps<typeof App>['onMessage']
-    onError: ComponentProps<typeof App>['onError']
-  } = {
+  const props: Required<ComponentProps<typeof App>> = {
+    onMount: (): void => {
+      const open: LogWindowEvent = {
+        type: 'log-window-event',
+        status: 'open'
+      }
+      chrome.runtime.sendMessage(open)
+    },
+    onUnmount: (): void => {
+      const close: LogWindowEvent = {
+        type: 'log-window-event',
+        status: 'close'
+      }
+      chrome.runtime.sendMessage(close)
+    },
     onOpen: (): void => {
       const m: CommentOpenEvent = {
         type: 'comment-open',
       }
       ports.forEach(p => p.postMessage(m))
-      chrome.runtime.sendMessage(m)
     },
     onClose: (event: CloseEvent): void => {
       const m: CommentCloseEvent = {

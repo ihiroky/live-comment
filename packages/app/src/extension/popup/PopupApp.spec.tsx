@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { store } from '../store'
 import { jest, test, expect } from '@jest/globals'
-import { CommentOpenEvent } from '../types'
+import { LogWindowEvent } from '../types'
 
 jest.mock('../store', () => {
   const callbacks: (() => void)[] = []
@@ -91,10 +91,13 @@ describe('On/off', () => {
     userEvent.click(feedComments)
 
     await waitFor(() => {
-      // Emulate receiving CommentOpen
+      // Emulate receiving LogWindowStatus
       const commentOpenListener = jest.mocked(chrome.runtime.onMessage.addListener).mock.calls[0][0]
-      const commentOpen: CommentOpenEvent = { type: 'comment-open' }
-      commentOpenListener(commentOpen, {} as chrome.runtime.MessageSender, () => undefined)
+      const mountedEvent: LogWindowEvent = {
+        type: 'log-window-event',
+        status: 'open',
+      }
+      commentOpenListener(mountedEvent, {} as chrome.runtime.MessageSender, () => undefined)
 
       const width = 800
       const height = 800
@@ -130,10 +133,13 @@ describe('On/off', () => {
     userEvent.click(feedComments)
 
     await waitFor(() => {
-      // Emulate receiving CommentOpen
+      // Emulate receiving LogWindowStatus
       const commentOpenListener = jest.mocked(chrome.runtime.onMessage.addListener).mock.calls[0][0]
-      const commentOpen: CommentOpenEvent = { type: 'comment-open' }
-      commentOpenListener(commentOpen, {} as chrome.runtime.MessageSender, () => undefined)
+      const mountedEvent: LogWindowEvent = {
+        type: 'log-window-event',
+        status: 'open',
+      }
+      commentOpenListener(mountedEvent, {} as chrome.runtime.MessageSender, () => undefined)
 
       const width = 800
       const height = 800
@@ -189,10 +195,13 @@ describe('In this tab', () => {
 
     // Wait until switch ON
     await waitFor(() => {
-      // Emulate receiving CommentOpen
+      // Emulate receiving LogWindowStatus
       const commentOpenListener = jest.mocked(chrome.runtime.onMessage.addListener).mock.calls[0][0]
-      const commentOpen: CommentOpenEvent = { type: 'comment-open' }
-      commentOpenListener(commentOpen, {} as chrome.runtime.MessageSender, () => undefined)
+      const mountedEvent: LogWindowEvent = {
+        type: 'log-window-event',
+        status: 'open',
+      }
+      commentOpenListener(mountedEvent, {} as chrome.runtime.MessageSender, () => undefined)
 
       expect(store.cache.logTab).toEqual({ tabId: newWindowTabId })
     })

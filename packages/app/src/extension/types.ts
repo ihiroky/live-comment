@@ -35,3 +35,8 @@ export type TargetTab = {
   status?: 'added' | 'removed'
   tabId?: number
 }
+
+export type LogWindowEvent = {
+  type: 'log-window-event'
+  status: 'open' | 'close'
+}
