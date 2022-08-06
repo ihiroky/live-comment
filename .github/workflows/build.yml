@@ -174,7 +174,7 @@ jobs:
         uses: ihiroky/archive-action@v1
         with:
           file_path: build/browser-extension.zip
-          root_dir: build/apps/
+          root_dir: build/apps/browser-extension
 
       - name: Gets latest release info
         id: latest_release
