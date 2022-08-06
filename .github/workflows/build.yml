@@ -159,6 +159,7 @@ jobs:
         run: |
           yarn --cwd packages/app/ clean
           yarn --cwd packages/app/ build-extension
+          test "${GITHUB_REF#refs/heads/}" != "main" && (cd packages/app/ && node scripts/beta_manifest.mjs)
         env:
           LC_WS_URL: wss://g1.live-comment.ga/app
           LC_API_URL: https://g1.live-comment.ga/api
