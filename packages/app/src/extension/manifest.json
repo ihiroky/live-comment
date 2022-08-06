@@ -2,7 +2,7 @@
   "manifest_version": 3,
 
   "name": "Live Comment",
-  "description": "Show comments on your browser",
+  "description": "Show comments on your browser.",
   "version": "0.5.0",
 
   "options_ui": {
