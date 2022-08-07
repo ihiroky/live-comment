@@ -8,6 +8,6 @@ const manifest = JSON.parse(manifestJSON.toString('utf8'))
 const modifiedJSON = JSON.stringify({
   ...manifest,
   name: `[BETA] ${manifest.name}`,
-  description: `THIS EXTENSION IS FOR BETA TESTING.\n\n${manifest.description}`
+  description: `THIS EXTENSION IS FOR BETA TESTING. ${manifest.description}`
 }, undefined, 2)
 await fsp.writeFile(outputPath, modifiedJSON)

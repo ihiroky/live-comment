@@ -72,13 +72,12 @@ async function showLogWindow(store: StoreType): Promise<void> {
 async function closeLogWindow(store: StoreType): Promise<void> {
   const tabId = store.cache.logTab.tabId
   if (tabId) {
-    await store.update('logTab', { tabId: 0 })
     const tab = await chrome.tabs.get(tabId)
     if (tab && tab.id) {
       await chrome.tabs.remove(tabId)
     }
   }
-  // logWindowStore is cleanup by chrome.tabs.onRemoved. see background.ts
+  // logTab and showCommentTabs are cleanup by chrome.tabs.onRemoved. See background.ts
 }
 
 async function toggleCommentsOnTab(

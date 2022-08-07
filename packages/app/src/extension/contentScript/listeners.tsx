@@ -109,7 +109,7 @@ export const createTargetTabStatusListener = (): ((message: TargetTab) => void) 
   let context: Context | null = null
 
   return (message: TargetTab): void => {
-    log.info('chrome.runtime.onMessage', message, context)
+    log.info('chrome.runtime.onMessage', message, !!context)
     if (message.type === 'target-tab') {
       switch (message.status) {
         case 'added':
