@@ -168,7 +168,6 @@ describe('On/off', () => {
     userEvent.click(feedComments)
 
     await waitFor(() => {
-      expect(store.update).toBeCalledWith('logTab', { tabId: 0 })
       expect(chrome.tabs.get).toBeCalledWith(newWindowTabId)
       expect(chrome.tabs.remove).toBeCalledWith(newWindowTabId)
     })
