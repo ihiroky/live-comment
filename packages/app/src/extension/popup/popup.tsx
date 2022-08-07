@@ -10,8 +10,10 @@ import { App } from './PopupApp'
   await store.sync()
   const window = await chrome.windows.getCurrent()
   const tabs = await chrome.tabs.query({ active: true, windowId: window.id })
-  if (tabs && tabs[0] && tabs[0].id) {
+  const tab = tabs[0]
+  if (tab && tab.id && tab.url) {
+    const available = !tab.url.startsWith('chrome://') && !tab.url.startsWith('https://chrome.google.com/')
     const root = createRoot(rootElement)
-    root.render(<App store={store} currentTabId={tabs[0].id} />)
+    root.render(<App store={store} currentTabId={tab.id} available={available} />)
   }
 })()
