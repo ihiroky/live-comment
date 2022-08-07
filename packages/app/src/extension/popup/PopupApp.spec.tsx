@@ -85,7 +85,7 @@ describe('On/off', () => {
     jest.mocked(store.cache).showCommentTabs = { tabIds: {} }
     jest.mocked(store.cache).aggressive = false
 
-    render(<App store={store} currentTabId={currentTabId} />)
+    render(<App store={store} currentTabId={currentTabId} available={true} />)
 
     const feedComments = screen.getByText(/Feed comments/)
     userEvent.click(feedComments)
@@ -127,7 +127,7 @@ describe('On/off', () => {
     jest.mocked(store.cache).showCommentTabs = { tabIds: {} }
     jest.mocked(store.cache).aggressive = true
 
-    const { rerender } = render(<App store={store} currentTabId={currentTabId} />)
+    const { rerender } = render(<App store={store} currentTabId={currentTabId} available={true} />)
 
     const feedComments = screen.getByText(/Feed comments/)
     userEvent.click(feedComments)
@@ -164,13 +164,36 @@ describe('On/off', () => {
       })
     })
 
-    rerender(<App store={store} currentTabId={currentTabId} />)
+    rerender(<App store={store} currentTabId={currentTabId} available={true} />)
     userEvent.click(feedComments)
 
     await waitFor(() => {
       expect(chrome.tabs.get).toBeCalledWith(newWindowTabId)
       expect(chrome.tabs.remove).toBeCalledWith(newWindowTabId)
     })
+  })
+
+  test('Disabled if the current tab is not available', async () => {
+    const currentTabId = 100
+    const newWindowId = 2
+    const newWindowTabId = 200
+    mockChromeApi({
+      newWindowId,
+      newWindowTabId
+    })
+    jest.mocked(store.cache).logTab = { tabId: 0 }
+    jest.mocked(store.cache).showCommentTabs = { tabIds: { 999: true } }
+    jest.mocked(store.cache).aggressive = false
+
+    render(<App store={store} currentTabId={currentTabId} available={false} />)
+
+    const feedComments = screen.getByText(/Feed comments/)
+    userEvent.click(feedComments)
+
+    await new Promise<void>(resolve => setTimeout(resolve, 100))
+
+    // Assert not changed.
+    expect(store.cache.showCommentTabs).toEqual({ tabIds: { 999: true } })
   })
 })
 
@@ -187,7 +210,7 @@ describe('In this tab', () => {
     jest.mocked(store.cache).showCommentTabs = { tabIds: {} }
     jest.mocked(store.cache).aggressive = false
 
-    const { rerender } = render(<App store={store} currentTabId={currentTabId} />)
+    const { rerender } = render(<App store={store} currentTabId={currentTabId} available={true} />)
 
     const feedComments = screen.getByText(/Feed comments/)
     userEvent.click(feedComments)
@@ -205,7 +228,7 @@ describe('In this tab', () => {
       expect(store.cache.logTab).toEqual({ tabId: newWindowTabId })
     })
 
-    rerender(<App store={store} currentTabId={currentTabId} />)
+    rerender(<App store={store} currentTabId={currentTabId} available={true} />)
     const inThisTab = screen.getByText(/In this tab/)
     userEvent.click(inThisTab)
 
@@ -222,7 +245,7 @@ describe('In this tab', () => {
       })
     })
 
-    rerender(<App store={store} currentTabId={currentTabId} />)
+    rerender(<App store={store} currentTabId={currentTabId} available={true} />)
     userEvent.click(inThisTab)
 
     await waitFor(() => {
@@ -233,6 +256,28 @@ describe('In this tab', () => {
         status: 'removed'
       })
     })
+  })
+
+  test('Disabled if the current tab is not available', async () => {
+    const currentTabId = 100
+    const newWindowId = 2
+    const newWindowTabId = 200
+    mockChromeApi({
+      newWindowId,
+      newWindowTabId
+    })
+    jest.mocked(store.cache).logTab = { tabId: newWindowTabId }
+    jest.mocked(store.cache).showCommentTabs = { tabIds: {} }
+    jest.mocked(store.cache).aggressive = false
+
+    render(<App store={store} currentTabId={currentTabId} available={false} />)
+    const inThisTab = screen.getByText(/In this tab/)
+    userEvent.click(inThisTab)
+
+    await new Promise<void>(resolve => setTimeout(resolve, 100))
+
+    // Assert not changed.
+    expect(store.cache.showCommentTabs).toEqual( { tabIds: {} })
   })
 })
 
@@ -249,7 +294,7 @@ describe('Aggressive mode', () => {
     jest.mocked(store.cache).showCommentTabs = { tabIds: {} }
     jest.mocked(store.cache).aggressive = true
 
-    const { rerender } = render(<App store={store} currentTabId={currentTabId} />)
+    const { rerender } = render(<App store={store} currentTabId={currentTabId} available={true} />)
 
     const toggle = screen.getByText(/As soon as a tab opens/)
     userEvent.click(toggle)
@@ -258,7 +303,7 @@ describe('Aggressive mode', () => {
       expect(store.cache.aggressive).toBe(false)
     })
 
-    rerender(<App store={store} currentTabId={currentTabId} />)
+    rerender(<App store={store} currentTabId={currentTabId} available={true} />)
     userEvent.click(toggle)
 
     await waitFor(() => {
