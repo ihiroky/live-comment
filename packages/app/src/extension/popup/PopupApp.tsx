@@ -112,9 +112,8 @@ async function toggleCommentsOnTab(
 type Props = {
   store: StoreType
   currentTabId: number
-  available: boolean
 }
-export const App = ({ store, currentTabId, available }: Props): JSX.Element => {
+export const App = ({ store, currentTabId }: Props): JSX.Element => {
   const storeCache = useSyncExternalStore(store.subscribe, () => store.cache)
   const logWindowShown = !!storeCache.logTab.tabId
   const commentsShownTabIds = storeCache.showCommentTabs.tabIds
@@ -130,15 +129,9 @@ export const App = ({ store, currentTabId, available }: Props): JSX.Element => {
   }, [])
 
   const toggleShowComments = useCallback((_: ChangeEvent<HTMLInputElement>, checked: boolean): void => {
-    if (!available) {
-      return
-    }
     toggleCommentsOnTab(store, logWindowShown, checked, currentTabId)
-  }, [store, logWindowShown, currentTabId, available])
+  }, [store, logWindowShown, currentTabId])
   const toggleLogWindow = useCallback((_: ChangeEvent<HTMLInputElement>, checked: boolean): void => {
-    if (!available) {
-      return
-    }
     if (checked) {
       showLogWindow(store).then((): void => {
         if (storeCache.aggressive) {
@@ -148,7 +141,7 @@ export const App = ({ store, currentTabId, available }: Props): JSX.Element => {
     } else {
       closeLogWindow(store)
     }
-  }, [store, currentTabId, storeCache.aggressive, available])
+  }, [store, currentTabId, storeCache.aggressive])
   const toggleAggressiveMode = useCallback((_: ChangeEvent<HTMLInputElement>, checked: boolean): void => {
     store.update('aggressive', checked)
   }, [store])
