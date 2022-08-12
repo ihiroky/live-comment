@@ -1,0 +1,41 @@
+name: Build extension
+
+on:
+  workflow_call:
+    inputs:
+      host:
+        required: true
+        type: string
+
+jobs:
+  browser-extension:
+    name: Build extension for ${{ inputs.host }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          cache: 'yarn'
+      - run: yarn install --frozen-lockfile --network-timeout 180000
+
+      - name: Build apps
+        run: |
+          yarn --cwd packages/app/ clean
+          yarn --cwd packages/app/ build-extension
+          test "${GITHUB_REF#refs/heads/}" != "main" && (cd packages/app/ && node scripts/beta_manifest.mjs) || echo 'No manifest modification.'
+        env:
+          LC_WS_URL: wss://${{ inputs.host }}/app
+          LC_API_URL: https://${{ inputs.host }}/api
+
+      - name: Create release directory tree
+        run: |
+          mkdir -p build/apps/
+          cp -a packages/app/dist/bundle/extension build/apps/browser-extension
+        shell: bash
+
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: browser-extension-${{ inputs.host }}-${{ github.run_number }}
+          path: build/apps/browser-extension/

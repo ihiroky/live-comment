@@ -144,62 +144,14 @@ jobs:
 #
 # Buid browser extension
 #
-  browser-extension-for-live-comment_ga:
+  browser-extension-for-g1:
     needs: check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: 16
-          cache: 'yarn'
-      - run: yarn install --frozen-lockfile --network-timeout 180000
+    uses: ./.github/workflows/build-extension.yml
+    with:
+      host: g1.live-comment.ga
 
-      - name: Build apps
-        run: |
-          yarn --cwd packages/app/ clean
-          yarn --cwd packages/app/ build-extension
-          test "${GITHUB_REF#refs/heads/}" != "main" && (cd packages/app/ && node scripts/beta_manifest.mjs) || echo 'No manifest modification.'
-        env:
-          LC_WS_URL: wss://g1.live-comment.ga/app
-          LC_API_URL: https://g1.live-comment.ga/api
-
-      - name: Create release directory tree
-        run: |
-          mkdir -p build/apps/
-          cp -a packages/app/dist/bundle/extension build/apps/browser-extension
-        shell: bash
-
-      - name: Archive apps
-        uses: ihiroky/archive-action@v1
-        with:
-          file_path: build/browser-extension.zip
-          root_dir: build/apps/browser-extension/
-
-      - name: Gets latest release info
-        id: latest_release
-        uses: octokit/request-action@v2.x
-        with:
-          route: GET /repos/ihiroky/live-comment/releases?per_page=1&page=1
-          owner: octokit
-          repo: request-action
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload asset to github release if draft release exists.
-        id: upload-release-asset
-        if: ${{ fromJson(steps.latest_release.outputs.data)[0].draft == true }}
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ fromJson(steps.latest_release.outputs.data)[0].upload_url }}
-          asset_path: build/browser-extension.zip
-          asset_name: browser-extension.zip
-          asset_content_type: application/zip
-
-      - name: Archive artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: browser-extension-${{ github.run_number }}
-          path: build/apps/
+  browser-extension-for-o1:
+    needs: check
+    uses: ./.github/workflows/build-extension.yml
+    with:
+      host: o1.live-comment.ga
