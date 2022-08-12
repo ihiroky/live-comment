@@ -18,6 +18,9 @@ Client | [post comments] [show comments]
 [post comments]: Web page to post comments.
 [show comments]: Desktop application to show comments on your screen.
 ```
+Browser extension version of the client has the ability to both post comments and show comments.
+The release in this repository will not include the browser extension because it contains specific host information. If need yours, build it yourself by specifying your host information.
+
 
 ## Start servers and clients for development
 
