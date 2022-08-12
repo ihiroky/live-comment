@@ -144,16 +144,20 @@ jobs:
 #
 # Buid browser extension
 #
-  browser-extension-for-g1_live-comment_ga:
+  browser-extension-for-g1:
     needs: check
     runs-on: ubuntu-latest
-    uses: ./.github/workflows/build-extension.yml
-    with:
-      host: g1.live-comment.ga
+    steps:
+      - name: Build extension for g1.live-comment.ga
+        uses: ./.github/workflows/build-extension.yml
+        with:
+          host: g1.live-comment.ga
 
-  browser-extension-for-o1_live-comment_ga:
+  browser-extension-for-o1:
     needs: check
     runs-on: ubuntu-latest
-    uses: ./.github/workflows/build-extension.yml
-    with:
-      host: o1.live-comment.ga
+    steps:
+      - name: Build extension for g1.live-comment.ga
+        uses: ./.github/workflows/build-extension.yml
+        with:
+          host: o1.live-comment.ga
