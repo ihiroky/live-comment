@@ -13,8 +13,8 @@ export function plugins(targets) {
     targets && copy({ targets, verbose: true }),
     replace({
       'process.env.NODE_ENV': `"${env}"`,
-      'process.env.LC_WS_URL': `"${process.env.LC_WS_URL}"`,
-      'process.env.LC_API_URL': `"${process.env.LC_API_URL}"`,
+      'process.env.LC_WS_URL': `"${process.env.LC_WS_URL ?? ''}"`,
+      'process.env.LC_API_URL': `"${process.env.LC_API_URL ?? ''}"`,
       'preventAssignment': true
     }),
     nodeResolve({
