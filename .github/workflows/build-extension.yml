@@ -10,7 +10,6 @@ on:
 jobs:
   browser-extension:
     name: Build extension for ${{ inputs.host }}
-    needs: check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
