@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SendCommentForm } from './SendCommentForm'
+import { fireEvent } from '@testing-library/dom'
 import '@testing-library/jest-dom'
 import { jest, test, } from '@jest/globals'
 
@@ -77,7 +78,7 @@ test('Input text and press Enter key only with "send with ctrl+enter" option.', 
 
 test('Input text and press Ctrl+Enter key with "send with ctrl+enter" option.', async () => {
   const onSubmit = jest.fn()
-  render(<SendCommentForm onSubmit={onSubmit} sendWithCtrlEnter={true}/>)
+  render(<SendCommentForm onSubmit={onSubmit} sendWithCtrlEnter={true} getControlModifierState={() => true} />)
 
   const inputText = 'any text.'
   const textBox = screen.getByRole('textbox', { name: '' }) as HTMLInputElement

@@ -1,9 +1,11 @@
 import { Component, ChangeEvent, KeyboardEvent, ReactNode } from 'react'
 import { CommentMessage } from '@/common/Message'
+import e from 'express'
 
 type PropsType = {
   onSubmit: (message: CommentMessage) => void
   sendWithCtrlEnter: boolean
+  getControlModifierState?: () => boolean
 }
 
 type StateType = {
@@ -12,21 +14,18 @@ type StateType = {
 
 export class SendCommentForm extends Component<PropsType, StateType> {
 
-  private canSendMessage: boolean
+  // For unit test with @testing-library/user-event v13.
+  private getControlModifierState?: () => boolean
 
   constructor(props: Readonly<PropsType>) {
     super(props)
     this.state = {
       comment: '',
     }
-    this.canSendMessage = false
+    this.getControlModifierState = props.getControlModifierState ?? undefined
   }
 
   private send = (): void => {
-    if (this.props.sendWithCtrlEnter && !this.canSendMessage) {
-      return
-    }
-
     const comment = this.state.comment
     if (comment) {
       const type = 'comment'
@@ -43,33 +42,26 @@ export class SendCommentForm extends Component<PropsType, StateType> {
     })
   }
 
-  private onKeyUp = (e: KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === 'Control') {
-      this.canSendMessage = false
-    }
-  }
-
   private onKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
+    const ctrlModifierState = !this.getControlModifierState
+      ? e.getModifierState('Control')
+      : this.getControlModifierState()
     switch (e.key) {
-      case 'Control':
-        this.canSendMessage = true
-        break
       case 'Enter':
+        if (this.props.sendWithCtrlEnter && !ctrlModifierState) {
+          return
+        }
         this.send()
         break
     }
   }
 
-  private onMouseDown = (): void => {
-    this.canSendMessage = true
+  private onMouseUp = (): void => {
     this.send()
-    this.canSendMessage = false
   }
 
-  private onTouchStart = (): void => {
-    this.canSendMessage = true
+  private onTouchEnd = (): void => {
     this.send()
-    this.canSendMessage = false
   }
 
   render(): ReactNode {
@@ -79,7 +71,6 @@ export class SendCommentForm extends Component<PropsType, StateType> {
           type="text"
           value={this.state.comment}
           onChange={this.onChange}
-          onKeyUp={this.onKeyUp}
           onKeyDown={this.onKeyDown}
         />
         <input
@@ -87,8 +78,8 @@ export class SendCommentForm extends Component<PropsType, StateType> {
           autoComplete="off"
           value="💬"
           disabled={this.state.comment.length === 0}
-          onMouseDown={this.onMouseDown}
-          onTouchStart={this.onTouchStart}
+          onMouseUp={this.onMouseUp}
+          onTouchEnd={this.onTouchEnd}
         />
       </form>
     )
