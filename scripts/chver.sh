@@ -13,7 +13,19 @@ function verup()
   yarn --silent --cwd ${dir} version --new-version "${version}" --no-git-tag-version
 }
 
+node -e "
+const fs = require('node:fs')
+
+const manifestPath = 'packages/app/src/extension/manifest.json'
+
+const manifestJSON = fs.readFileSync(manifestPath)
+const manifest = JSON.parse(manifestJSON.toString('utf8'))
+const modifiedJSON = JSON.stringify({
+  ...manifest,
+  version: '${version}'
+}, undefined, 2)
+fs.writeFileSync(manifestPath, modifiedJSON)
+"
+
 verup .
-verup packages/comment
-verup packages/server
-verup packages/desktop
+verup packages/app
