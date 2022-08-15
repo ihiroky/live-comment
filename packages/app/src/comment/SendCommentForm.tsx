@@ -1,6 +1,5 @@
 import { Component, ChangeEvent, KeyboardEvent, ReactNode } from 'react'
 import { CommentMessage } from '@/common/Message'
-import e from 'express'
 
 type PropsType = {
   onSubmit: (message: CommentMessage) => void

@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SendCommentForm } from './SendCommentForm'
-import { fireEvent } from '@testing-library/dom'
 import '@testing-library/jest-dom'
 import { jest, test, } from '@jest/globals'
 
