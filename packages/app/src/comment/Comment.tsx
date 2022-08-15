@@ -132,11 +132,12 @@ function setBooleanOptionValue(key: OptionKey, value: boolean): void {
   window.localStorage.setItem(key, value ? 't' : '')
 }
 
+const autoScroll = getBooleanOptionValue('autoScroll', true)
+const sendWithCtrlEnter = getBooleanOptionValue('sendWithCtrlEnter', true)
+const openSoundPanel = getBooleanOptionValue('openSoundPanel', true)
+
 export const Comment: FC<CommentProps> = (props: CommentProps): JSX.Element => {
   // TODO Divide state
-  const autoScroll = getBooleanOptionValue('autoScroll', true)
-  const sendWithCtrlEnter = getBooleanOptionValue('sendWithCtrlEnter', true)
-  const openSoundPanel = getBooleanOptionValue('openSoundPanel', true)
   const token = useToken()
   const [state, setState] = useState<CommentState>({
     comments: [],
