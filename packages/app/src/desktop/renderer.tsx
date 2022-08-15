@@ -2,6 +2,7 @@ import { FC, StrictMode, useCallback, useEffect, useMemo, useState } from 'react
 import { createRoot } from 'react-dom/client'
 import { SettingsV1 } from './settings'
 import { createHash } from '@/common/utils'
+import { getLogger } from '@/common/Logger'
 import { createReconnectableWebSocket, ReconnectableWebSocket, useReconnectableWebSocket } from '@/wscomp/rws'
 import { Poll } from '@/poll/Poll'
 import { SettingsForm } from './settings/SettingsForm'
@@ -18,6 +19,8 @@ declare global {
     }
   }
 }
+
+const log = getLogger('renderer')
 
 export function screenMain(): void {
   window.main.request().then((settings: SettingsV1): void => {
@@ -44,11 +47,15 @@ export function screenMain(): void {
         }
         rws.addEventListener('open', onRwsOpen)
         rws.addEventListener('close', onRwsClose)
+        rws.addEventListener('error', log.error)
+        rws.addEventListener('message', messageSource.publish)
         return (): void => {
           rws.removeEventListener('open', onRwsOpen)
           rws.removeEventListener('close', onRwsClose)
+          rws.removeEventListener('error', log.error)
+          rws.removeEventListener('message', messageSource.publish)
         }
-      }, [rws, onRwsOpen, onRwsClose])
+      }, [rws, messageSource, onRwsOpen, onRwsClose])
 
       return (
         <StrictMode>

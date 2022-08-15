@@ -11,6 +11,7 @@ export default [{
     name: 'Main',
     format: 'cjs',
   },
+  external: ['electron'],
   plugins: plugins(),
   onwarn,
   watch,
@@ -21,6 +22,7 @@ export default [{
     name: 'Preload',
     format: 'cjs',
   },
+  external: ['electron'],
   plugins: plugins(),
   onwarn,
   watch,
@@ -31,6 +33,7 @@ export default [{
     name: 'Renderer',
     format: 'es'
   },
+  external: ['electron'],
   plugins: plugins(),
   onwarn,
   watch,
