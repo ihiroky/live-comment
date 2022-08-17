@@ -20,14 +20,16 @@
       "target": "nsis",
       "arch": ["x64"]
     }],
-    "publish": ["github"]
+    "publish": ["github"],
+    "icon": "resources/kujira.png"
   },
   "mac": {
     "target": [{
       "target": "dmg",
       "arch": ["x64"]
     }],
-    "publish": ["github"]
+    "publish": ["github"],
+    "icon": "resources/kujira.png"
   },
   "linux": {
     "executableName": "live-comment",
@@ -35,7 +37,8 @@
       "target": "deb",
       "arch": ["x64"]
     }],
-    "publish": ["github"]
+    "publish": ["github"],
+    "icon": "resources/kujira.png"
   },
   "nsis": {
     "runAfterFinish": false
