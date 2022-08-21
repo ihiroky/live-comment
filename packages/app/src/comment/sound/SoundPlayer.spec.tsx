@@ -1,10 +1,11 @@
 import { SoundPlayer } from './SoundPlayer'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import '@testing-library/jest-dom'
 import { usePlaySound, useSoundMetadata } from './hooks'
-import { PlaySoundMessage } from '../types'
+import { PlaySoundMessage } from '@/sound/types'
 import { sign } from 'jsonwebtoken'
-import { jest, test, expect, afterEach } from '@jest/globals'
+import { jest, test, afterEach } from '@jest/globals'
 
 jest.mock('./hooks')
 
@@ -48,7 +49,7 @@ test('Show/hide preferences if switch toggles', async () => {
   })
 })
 
-test('Send message to play sound if icon is clicked', async () => {
+test('Send message to play sound if icon is clicked, and the button is disabled right after first click', async () => {
   jest.mocked(usePlaySound).mockReturnValue(jest.fn())
   const token = sign({ room: 'room' }, 'hoge')
   window.localStorage.setItem('token', token)
@@ -58,7 +59,7 @@ test('Send message to play sound if icon is clicked', async () => {
   ])
   window.parent.postMessage = jest.fn()
 
-  render(<SoundPlayer url="https://localhost/" />)
+  const { rerender } = render(<SoundPlayer url="https://localhost/" />)
 
   const icon = screen.getByTestId('play-id0')
   userEvent.click(icon)
@@ -69,6 +70,9 @@ test('Send message to play sound if icon is clicked', async () => {
     id: 'id0'
   }
   await waitFor(() => expect(window.parent.postMessage).toBeCalledWith(message, window.location.origin))
+
+  rerender(<SoundPlayer url="https://localhost/" />)
+  expect(icon).toBeDisabled()
 })
 
 test('Receive message to play sound', async () => {
