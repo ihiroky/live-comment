@@ -25,9 +25,16 @@ function createRootElement(): Element | DocumentFragment {
   const div = document.createElement('div')
   div.id = ROOT_ID
   div.style.position = 'fixed'
+  div.style.top = '0px'
+  div.style.left = '0px'
+  div.style.width = '100vw'
+  div.style.height = '100vh'
   div.style.inset = '0px'
+  div.style.margin = '0px'
+  div.style.padding = '0px'
   div.style.zIndex = '2147483647'
   div.style.pointerEvents = 'none'
+  div.style.background = 'transparent'
   document.documentElement.appendChild(div)
 
   const shadowRoot = div.attachShadow({ mode: 'open' })
@@ -99,7 +106,8 @@ function createContext(): Context {
       fontBorderColor={'#cccccc'}
       watermark={watermark}
       messageSource={messageSource}
-    />)
+    />
+  )
 
   return{ port, root }
 }
