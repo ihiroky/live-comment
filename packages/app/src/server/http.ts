@@ -331,6 +331,12 @@ export function createApp(configuration: Configuration): Express {
   // TODO Limit should be configurable
   app.use(express.raw({ limit: '5mb', type: 'application/zip' }))
   app.use(corsMiddleware)
+  app.use(function (_, res, next) {
+    res.removeHeader('X-Powered-By')
+    res.removeHeader('ETag')
+    res.header('Cache-Control', 'private, no-cache, must-revalidate')
+    next()
+  })
   app.use(acnAznMiddleware)
   const router = createRouter(configuration)
   app.options('*', corsMiddleware) // include before other routes
