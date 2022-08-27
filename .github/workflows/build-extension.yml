@@ -34,6 +34,34 @@ jobs:
           cp -a packages/app/dist/bundle/extension build/apps/browser-extension
         shell: bash
 
+      - name: Archive apps
+        uses: ihiroky/archive-action@v1
+        with:
+          file_path: build/browser-extension-${{ inputs.host }}-${{ github.run_number }}.zip
+          root_dir: build/apps/browser-extension
+
+      - name: Gets latest release info
+        id: latest_release
+        uses: octokit/request-action@v2.x
+        with:
+          route: GET /repos/ihiroky/live-comment/releases?per_page=1&page=1
+          owner: octokit
+          repo: request-action
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload asset to github release if draft release exists.
+        id: upload-release-asset
+        if: ${{ fromJson(steps.latest_release.outputs.data)[0].draft == true }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ fromJson(steps.latest_release.outputs.data)[0].upload_url }}
+          asset_path: build/browser-extension-${{ inputs.host }}-${{ github.run_number }}.zip
+          asset_name: browser-extension-${{ inputs.host }}-${{ github.run_number }}.zip
+          asset_content_type: application/zip
+
       - name: Archive artifacts
         uses: actions/upload-artifact@v2
         with:
