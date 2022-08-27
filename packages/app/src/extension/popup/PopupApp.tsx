@@ -152,14 +152,15 @@ export const App = ({ store, currentTabId }: Props): JSX.Element => {
         <FormGroup>
           <FormControlLabel control={
             <Switch checked={logWindowShown} onChange={toggleLogWindow} />
-          } label={<Typography variant="body1">Feed comments</Typography>} />
+          } label={<Typography variant="body1">Feed/Post comments</Typography>} />
           <Divider />
           <FormControlLabel control={
             <Switch checked={commentsShownTabIds[currentTabId] ?? false} onChange={toggleShowComments} />
-          } label={<Typography variant="body2">In this tab</Typography>} />
+          } label={<Typography variant="body1">Show comments in this tab</Typography>} />
+          <Divider />
           <FormControlLabel control={
             <Switch checked={storeCache.aggressive} onChange={toggleAggressiveMode} />
-          } label={<Typography variant="body2">As soon as a tab opens</Typography>} />
+          } label={<Typography variant="body2">Show comments as soon as a tab opens</Typography>} />
         </FormGroup>
       </FormControl>
     </StrictMode>
