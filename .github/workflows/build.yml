@@ -111,7 +111,7 @@ jobs:
       - name: Archive apps
         uses: ihiroky/archive-action@v1
         with:
-          file_path: build/server-apps.zip
+          file_path: build/server-apps-${{ github.run_number }}.zip
           root_dir: build/apps/
 
       - name: Gets latest release info
@@ -132,8 +132,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ fromJson(steps.latest_release.outputs.data)[0].upload_url }}
-          asset_path: build/server-apps.zip
-          asset_name: server-apps.zip
+          asset_path: build/server-apps-${{ github.run_number }}.zip
+          asset_name: server-apps-${{ github.run_number }}.zip
           asset_content_type: application/zip
 
       - name: Archive artifacts
