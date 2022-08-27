@@ -18,6 +18,7 @@ import {
 import { getRandomInteger } from '@/common/utils'
 import { getLogger } from '@/common/Logger'
 import { HealthCheck, countUpPending, countDownPending } from './HealthCheck'
+import { playSoundCommand } from '@/sound/types'
 
 export interface ClientSession extends WebSocket {
   alive: boolean
@@ -29,6 +30,7 @@ export interface ClientSession extends WebSocket {
   pendingCharCount: number
   room?: string
   healthCheckSlot?: number
+  lastPlaySoundReceivedTime: number
 }
 
 // TODO optimize send message loop
@@ -135,6 +137,22 @@ function broadcast(
   })
 }
 
+/**
+ * Drop message continuously if messages are recieved within 3000ms.
+ * @param c
+ * @returns
+ */
+function dropPlaySoundMessage(m: CommentMessage | ApplicationMessage, c: ClientSession): boolean {
+  if (!('cmd' in m && m.cmd === playSoundCommand)) {
+    return false
+  }
+
+  const lastReceivedTime = c.lastPlaySoundReceivedTime
+  const now = Date.now()
+  c.lastPlaySoundReceivedTime = now
+  return now - lastReceivedTime <= 3000
+}
+
 function onConnected(
   server: WebSocket.Server,
   ws: WebSocket,
@@ -150,11 +168,15 @@ function onConnected(
     .digest('hex')
   client.connectedTime = Date.now()
   client.blocked = false
+  client.lastPlaySoundReceivedTime = 0
   healthCheck.add(client)
   client.on('message', (message: WebSocket.Data): void => {
     const data = message.toString()
     const m = JSON.parse(data)
     if (isClientMessage(m)) {
+      if (dropPlaySoundMessage(m, client)) {
+        return
+      }
       broadcast(server, client, m)
     } else if (isAcnMessage(m)) {
       authenticate(client, m, configuration)

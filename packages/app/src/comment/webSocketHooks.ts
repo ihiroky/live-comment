@@ -10,7 +10,7 @@ import { getLogger } from '@/common/Logger'
 
 import { gotoLoginPage } from './utils/pages'
 import { AppState } from './types'
-import { isPlaySoundMessage } from './types'
+import { isPlaySoundMessage } from '@/sound/types'
 import { isPollFinishMessage, isPollStartMessage } from '@/poll/types'
 import { ReconnectableWebSocket } from '@/wscomp/rws'
 import { NavigateFunction } from 'react-router-dom'

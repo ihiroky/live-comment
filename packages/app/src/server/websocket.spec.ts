@@ -6,12 +6,13 @@ import path from 'path'
 import os from 'os'
 import http from 'http'
 import { Socket } from 'net'
-import { AcnMessage, AcnOkMessage, AcnTokenMessage, CloseCode, CommentMessage, ErrorMessage } from '@/common/Message'
+import { AcnMessage, AcnOkMessage, AcnTokenMessage, ApplicationMessage, CloseCode, CommentMessage, ErrorMessage } from '@/common/Message'
 import { assertNotNullable } from '@/common/assert'
 import { getLogger, LogLevels } from '@/common/Logger'
 import { HealthCheck, countUpPending, countDownPending } from './HealthCheck'
 import { sign } from 'jsonwebtoken'
 import { jest, test, expect, beforeEach, afterEach } from '@jest/globals'
+import { playSoundCommand } from '@/sound/types'
 
 jest.mock('http')
 jest.mock('ws')
@@ -317,6 +318,45 @@ test('Broardcast in the sender room', () => {
   expect(session.send).toBeCalledWith(packet, expect.any(Function))
   expect(anotherRoomSession.send).not.toBeCalled()
   expect(sameSession.send).toBeCalledWith(packet, expect.any(Function))
+})
+
+test('Drop PlaySoundMessage within 3000 ms', () => {
+  const { server, session } = callOnConnection()
+  expect(session.on).toBeCalledWith('message', expect.any(Function))
+  const onMessage = jest.mocked(session.on).mock.calls[0][1]
+
+  session.room = 'room'
+  const anotherRoomSession = new WebSocket('') as ClientSession
+  anotherRoomSession.room = 'another room'
+  const sameSession = new WebSocket('') as ClientSession
+  sameSession.room = session.room
+  const playSound: ApplicationMessage = {
+    type: 'app',
+    cmd: playSoundCommand,
+  }
+  server.clients = new Set([session, anotherRoomSession, sameSession])
+
+  // Within 3000 ms
+  session.lastPlaySoundReceivedTime = 0
+  withFakeTimers(() => {
+    onMessage.bind(session)(JSON.stringify(playSound))
+    jest.advanceTimersByTime(3000)
+    onMessage.bind(session)(JSON.stringify(playSound))
+  })
+  const sentPlaySound = Object.assign({}, playSound)
+  sentPlaySound.from = session.id
+  const packet = JSON.stringify(sentPlaySound)
+  expect(session.send).toHaveBeenNthCalledWith(1, packet, expect.any(Function))
+
+  // Over 3000ms
+  session.lastPlaySoundReceivedTime = 0
+  withFakeTimers(() => {
+    onMessage.bind(session)(JSON.stringify(playSound))
+    jest.advanceTimersByTime(3001)
+    onMessage.bind(session)(JSON.stringify(playSound))
+  })
+  expect(session.send).toHaveBeenNthCalledWith(2, packet, expect.any(Function))
+  expect(session.send).toHaveBeenNthCalledWith(3, packet, expect.any(Function))
 })
 
 test('Write log and remove session from health check on error', () => {

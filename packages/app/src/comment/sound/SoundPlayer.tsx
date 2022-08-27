@@ -2,7 +2,7 @@ import { FormControl, FormControlLabel, FormGroup, Grid, IconButton, Switch } fr
 import { makeStyles } from '@mui/styles'
 import { getLogger } from '@/common/Logger'
 import { FC, MouseEvent, useState, useCallback, useEffect, useMemo } from 'react'
-import { isPlaySoundMessage, PlaySoundMessage } from '../types'
+import { isPlaySoundMessage, PlaySoundMessage } from '@/sound/types'
 import { useToken } from '../utils/token'
 import { useExistsSounds, useSoundMetadata, usePlaySound } from './hooks'
 import { NoteBlack } from './NoteBlack'
@@ -71,11 +71,19 @@ export const SoundPlayer: FC<Props> = ({ url }: Props): JSX.Element => {
   const [prefsShown, setPrefsShown] = useState(false)
   const [sounds] = useSoundMetadata(token.payload.room, existsSounds)
   const playSound = usePlaySound(token.payload.room)
+  const [playRequested, setPlayRequested] = useState<boolean>(false)
   const style = useStyles()
   const onIconClick = useCallback((ev: MouseEvent<HTMLButtonElement>, id: string): void => {
+    if (playRequested) {
+      return
+    }
+    setPlayRequested(true)
+    window.setTimeout((): void => {
+      setPlayRequested(false)
+    }, 3000)
     const message: PlaySoundMessage = { type: 'app', cmd: 'sound/play', id }
     window.parent.postMessage(message, window.location.origin)
-  }, [])
+  }, [playRequested])
   useEffect((): (() => void) => {
     const resizeListener = (): void => {
       setWidth(window.innerWidth)
@@ -162,7 +170,9 @@ export const SoundPlayer: FC<Props> = ({ url }: Props): JSX.Element => {
                   <IconButton
                     data-testid={`play-${sound.id}`}
                     onClick={e => onIconClick(e, sound.id)}
-                    size="large">
+                    size="large"
+                    disabled={playRequested}
+                  >
                     <NoteBlack />
                   </IconButton>
                   <div>
