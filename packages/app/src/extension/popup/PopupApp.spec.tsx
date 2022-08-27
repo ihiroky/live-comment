@@ -87,7 +87,7 @@ describe('On/off', () => {
 
     render(<App store={store} currentTabId={currentTabId} />)
 
-    const feedComments = screen.getByText(/Feed comments/)
+    const feedComments = screen.getByText(/Feed\/Post comments/)
     userEvent.click(feedComments)
 
     await waitFor(() => {
@@ -129,7 +129,7 @@ describe('On/off', () => {
 
     const { rerender } = render(<App store={store} currentTabId={currentTabId} />)
 
-    const feedComments = screen.getByText(/Feed comments/)
+    const feedComments = screen.getByText(/Feed\/Post comments/)
     userEvent.click(feedComments)
 
     await waitFor(() => {
@@ -189,7 +189,7 @@ describe('In this tab', () => {
 
     const { rerender } = render(<App store={store} currentTabId={currentTabId} />)
 
-    const feedComments = screen.getByText(/Feed comments/)
+    const feedComments = screen.getByText(/Feed\/Post comments/)
     userEvent.click(feedComments)
 
     // Wait until switch ON
@@ -206,7 +206,7 @@ describe('In this tab', () => {
     })
 
     rerender(<App store={store} currentTabId={currentTabId} />)
-    const inThisTab = screen.getByText(/In this tab/)
+    const inThisTab = screen.getByText(/Show comments in this tab/)
     userEvent.click(inThisTab)
 
     await waitFor(() => {
@@ -251,7 +251,7 @@ describe('Aggressive mode', () => {
 
     const { rerender } = render(<App store={store} currentTabId={currentTabId} />)
 
-    const toggle = screen.getByText(/As soon as a tab opens/)
+    const toggle = screen.getByText(/Show comments as soon as a tab opens/)
     userEvent.click(toggle)
 
     await waitFor(() => {
