@@ -40,3 +40,13 @@ export type LogWindowEvent = {
   type: 'log-window-event'
   status: 'open' | 'close'
 }
+
+export type Ping = {
+  type: 'ping'
+  id: number
+}
+
+export type Pong = {
+  type: 'pong'
+  id: number
+}

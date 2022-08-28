@@ -1,7 +1,7 @@
-import { CommentEvent, TargetTab } from '../types'
+import { CommentEvent, Ping, Pong, TargetTab } from '../types'
 import { getLogger } from '@/common/Logger'
 import { makeStyles } from '@mui/styles'
-import { createMessageSource, MessageScreen } from '@/screen/MessageScreen'
+import { createMessageSource, MessageScreen, PublishableMessageSource } from '@/screen/MessageScreen'
 import { ComponentProps, StrictMode } from 'react'
 import { createRoot, Root } from 'react-dom/client'
 
@@ -55,14 +55,79 @@ function App(props: ComponentProps<typeof MessageScreen>): JSX.Element {
 type Context = {
   port: chrome.runtime.Port
   root: Root
+  tabId?:number
+  closed: boolean
+  release: () => void
 }
 
-function createContext(): Context {
-  // TODO receive properties to render Screen.
-  const port = chrome.runtime.connect({ name: 'popup-comments' })
-  log.debug('[createContext] Connected port:', port.name)
+function reconnect(context: Context, messageSource: PublishableMessageSource): void {
+  log.info(`${context.port.name} is stale. Try to close and open new port.`)
 
-  const messageSource = createMessageSource()
+  context.port.disconnect()
+  context.release()
+  context.closed = true
+
+  function setupAgain(): void {
+    log.info('[setupAgain] start')
+    if (!context.closed) {
+      return
+    }
+    const newPort = chrome.runtime.connect({ name: 'popup-comments' })
+    log.info('[reconnect] Connected port:', newPort.name)
+    context.port = newPort
+    context.closed = false
+    setupListeners(context, messageSource)
+    monitorPort(context, messageSource)
+  }
+  window.setTimeout(setupAgain, 1000)
+}
+
+function monitorPort(context: Context, messageSource: PublishableMessageSource): void {
+  log.debug('[monitorPort]', context)
+  let lastPong = Date.now()
+  const id = context.tabId || (Date.now() / 1000 + 1000 * Math.random())
+
+  const pongListener = (message: Pong): void => {
+    if (message.type === 'pong' && message.id === id) {
+      lastPong = Date.now()
+      log.debug('pong', lastPong)
+      return
+    }
+  }
+  context.port.onMessage.addListener(pongListener)
+
+  const interval = 1000
+  function checkPingPong(): void {
+    if (context.closed) {
+      context.port.onMessage.removeListener(pongListener)
+      log.debug('[checkPingPong] Finished by closed')
+      return
+    }
+    try {
+      const ping: Ping = {
+        type: 'ping',
+        id,
+      }
+      context.port.postMessage(ping)
+      log.debug('ping', ping)
+      if (Date.now() - lastPong <= 3000) {
+        window.setTimeout(checkPingPong, interval)
+        return
+      }
+      context.port.onMessage.removeListener(pongListener)
+      reconnect(context, messageSource)
+    } catch (e: unknown) {
+      context.port.onMessage.removeListener(pongListener)
+      reconnect(context, messageSource)
+    }
+    log.debug('[checkPingPong] Finished.')
+  }
+
+  window.setTimeout(checkPingPong, interval)
+}
+
+function setupListeners(context: Context, messageSource: PublishableMessageSource): void {
+  log.info('[setupListeners]', context)
   const messageListener = (message: CommentEvent): void => {
     switch (message.type) {
       case 'comment-message': {
@@ -77,18 +142,39 @@ function createContext(): Context {
   }
 
   if (document.visibilityState === 'visible') {
-    port.onMessage.addListener(messageListener)
+    context.port.onMessage.addListener(messageListener)
   }
-  document.addEventListener('visibilitychange', (): void => {
+  const visibilityChangeListener = (): void => {
     if (document.visibilityState === 'visible') {
-      port.onMessage.addListener(messageListener)
+      context.port.onMessage.addListener(messageListener)
     } else {
-      port.onMessage.removeListener(messageListener)
+      context.port.onMessage.removeListener(messageListener)
     }
-  })
+  }
+  document.addEventListener('visibilitychange', visibilityChangeListener)
+  context.release = (): void => {
+    document.removeEventListener('visibilitychange', visibilityChangeListener)
+  }
+}
+
+function createContext(tabId: number | undefined): Context {
+  // TODO receive properties to render Screen.
+  const messageSource = createMessageSource()
+  const port = chrome.runtime.connect({ name: 'popup-comments' })
+  log.debug('[createContext] Connected port:', port.name)
 
   const rootElement = createRootElement()
   const root = createRoot(rootElement)
+
+  const context = {
+    port,
+    root,
+    closed: false,
+    tabId,
+    release: (): void => undefined,
+  }
+  setupListeners(context, messageSource)
+  monitorPort(context, messageSource)
 
   const watermark: ComponentProps<typeof App>['watermark'] = {
     html: `🐳`,
@@ -109,7 +195,7 @@ function createContext(): Context {
     />
   )
 
-  return{ port, root }
+  return context
 }
 
 
@@ -122,13 +208,15 @@ export const createTargetTabStatusListener = (): ((message: TargetTab) => void) 
       switch (message.status) {
         case 'added':
           if (context === null) {
-            context = createContext()
+            context = createContext(message.tabId)
           }
           break
         case 'removed':
           if (context) {
-            context.port.disconnect()
             context.root.unmount()
+            context.port.disconnect()
+            context.release()
+            context.closed = true
             const div = document.getElementById(ROOT_ID)
             if (div) {
               document.documentElement.removeChild(div)
