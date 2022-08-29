@@ -6,6 +6,7 @@ import '@testing-library/jest-dom'
 jest.mock('@/comment/App', () => ({
   App: jest.fn(),
 }))
+jest.useFakeTimers()
 
 beforeEach(() => {
   global.chrome = {
@@ -105,4 +106,77 @@ test('Change listener settings as visibility changes', () => {
   jest.spyOn(Document.prototype, 'visibilityState', 'get').mockReturnValue('visible')
   document.dispatchEvent(new Event('visibilitychange'))
   expect(portMock.onMessage.addListener).toBeCalledWith(expect.any(Function))
+})
+
+test('Ping within 3000 ms from last pong.', () => {
+  const addedMessage: TargetTab = {
+    type: 'target-tab',
+    status: 'added',
+    tabId: 1
+  }
+  const portMock = createPortMock()
+  jest.mocked(chrome.runtime.connect).mockReturnValue(portMock)
+
+  const listener = createTargetTabStatusListener()
+  listener(addedMessage)
+
+  jest.advanceTimersByTime(1000)
+
+  // Called by timer
+  expect(portMock.postMessage).toBeCalledWith({
+    type: 'ping',
+    id: addedMessage.tabId
+  })
+  expect(portMock.onMessage.removeListener).not.toBeCalled()
+})
+
+test('Ping over 3000 ms from last pong.', () => {
+  const addedMessage: TargetTab = {
+    type: 'target-tab',
+    status: 'added',
+    tabId: 1
+  }
+  const portMock = createPortMock()
+  jest.mocked(chrome.runtime.connect).mockReturnValue(portMock)
+
+  const listener = createTargetTabStatusListener()
+  listener(addedMessage)
+
+  jest.advanceTimersByTime(4000)
+
+  expect(portMock.postMessage).toBeCalledWith({
+    type: 'ping',
+    id: addedMessage.tabId
+  })
+  expect(portMock.onMessage.removeListener).toBeCalled()
+})
+
+test('PostMessage to ping throws error, reconnect, reopen failed, then open successfully.', () => {
+  const addedMessage: TargetTab = {
+    type: 'target-tab',
+    status: 'added',
+    tabId: 1
+  }
+  const portMock = createPortMock()
+  jest.mocked(portMock.postMessage).mockImplementation((): void => {
+    throw new Error('MOCK ERROR')
+  })
+  jest.mocked(chrome.runtime.connect).mockReturnValue(portMock)
+
+  const listener = createTargetTabStatusListener()
+  listener(addedMessage)
+
+  jest.advanceTimersByTime(1000)
+
+  expect(portMock.postMessage).toBeCalledWith({
+    type: 'ping',
+    id: addedMessage.tabId
+  })
+  expect(portMock.onMessage.removeListener).toBeCalled()
+
+
+  // Test reconnect()
+  //jest.advanceTimersByTime(1000)
+  // Second call by reconnect()
+  expect(chrome.runtime.connect).toBeCalledTimes(2)
 })

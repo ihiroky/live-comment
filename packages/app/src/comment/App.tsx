@@ -21,16 +21,21 @@ type Props = {
   onMessage?: (m: Message) => void
 }
 
+const isSoundPage = window.location.href.endsWith('/sound')
+
 const AppRoutes = (props: Props): JSX.Element => {
   const navigate = useNavigate()
   return (
     <Routes>
       <Route path='/' element={<Navigate replace to='/login' />} />
       <Route path='/login' element={<LoginForm apiUrl={apiUrl} navigate={navigate} />} />
-      <Route path='/comment' element={
-        <Comment url={wsUrl} maxMessageCount={1024} navigate={navigate} {...props} />
-      } />
-      <Route path='/sound' element={<SoundPlayer url={apiUrl} />} />
+      { !isSoundPage ? (
+        <Route path='/comment' element={
+          <Comment url={wsUrl} maxMessageCount={1024} navigate={navigate} {...props} />
+        } />
+      ) : (
+        <Route path='/sound' element={<SoundPlayer url={apiUrl} />} />
+      )}
     </Routes>
   )
 }
