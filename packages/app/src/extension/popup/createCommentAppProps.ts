@@ -21,7 +21,7 @@ export function createCommentAppProps(): Required<ComponentProps<typeof App>> {
     })
     port.onMessage.addListener((message: Ping, p: chrome.runtime.Port): void => {
       if (message.type === 'ping') {
-        log.info('ping from ', message.id, p.sender?.tab?.id)
+        log.debug('ping from ', message.id, p.sender?.tab?.id)
         const pong: Pong = {
           type: 'pong',
           id: message.id,
