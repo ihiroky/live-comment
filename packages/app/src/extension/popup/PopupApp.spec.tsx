@@ -11,7 +11,11 @@ jest.mock('../store', () => {
     cache: {
       logTab: { tabId: 0 },
       showCommentTabs: { tabIds: {} },
-      aggressive: true
+      aggressive: true,
+      settingsTab: {
+        tabId: 0,
+        settings: {},
+      },
     },
     sync: () => Promise.resolve(),
     update: jest.fn<typeof store.update>((k, v) => {
@@ -57,6 +61,9 @@ function mockChromeApi(p: {
         }],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any),
+      onRemoved: {
+        addListener: jest.fn<typeof chrome.windows.onRemoved.addListener>()
+      }
     },
     tabs: {
       sendMessage: jest.fn<typeof chrome.tabs.sendMessage>(),
@@ -264,5 +271,49 @@ describe('Aggressive mode', () => {
     await waitFor(() => {
       expect(store.cache.aggressive).toBe(true)
     })
+  })
+})
+
+describe('Settings', () => {
+  test('Open settings window if not open, then close the window', async () => {
+    const currentTabId = 1
+    const newWindowId = 2
+    const newWindowTabId = 200
+    mockChromeApi({
+      newWindowId,
+      newWindowTabId,
+    })
+
+    render(<App store={store} currentTabId={currentTabId} />)
+
+    const button = screen.getByRole('button', { name: /Settings/ })
+    userEvent.click(button)
+    await waitFor(() => {
+      expect(store.cache.settingsTab.tabId).toBe(newWindowTabId)
+    })
+
+    const removeListener = jest.mocked(chrome.windows.onRemoved.addListener).mock.calls[0][0]
+    removeListener(newWindowId)
+    await waitFor(() => {
+      expect(store.cache.settingsTab.tabId).toBe(0)
+    })
+  })
+
+  test('Do nothing if already open', async () => {
+    const currentTabId = 1
+    const newWindowId = 2
+    const newWindowTabId = 200
+    mockChromeApi({
+      newWindowId,
+      newWindowTabId,
+    })
+    jest.mocked(store.cache).settingsTab.tabId = 1000
+
+    render(<App store={store} currentTabId={currentTabId} />)
+
+    const button = screen.getByRole('button', { name: /Settings/ })
+    userEvent.click(button)
+
+    expect(chrome.windows.create).not.toBeCalled()
   })
 })

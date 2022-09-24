@@ -4,6 +4,7 @@ import { makeStyles } from '@mui/styles'
 import { createMessageSource, MessageScreen, PublishableMessageSource } from '@/screen/MessageScreen'
 import { ComponentProps, StrictMode } from 'react'
 import { createRoot, Root } from 'react-dom/client'
+import { store } from '../store'
 
 const log = getLogger('contentScriptListeners')
 
@@ -58,6 +59,7 @@ type Context = {
   tabId?:number
   closed: boolean
   release: () => void
+  unsubscribeStoreUpdate: () => void
 }
 
 function reconnect(context: Context, messageSource: PublishableMessageSource): void {
@@ -166,34 +168,31 @@ function createContext(tabId: number | undefined): Context {
   const rootElement = createRootElement()
   const root = createRoot(rootElement)
 
-  const context = {
+  const context: Context = {
     port,
     root,
     closed: false,
     tabId,
-    release: (): void => undefined,
+    release: () => undefined,
+    unsubscribeStoreUpdate: () => undefined
   }
   setupListeners(context, messageSource)
   monitorPort(context, messageSource)
 
-  const watermark: ComponentProps<typeof App>['watermark'] = {
-    html: `🐳`,
-    opacity: 0.33,
-    color: '#333333',
-    fontSize: '48px',
-    position: 'bottom-right',
-    offset: '3%',
-    noComments: false
+  function renderApp(): void {
+    const { general, watermark } = store.cache.settingsTab.settings
+    root.render(
+      <App
+        duration={general.duration * 1000}
+        color={general.fontColor}
+        fontBorderColor={general.fontBorderColor}
+        watermark={watermark}
+        messageSource={messageSource}
+      />
+    )
   }
-  root.render(
-    <App
-      duration={7000}
-      color={'#111111'}
-      fontBorderColor={'#cccccc'}
-      watermark={watermark}
-      messageSource={messageSource}
-    />
-  )
+  context.unsubscribeStoreUpdate = store.subscribe(renderApp)
+  renderApp()
 
   return context
 }
@@ -216,6 +215,7 @@ export const createTargetTabStatusListener = (): ((message: TargetTab) => void) 
             context.root.unmount()
             context.port.disconnect()
             context.release()
+            context.unsubscribeStoreUpdate()
             context.closed = true
             const div = document.getElementById(ROOT_ID)
             if (div) {

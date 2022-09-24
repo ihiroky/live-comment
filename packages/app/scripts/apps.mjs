@@ -24,9 +24,6 @@ export const apps = {
   renderer: {
     entryPoints: ['src/desktop/renderer.tsx'],
     outfile: 'resources/renderer.js',
-    // assets: [
-    //   { src: 'src/public/*', destDir: 'dist/bundle/comment/' },
-    // ]
   },
   extension: {
     // The order of entryPoints is important for rollup.
@@ -34,7 +31,8 @@ export const apps = {
       'src/extension/background.ts',
       'src/extension/contentScript.tsx',
       'src/extension/popup/popup.tsx',
-      'src/extension/popup/comment.tsx'
+      'src/extension/popup/comment.tsx',
+      'src/extension/popup/settings.tsx',
     ],
     outdir: 'dist/bundle/extension/',
     assets: [

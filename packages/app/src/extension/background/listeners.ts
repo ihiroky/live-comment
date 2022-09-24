@@ -63,4 +63,11 @@ export const cleanUpExtensionTabs = (tabId: number): void => {
     store.update('showCommentTabs', { tabIds: {} })
     store.update('logTab', { tabId: 0 })
   }
+
+  if (tabId === store.cache.settingsTab.tabId) {
+    store.update('settingsTab', {
+      ...store.cache.settingsTab,
+      tabId: 0,
+    })
+  }
 }
