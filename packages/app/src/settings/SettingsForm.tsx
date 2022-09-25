@@ -98,7 +98,6 @@ export const SettingsForm = (props: SettingsFormProps): JSX.Element => {
 
   const settingsState: SettingsState = useSettingsState(props.repository)
   const [value, setValue] = useState<number>(0)
-  console.log(settingsState)
 
   // eslint-disable-next-line @typescript-eslint/ban-types
   function onChange(e: ChangeEvent<{}>, newValue: number): void {

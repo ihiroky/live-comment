@@ -16,7 +16,6 @@ if (!rootElement) {
 const root = createRoot(rootElement)
 const App = (): JSX.Element => {
   const storeCache = useSyncExternalStore(store.subscribe, () => store.cache)
-  console.info('[storeCache]', storeCache)
   const props = useMemo(() => ({
     useConnectionSettings: false,
     repository: {

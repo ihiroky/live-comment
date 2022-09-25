@@ -2,8 +2,6 @@ import { CommentEvent, TargetTab } from '../types'
 import { createTargetTabStatusListener } from './listeners'
 import { jest, test, beforeEach } from '@jest/globals'
 import '@testing-library/jest-dom'
-import '../store'
-import { App } from '@/comment/App'
 import { store } from '../store'
 
 jest.mock('../store', () => {
