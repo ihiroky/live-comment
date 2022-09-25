@@ -291,12 +291,6 @@ describe('Settings', () => {
     await waitFor(() => {
       expect(store.cache.settingsTab.tabId).toBe(newWindowTabId)
     })
-
-    const removeListener = jest.mocked(chrome.windows.onRemoved.addListener).mock.calls[0][0]
-    removeListener(newWindowId)
-    await waitFor(() => {
-      expect(store.cache.settingsTab.tabId).toBe(0)
-    })
   })
 
   test('Do nothing if already open', async () => {
