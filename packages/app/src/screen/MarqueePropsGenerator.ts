@@ -104,12 +104,10 @@ export class MarqueePropsGenerator {
     }
 
     let insertPosition = marquees.length
-    if (length > 0 && marquees[length - 1].level >= level) {
-      for (let i = marquees.length - 1; i >= 0; i--) {
-        if (marquees[i].level <= level) {
-          insertPosition = i + 1
-          break
-        }
+    for (let i = 0; i < marquees.length; i++) {
+      if (marquees[i].level > level) {
+        insertPosition = i
+        break
       }
     }
 
