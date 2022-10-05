@@ -1,5 +1,5 @@
 import { ChangeEvent, StrictMode, useCallback, useEffect, useSyncExternalStore } from 'react'
-import { Divider, FormControl, FormControlLabel, FormGroup, Switch, Typography } from '@mui/material'
+import { Button, Divider, FormControl, FormControlLabel, FormGroup, Switch, Typography } from '@mui/material'
 import { getLogger } from '@/common/Logger'
 import { LogWindowEvent, TargetTab } from '../types'
 import { StoreType } from '../store'
@@ -109,6 +109,30 @@ async function toggleCommentsOnTab(
   chrome.tabs.sendMessage(targetTabId, message)
 }
 
+async function showSettingsWindow(store: StoreType): Promise<void> {
+  if (store.cache.settingsTab.tabId) {
+    return
+  }
+
+  const width = 600
+  const height = 700
+  const options: chrome.windows.CreateData = {
+    type: 'panel',
+    url: 'chrome-extension://' + chrome.runtime.id + '/popup/settings.html',
+    top: window.screen.availHeight - height,
+    left: window.screen.availWidth - width,
+    width,
+    height,
+  }
+  const w = await chrome.windows.create(options)
+  store.update('settingsTab', {
+    ...store.cache.settingsTab,
+    tabId: w.tabs?.[0].id || 0
+  })
+
+  // settingsTabs are cleanup by chrome.tabs.onRemoved. See background.ts
+}
+
 type Props = {
   store: StoreType
   currentTabId: number
@@ -145,6 +169,9 @@ export const App = ({ store, currentTabId }: Props): JSX.Element => {
   const toggleAggressiveMode = useCallback((_: ChangeEvent<HTMLInputElement>, checked: boolean): void => {
     store.update('aggressive', checked)
   }, [store])
+  const showSettings = useCallback((): void => {
+    showSettingsWindow(store)
+  }, [store])
 
   return (
     <StrictMode>
@@ -161,6 +188,9 @@ export const App = ({ store, currentTabId }: Props): JSX.Element => {
           <FormControlLabel control={
             <Switch checked={storeCache.aggressive} onChange={toggleAggressiveMode} />
           } label={<Typography variant="body2">Show comments as soon as a tab opens</Typography>} />
+          <Button variant="contained" sx={{width: 'fit-content', margin: 'auto'}} onClick={showSettings}>
+            Settings
+          </Button>
         </FormGroup>
       </FormControl>
     </StrictMode>

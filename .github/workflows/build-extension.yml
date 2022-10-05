@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: 16
+          node-version: 18
           cache: 'yarn'
       - run: yarn install --frozen-lockfile --network-timeout 180000
 
@@ -27,6 +27,7 @@ jobs:
         env:
           LC_WS_URL: wss://${{ inputs.host }}/app
           LC_API_URL: https://${{ inputs.host }}/api
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Create release directory tree
         run: |

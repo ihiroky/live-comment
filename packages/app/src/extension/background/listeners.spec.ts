@@ -13,6 +13,10 @@ jest.mock('../store', () => ({
         tabIds: {},
       },
       aggressive: true,
+      settingsTab: {
+        tabId: 2,
+        settings: {},
+      }
     }
   }
 }))
@@ -151,7 +155,7 @@ describe('checkTargetTabStatus', () => {
 
 describe('cleanUpExtensonTabs', () => {
 
-  test('Clean up if log tab is closed', () => {
+  test('Clean up if log tab is open', () => {
     const tabId = store.cache.logTab.tabId
     jest.mocked(store.cache.showCommentTabs).tabIds = {
       10: true,
@@ -182,7 +186,19 @@ describe('cleanUpExtensonTabs', () => {
     expect(store.update).toBeCalledTimes(2)
   })
 
-  test('Do nothing if not logTab tab id', () => {
+  test('Clean up if settings tab is open', () => {
+    const tabId = store.cache.settingsTab.tabId
+
+    cleanUpExtensionTabs(tabId)
+
+    expect(store.update).toHaveBeenCalledWith('settingsTab', {
+      ...store.cache.settingsTab,
+      tabId: 0,
+    })
+    expect(store.update).toBeCalledTimes(1)
+  })
+
+  test('Do nothing if not logTab or settingsTab tab id', () => {
     cleanUpExtensionTabs(10)
 
     expect(chrome.tabs.sendMessage).not.toBeCalled()
