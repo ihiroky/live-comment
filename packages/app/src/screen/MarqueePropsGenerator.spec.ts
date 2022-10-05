@@ -469,4 +469,47 @@ describe('MarqueePropsGenerator', () => {
       matchMarqueePropsExceptKey(actual[2], m1)
     })
   })
+
+  test('If the new message level is lower than the current minimum level, insert new one at head', () => {
+    const onUpdate = jest.fn()
+    const sut = new MarqueePropsGenerator(7000, onUpdate)
+
+    const p0 = {
+      getBoundingClientRect: () => ({ right: window.innerWidth - SPACE_BETWEEN_COMMENTS })
+    } as HTMLParagraphElement
+    const m0 = {
+      key: 0,
+      created: 0,
+      level: 1,
+      ref: { current: p0 },
+      comment: 'comment 0'
+    }
+    sut['marquees'].push(m0)
+    const message0: CommentMessage = {
+      type: 'comment',
+      comment: 'comment 0',
+    }
+    sut.onMessage(message0)
+    const message1: CommentMessage = {
+      type: 'comment',
+      comment: 'comment 1',
+    }
+    sut.onMessage(message1)
+
+    const actual = sut['marquees']
+    expect(actual.length).toBe(3)
+    matchMarqueePropsExceptKey(actual[0], {
+      created: 123,
+      level: 0,
+      ref: { current: null },
+      comment: message0.comment,
+    })
+    matchMarqueePropsExceptKey(actual[1], m0)
+    matchMarqueePropsExceptKey(actual[2], {
+      created: 123,
+      level: 2,
+      ref: { current: null },
+      comment: message1.comment,
+    })
+  })
 })
