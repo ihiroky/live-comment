@@ -17,6 +17,8 @@ type StoreObj = {
 
 export type StoreType = ReturnType<typeof createChromeStore<StoreObj>>
 
+const defaultSettings = loadDefault(false)
+
 export const store = createChromeStore<StoreObj>(chrome.storage.local, {
   logTab: {
     tabId: 0,
@@ -27,6 +29,6 @@ export const store = createChromeStore<StoreObj>(chrome.storage.local, {
   aggressive: true,
   settingsTab: {
     tabId: 0,
-    settings: loadDefault(false), // TODO Set lazily by function.
+    settings: defaultSettings,
   },
 })

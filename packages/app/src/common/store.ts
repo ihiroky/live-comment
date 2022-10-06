@@ -158,7 +158,7 @@ export function createChromeStore<T extends Record<string, unknown>>(
 
   const isKey = createIsKey(keys)
   const listener = (changes: Record<string, chrome.storage.StorageChange>, areaName: AreaName): void => {
-    log.info('CALL listner', changes, areaName)
+    log.info('CALL listener', changes, areaName)
     if (chrome.storage[areaName] !== storage) {
       return
     }
