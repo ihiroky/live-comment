@@ -181,6 +181,9 @@ function createContext(tabId: number | undefined): Context {
 
   function renderApp(): void {
     const { general, watermark } = store.cache.settingsTab.settings
+
+    // TODO Apply zoom
+
     root.render(
       <App
         duration={general.duration * 1000}

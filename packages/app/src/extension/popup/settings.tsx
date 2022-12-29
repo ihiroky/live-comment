@@ -17,7 +17,7 @@ const root = createRoot(rootElement)
 const App = (): JSX.Element => {
   const storeCache = useSyncExternalStore(store.subscribe, () => store.cache)
   const props = useMemo(() => ({
-    useConnectionSettings: false,
+    useStandaloneSettings: false,
     repository: {
       requestSettings: () => Promise.resolve(storeCache.settingsTab.settings),
       postSettings: (settings: SettingsV1): Promise<void> => {

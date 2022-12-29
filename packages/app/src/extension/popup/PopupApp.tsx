@@ -110,6 +110,7 @@ async function toggleCommentsOnTab(
 }
 
 async function showSettingsWindow(store: StoreType): Promise<void> {
+  // TODO check if the tab opens
   if (store.cache.settingsTab.tabId) {
     return
   }

@@ -47,7 +47,7 @@ const useStyles = makeStyles({
 
 
 type GeneralProps = GeneralSettings & {
-  usesConnectionSettings: boolean
+  useStandaloneSettings: boolean
   getScreenPropsList: () => Promise<ScreenProps[]>
   onUpdate(name: keyof GeneralSettings, value: string, error: boolean): void
 }
@@ -153,7 +153,7 @@ export const General: FC<GeneralProps> = (props: GeneralProps): JSX.Element => {
     <div className={classes.root}>
       <div className={classes.fields}>
         <Grid container spacing={1}>
-          {props.usesConnectionSettings && (
+          {props.useStandaloneSettings && (
             <>
               <Grid item xs={12}>
                 <TF data={urlField} onChange={onTextFieldChange} />
@@ -169,9 +169,11 @@ export const General: FC<GeneralProps> = (props: GeneralProps): JSX.Element => {
           <Grid item xs={6}>
             <TF data={durationField} onChange={onTextFieldChange} />
           </Grid>
-          <Grid item xs={6}>
-            <TF data={zoomField} onChange={onTextFieldChange} />
-          </Grid>
+          {props.useStandaloneSettings && (
+            <Grid item xs={6}>
+              <TF data={zoomField} onChange={onTextFieldChange} />
+            </Grid>
+          )}
           <Grid item xs={6}>
             <TF data={fontColorField} onChange={onTextFieldChange} />
           </Grid>
