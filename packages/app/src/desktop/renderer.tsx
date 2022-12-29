@@ -5,7 +5,7 @@ import { createHash } from '@/common/utils'
 import { getLogger } from '@/common/Logger'
 import { createReconnectableWebSocket, ReconnectableWebSocket, useReconnectableWebSocket } from '@/wscomp/rws'
 import { Poll } from '@/poll/Poll'
-import { SettingsForm } from './settings/SettingsForm'
+import { SettingsForm } from '@/settings/SettingsForm'
 import { MessageScreen, PublishableMessageSource, createMessageSource } from '@/screen/MessageScreen'
 import { onOpen, onClose } from './screenEventListeners'
 
@@ -126,7 +126,7 @@ export function settingsMain(): void {
   const root = createRoot(rootElement)
   root.render(
     <StrictMode>
-      <SettingsForm />
+      <SettingsForm useStandaloneSettings={true} repository={window.settings} />
     </StrictMode>
   )
 }
