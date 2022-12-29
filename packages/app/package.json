@@ -67,7 +67,7 @@
     "@types/yargs": "^16.0.1",
     "concurrently": "^6.2.0",
     "electron": "^19.0.4",
-    "electron-builder": "^22.10.5",
+    "electron-builder": "^23.6.0",
     "esbuild": "^0.14.47",
     "jest": "^28.1.2",
     "jest-environment-jsdom": "^28.1.2",
