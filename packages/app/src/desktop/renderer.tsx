@@ -6,6 +6,7 @@ import { getLogger } from '@/common/Logger'
 import { createReconnectableWebSocket, ReconnectableWebSocket, useReconnectableWebSocket } from '@/wscomp/rws'
 import { Poll } from '@/poll/Poll'
 import { SettingsForm } from '@/settings/SettingsForm'
+import { ScreenProps } from '@/settings/types'
 import { MessageScreen, PublishableMessageSource, createMessageSource } from '@/screen/MessageScreen'
 import { onOpen, onClose } from './screenEventListeners'
 
@@ -16,6 +17,11 @@ declare global {
     }
     poll: {
       request(): Promise<SettingsV1>
+    }
+    settings: {
+      requestSettings: () => Promise<SettingsV1>
+      postSettings: (settings: SettingsV1) => Promise<void>
+      getScreenPropsList: () => Promise<ScreenProps[]>
     }
   }
 }
