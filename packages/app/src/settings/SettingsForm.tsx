@@ -90,7 +90,7 @@ function toWatermarkSettings(state: WatermarkSettingsState): WatermarkSettings {
 }
 
 type SettingsFormProps = {
-  useConnectionSettings: boolean
+  useStandaloneSettings: boolean
   repository: SettingsRepository
 }
 
@@ -123,7 +123,7 @@ export const SettingsForm = (props: SettingsFormProps): JSX.Element => {
       </AppBar>
       <TabPanel value={value} index={0}>
         <General
-          usesConnectionSettings={props.useConnectionSettings}
+          useStandaloneSettings={props.useStandaloneSettings}
           getScreenPropsList={props.repository.getScreenPropsList}
           onUpdate={onGeneralSettingsUpdate}
           { ...toGeneralSettings(settingsState.general) }

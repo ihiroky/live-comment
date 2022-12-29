@@ -18,7 +18,7 @@ function prepare(): ComponentProps<typeof General> {
     fontBorderColor: { data: '', error: false },
     gpu: { data: false, error: false },
     onUpdate: jest.fn(),
-    usesConnectionSettings: true,
+    useStandaloneSettings: true,
     getScreenPropsList: () => {
       return new Promise<ScreenProps[]>((resolve: (sp: ScreenProps[]) => void): void => {
         resolve([
