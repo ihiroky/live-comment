@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import { store } from '../store'
+import { validatePopupWindows } from './validatePopupWindows'
 import { App } from './PopupApp'
 
 ;(async function(): Promise<void> {
@@ -8,6 +9,8 @@ import { App } from './PopupApp'
     throw new Error('Root element not found')
   }
   await store.sync()
+  await validatePopupWindows(store)
+
   const window = await chrome.windows.getCurrent()
   const tabs = await chrome.tabs.query({ active: true, windowId: window.id })
   if (tabs && tabs[0] && tabs[0].id) {
