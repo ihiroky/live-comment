@@ -32,7 +32,7 @@ const useStyles = makeStyles({
     width: '100vw',
     height: '100vh',
     backgroundColor: '#ccffcc',
-    padding: 0,
+    padding: '0px 4px',
     margin: 0,
   },
   nav: {
