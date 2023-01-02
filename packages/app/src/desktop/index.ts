@@ -7,6 +7,7 @@ import {
   registerAppRootProtocol,
   createSettingsWindow,
   createPollWindow,
+  createCommentWindow,
 } from './subwindows'
 import {
   CHANNEL_REQUEST_SETTINGS,
@@ -14,11 +15,13 @@ import {
   CHANNEL_REQUEST_SCREEN_PROPS,
   CHANNEL_DESKTOP_THUMBNAIL,
   ScreenProps,
+  CHANNEL_LOG_SEND,
+  CHANNEL_LOG_RECV,
 } from './channels'
 
 
-
 let mainWindow_: electron.BrowserWindow | null = null
+let commentWindow_: electron.BrowserWindow | null = null
 
 // https://www.electronjs.org/docs/faq#my-apps-tray-disappeared-after-a-few-minutes
 let tray_: electron.Tray | null = null
@@ -129,8 +132,8 @@ function showTrayIcon(): void {
     tray_.destroy()
   }
   const menu: electron.Menu = electron.Menu.buildFromTemplate([
-    { label: 'Poll', click: createPollWindow },
     { label: 'Settings', click: createSettingsWindow },
+    { label: 'Poll', click: createPollWindow },
     { label: 'Quit', role: 'quit' }
   ])
   tray_ = new electron.Tray(path.resolve('resources/icon.png'))
@@ -139,13 +142,17 @@ function showTrayIcon(): void {
 }
 
 async function asyncShowMainWindow(): Promise<void> {
-  const settings = await asyncLoadSettings()
-
   // TODO toggle dev tools of main window from setting form
 
   // Needed not to be hidden by full screen apps on Mac.
   electron.app.dock?.hide()
 
+  if (mainWindow_ !== null) {
+    showCommentWindow()
+    return
+  }
+
+  const settings = await asyncLoadSettings()
   mainWindow_ = new electron.BrowserWindow({
     frame: false,
     transparent: true,
@@ -167,6 +174,23 @@ async function asyncShowMainWindow(): Promise<void> {
   mainWindow_.on('closed', (): void => {
     mainWindow_ = null
   })
+  mainWindow_.on('show', (): void => {
+    showCommentWindow()
+  })
+  mainWindow_.show()
+}
+
+function showCommentWindow(): void {
+  if (commentWindow_ !== null) {
+    return
+  }
+  commentWindow_ = createCommentWindow()
+  // Add switch to make this always-on-top
+  commentWindow_?.on('closed', (): void => {
+    commentWindow_ = null
+    mainWindow_?.close()
+    electron.app.quit()
+  })
 }
 
 async function asyncGetDesktopThumnail(
@@ -185,6 +209,9 @@ function onReady(): void {
   electron.ipcMain.handle(CHANNEL_POST_SETTINGS, asyncSaveSettings)
   electron.ipcMain.handle(CHANNEL_REQUEST_SCREEN_PROPS, asyncLoadSettings)
   electron.ipcMain.handle(CHANNEL_DESKTOP_THUMBNAIL, asyncGetDesktopThumnail)
+  electron.ipcMain.handle(CHANNEL_LOG_SEND, (_: electron.IpcMainInvokeEvent, message: unknown): void => {
+    mainWindow_?.webContents.send(CHANNEL_LOG_RECV, message)
+  })
 
   registerAppRootProtocol()
   moveToRootDirectory()
@@ -232,7 +259,7 @@ electron.app.on('window-all-closed', (): void => {
   }
 })
 electron.app.on('activate', (): void => {
-  if (electron.app.isReady() && mainWindow_ === null) {
+  if (electron.app.isReady()) {
     asyncShowMainWindow()  // No need to wait
   }
 })
