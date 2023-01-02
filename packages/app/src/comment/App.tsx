@@ -5,14 +5,16 @@ import { Comment } from './Comment'
 import { LoginForm } from './LoginForm'
 import { SoundPlayer } from './sound/SoundPlayer'
 
-const wsUrl = process.env.NODE_ENV === 'production'
+const defaultWsUrl = process.env.NODE_ENV === 'production'
   ? (process.env.LC_WS_URL || `wss://${window.location.hostname}/app`)
   : `ws://localhost:8080`
-const apiUrl = process.env.NODE_ENV === 'production'
+const defaultApiUrl = process.env.NODE_ENV === 'production'
   ? (process.env.LC_API_URL || `https://${window.location.hostname}/api`)
   : `http://localhost:9080`
 
 type Props = {
+  wsUrl?: string
+  apiUrl?: string
   onMount?: () => void
   onUnmount?: () => void
   onOpen?: () => void
@@ -23,7 +25,11 @@ type Props = {
 
 const isSoundPage = window.location.href.endsWith('/sound')
 
+
+
 const AppRoutes = (props: Props): JSX.Element => {
+  const wsUrl = props.wsUrl || defaultWsUrl
+  const apiUrl = props.apiUrl || defaultApiUrl
   const navigate = useNavigate()
   return (
     <Routes>
@@ -39,7 +45,10 @@ const AppRoutes = (props: Props): JSX.Element => {
     </Routes>
   )
 }
-const Router = window.location.protocol === 'chrome-extension:' ? HashRouter : BrowserRouter
+const Router = (window.location.protocol === 'chrome-extension:' || window.location.protocol === 'file:')
+  ? HashRouter
+  : BrowserRouter
+
 export const App = ({ onMount, onUnmount, ...props}: Props): JSX.Element => {
   useEffect((): (() => void) => {
     onMount?.()

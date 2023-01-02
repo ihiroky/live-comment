@@ -1,14 +1,15 @@
 import electron from 'electron'
+import fs from 'fs'
 import path from 'path'
 import { getLogger } from '../common/Logger'
 
 const log = getLogger('Subwindows')
 const openWindows_: Record<string, electron.BrowserWindow> = {}
 const APP_ROOT_PROTOCOL = 'approot'
+const APP_ROOT_DIR = 'resources'
 
-function getHtmlDataUrl(title: string, src: string, mainFunc: string): string {
-  return `data:text/html;charset=utf-8,
-<html>
+function generateHtml(title: string, src: string, mainFunc: string): string {
+  const html = `<html>
  <head>
   <title>${title}</title>
  </head>
@@ -21,6 +22,9 @@ ${mainFunc}();
   </script>
  </body>
 </html>`
+  const filePath = path.resolve(`${APP_ROOT_DIR}/${mainFunc}.html`)
+  fs.writeFileSync(filePath, html)
+  return `file://${filePath}`
 }
 
 function contexteMenuEventHandler(_: electron.Event, params: electron.ContextMenuParams): void {
@@ -60,12 +64,9 @@ function createSubWindow(
       preload: path.resolve(`dist/desktop/preload.js`)
     },
   })
-  const dataUrl = getHtmlDataUrl(id, './renderer.js', mainFuncName)
   window.webContents.on('context-menu', contexteMenuEventHandler)
-  window.loadURL(dataUrl, {
-    // https://github.com/electron/electron/issues/20700
-    baseURLForDataURL: `${APP_ROOT_PROTOCOL}://resources/`,
-  })
+  const fileUrl = generateHtml(id, './renderer.js', mainFuncName)
+  window.loadURL(fileUrl)
   window.on('closed', (): void => {
     delete openWindows_[id]
   })
@@ -73,6 +74,7 @@ function createSubWindow(
   return window
 }
 
+// TODO remove since unused
 export function registerAppRootProtocol(): void {
   if (!electron.app.isReady) {
     throw new Error('app is not ready.')
@@ -89,19 +91,13 @@ export function registerAppRootProtocol(): void {
 }
 
 export function createSettingsWindow(): void {
-  createSubWindow(
-    'SettingsForm',
-    600,
-    700,
-    'settingsMain'
-  )
+  createSubWindow('SettingsForm', 600, 700, 'settingsMain')
 }
 
 export function createPollWindow(): void {
-  createSubWindow(
-    'Poll',
-    900,
-    700,
-    'pollMain'
-  )
+  createSubWindow('Poll', 900, 700, 'pollMain')
+}
+
+export function createCommentWindow(): electron.BrowserWindow | null {
+  return createSubWindow('Comment', 600, 800, 'commentMain')
 }
