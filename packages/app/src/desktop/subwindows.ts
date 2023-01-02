@@ -12,6 +12,19 @@ function generateHtml(title: string, src: string, mainFunc: string): string {
   const html = `<html>
  <head>
   <title>${title}</title>
+  <style>
+html {
+  height: 100%;
+}
+body {
+  margin: 0px;
+  overflow: hidden;
+  height: 100%;
+}
+#root {
+  height: 100%;
+}
+  </style>
  </head>
  <body>
   <div id="root"></div>
@@ -99,5 +112,5 @@ export function createPollWindow(): void {
 }
 
 export function createCommentWindow(): electron.BrowserWindow | null {
-  return createSubWindow('Comment', 600, 800, 'commentMain')
+  return createSubWindow('Comment', 800, 600, 'commentMain')
 }
