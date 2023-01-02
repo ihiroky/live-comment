@@ -158,7 +158,13 @@ test('No jwt payload', async () => {
 })
 
 test('Invalid jwt', async () => {
-  const jwt = sign({}, config.jwtPrivateKey, { expiresIn: '10s', algorithm: 'RS256' })
+  const ec384Key = `-----BEGIN EC PRIVATE KEY-----
+MIGkAgEBBDBwP13IPv6F6gmyCnbcn1guwvDjpryOE+kJC4WgICZl0Zy+uHBInIjZ
+eW8+m+l76zOgBwYFK4EEACKhZANiAASNKKEaueDpIzbLBioQemjkQ5VR53gavGvn
+khBw71PYdkE5Be63+rEey7CH9/nEaUgdipqUWkbJCqu3TIZ2Kk59dzLarWPP8Pkr
+S5nTR/40W8nCmhl3axYknwxhleDjiYU=
+-----END EC PRIVATE KEY-----`
+  const jwt = sign({}, ec384Key, { expiresIn: '10s', algorithm: 'ES384' })
   const res = await request(app)
     .get('/sound/file')
     .set('Authorization', `Bearer ${jwt}`)

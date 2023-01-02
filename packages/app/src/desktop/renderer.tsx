@@ -1,27 +1,33 @@
 import { FC, StrictMode, useCallback, useEffect, useMemo, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { SettingsV1 } from './settings'
-import { createHash } from '@/common/utils'
+import { createHash, fetchWithTimeout } from '@/common/utils'
 import { getLogger } from '@/common/Logger'
-import { createReconnectableWebSocket, ReconnectableWebSocket, useReconnectableWebSocket } from '@/wscomp/rws'
+import { createReconnectableWebSocket, ReconnectableWebSocket } from '@/wscomp/rws'
 import { Poll } from '@/poll/Poll'
 import { SettingsForm } from '@/settings/SettingsForm'
 import { ScreenProps } from '@/settings/types'
 import { MessageScreen, PublishableMessageSource, createMessageSource } from '@/screen/MessageScreen'
-import { onOpen, onClose } from './screenEventListeners'
+import { App as CommentApp } from '@/comment/App'
+import { AcnMessage, CloseCode, CommentMessage, isAcnOkMessage, Message } from '@/common/Message'
 
 declare global {
   interface Window {
     main: {
-      request(): Promise<SettingsV1>
+      request: () => Promise<SettingsV1>
+      onMessage: (onMessage: (m: Message) => void) => () => void
     }
     poll: {
-      request(): Promise<SettingsV1>
+      request: () => Promise<SettingsV1>
     }
     settings: {
       requestSettings: () => Promise<SettingsV1>
       postSettings: (settings: SettingsV1) => Promise<void>
       getScreenPropsList: () => Promise<ScreenProps[]>
+    }
+    comment: {
+      request: () => Promise<SettingsV1>
+      send: (m: Message) => Promise<void>
     }
   }
 }
@@ -31,37 +37,11 @@ const log = getLogger('renderer')
 export function screenMain(): void {
   window.main.request().then((settings: SettingsV1): void => {
     const App: FC = (): JSX.Element => {
-      const rws = useReconnectableWebSocket(settings.general.url, settings.watermark.noComments)
       const messageSource = useMemo((): PublishableMessageSource => createMessageSource(), [])
-      const onRwsOpen = useCallback((): void => {
-        if (!rws) {
-          return
-        }
-        const hash = createHash(settings.general.password)
-        onOpen(rws, settings.general.room, hash, messageSource)
-      }, [rws, messageSource])
-      const onRwsClose = useCallback((ev: CloseEvent): void => {
-        if (!rws) {
-          return
-        }
-        onClose(rws, ev, messageSource)
-      }, [rws, messageSource])
 
       useEffect((): (() => void) => {
-        if (!rws) {
-          return () => undefined
-        }
-        rws.addEventListener('open', onRwsOpen)
-        rws.addEventListener('close', onRwsClose)
-        rws.addEventListener('error', log.error)
-        rws.addEventListener('message', messageSource.publish)
-        return (): void => {
-          rws.removeEventListener('open', onRwsOpen)
-          rws.removeEventListener('close', onRwsClose)
-          rws.removeEventListener('error', log.error)
-          rws.removeEventListener('message', messageSource.publish)
-        }
-      }, [rws, messageSource, onRwsOpen, onRwsClose])
+        return window.main.onMessage(messageSource.publish)
+      }, [messageSource])
 
       return (
         <StrictMode>
@@ -135,4 +115,142 @@ export function settingsMain(): void {
       <SettingsForm useStandaloneSettings={true} repository={window.settings} />
     </StrictMode>
   )
+}
+
+function login(apiUrl: string, settings: SettingsV1): Promise<Message> {
+  const message: AcnMessage = {
+    type: 'acn',
+    room: settings.general.room,
+    longLife: false,
+    hash: createHash(settings.general.password)
+  }
+  return fetchWithTimeout(
+    `${apiUrl}/login`,
+    {
+      method: 'POST',
+      cache: 'no-store',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(message)
+    },
+    3000
+  ).then((res: Response): Promise<Message> =>
+    res.ok
+      ? res.json()
+      : Promise.resolve({ type: 'error', error: 'ERROR', message: 'Fetch failed' })
+  ).then((m: Message): Message => {
+    if (!isAcnOkMessage(m)) {
+      return m
+    }
+    window.localStorage.setItem('token', m.attrs.token)
+    const loginOk: CommentMessage = {
+      type: 'comment',
+      comment: 'Login successfully.',
+    }
+    return loginOk
+  })
+}
+
+const onClose = (ev: CloseEvent): void => {
+  if (ev.code === CloseCode.ACN_FAILED) {
+    const comment: CommentMessage = {
+      type: 'comment',
+      comment: 'Room authentication failed. Please check your setting 👀'
+    }
+    window.comment.send(comment)
+    return
+  }
+
+  const comment: CommentMessage = {
+    type: 'comment',
+    comment: `Failed to connect to the server (${ev.code}) 😢`
+  }
+  window.comment.send(comment)
+}
+
+function createServerUrls(hostOrUrl?: string): { ws?: string, api?: string } {
+  if (!hostOrUrl) {
+    return {}
+  }
+
+  // For local development
+  if (/^ws:\/\/localhost:8080\/?/.test(hostOrUrl) || /'http:\/\/localhost:9080'\/?/.test(hostOrUrl)) {
+    return {
+      ws: 'ws://localhost:8080',
+      api:'http://localhost:9080',
+    }
+  }
+
+  // TODO Check strictly
+  const wsUrlRe = /^(wss?):\/\/([^/]+)\/app$/
+  const wsExec = wsUrlRe.exec(hostOrUrl)
+  if (wsExec) {
+    const protocol = wsExec[1] === 'wss' ? 'https' : 'http'
+    const host = wsExec[2]
+    return {
+      ws: hostOrUrl,
+      api: `${protocol}://${host}/api`
+    }
+  }
+  // TODO Check strictly
+  const apiUrlRe = /^(https?):\/\/([^/]+)\/api$/
+  const apiExec = apiUrlRe.exec(hostOrUrl)
+  if (apiExec) {
+    const protocol = apiExec[1] === 'https' ? 'wss' : 'ws'
+    const host = apiExec[2]
+    return {
+      ws: `${protocol}://${host}/app`,
+      api: hostOrUrl,
+    }
+  }
+
+  if (/^wss?:\/\//.test(hostOrUrl) || /^https?:\/\//.test(hostOrUrl)) {
+    throw new Error('Unexpected: ' + hostOrUrl)
+  }
+
+  return {
+    ws: `wss://${hostOrUrl}/app`,
+    api: `https://${hostOrUrl}/api`,
+  }
+}
+
+export function commentMain(): Promise<void> {
+  if (!window.comment && window.top) {
+    // in iframe
+    window.comment = window.top.comment
+  }
+
+  return window.comment.request().then((settings: SettingsV1): Promise<void> => {
+    const urls = createServerUrls(settings.general.url)
+    const onOpen = (): void => {
+      const comment: CommentMessage = {
+        type: 'comment',
+        comment: `🎉 Connected to ${urls.ws} 🎉`,
+      }
+      window.comment.send(comment)
+    }
+
+    const promise = urls.api
+      ? login(urls.api, settings).then(window.comment.send)
+      : Promise.resolve()
+
+    return promise.then((): void => {
+      // TODO Display error when fetch returns an error.
+      const rootElement = document.getElementById('root')
+      if (!rootElement) {
+        throw new Error('Root element not found')
+      }
+      const root = createRoot(rootElement)
+      root.render(
+        <StrictMode>
+          <CommentApp
+            wsUrl={urls.ws} apiUrl={urls.api}
+            onOpen={onOpen} onClose={onClose} onMessage={window.comment.send} onError={log.error}
+          />
+        </StrictMode>
+      )
+    })
+  })
 }
