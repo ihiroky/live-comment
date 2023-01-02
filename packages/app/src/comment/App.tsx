@@ -28,8 +28,8 @@ const isSoundPage = window.location.href.endsWith('/sound')
 
 
 const AppRoutes = (props: Props): JSX.Element => {
-  const wsUrl = props.wsUrl ?? defaultWsUrl
-  const apiUrl = props.apiUrl ?? defaultApiUrl
+  const wsUrl = props.wsUrl || defaultWsUrl
+  const apiUrl = props.apiUrl || defaultApiUrl
   const navigate = useNavigate()
   return (
     <Routes>

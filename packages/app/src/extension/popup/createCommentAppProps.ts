@@ -32,6 +32,8 @@ export function createCommentAppProps(): Required<ComponentProps<typeof App>> {
   }
 
   const props: Required<ComponentProps<typeof App>> = {
+    wsUrl: '',
+    apiUrl: '',
     onMount: (): void => {
       log.debug('[onMount]')
       chrome.runtime.onConnect.addListener(onConnected)
