@@ -127,7 +127,7 @@ jobs:
       - name: Upload asset to github release if draft release exists.
         id: upload-release-asset
         if: ${{ fromJson(steps.latest_release.outputs.data)[0].draft == true }}
-        uses: actions/upload-release-asset@v1
+        uses: ihiroky/upload-release-asset@main
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
