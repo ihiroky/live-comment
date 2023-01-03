@@ -40,21 +40,6 @@ ${mainFunc}();
   return `file://${filePath}`
 }
 
-function contexteMenuEventHandler(_: electron.Event, params: electron.ContextMenuParams): void {
-  const editFrags = params.editFlags
-  const menu = electron.Menu.buildFromTemplate([
-    { role: 'undo', enabled: editFrags.canUndo },
-    { role: 'redo', enabled: editFrags.canRedo },
-    { type: 'separator' },
-    { role: 'cut', enabled: editFrags.canCut },
-    { role: 'copy', enabled: editFrags.canCopy },
-    { role: 'paste', enabled: editFrags.canPaste },
-    { role: 'delete', enabled: editFrags.canDelete },
-    { role: 'selectAll', enabled: editFrags.canSelectAll },
-  ])
-  menu.popup()
-}
-
 function createSubWindow(
   id: string,
   width: number,
@@ -77,7 +62,28 @@ function createSubWindow(
       preload: path.resolve(`dist/desktop/preload.js`)
     },
   })
-  window.webContents.on('context-menu', contexteMenuEventHandler)
+  window.webContents.on('context-menu', (_: electron.Event, params: electron.ContextMenuParams): void => {
+    const editFrags = params.editFlags
+    const alwaysOnTop = window.isAlwaysOnTop()
+    const menu = electron.Menu.buildFromTemplate([
+      {
+        label: alwaysOnTop ? 'Cancel always on top' : 'Always on top',
+        click: () => window.setAlwaysOnTop(!alwaysOnTop)
+      },
+      { type: 'separator' },
+      { role: 'undo', enabled: editFrags.canUndo },
+      { role: 'redo', enabled: editFrags.canRedo },
+      { type: 'separator' },
+      { role: 'cut', enabled: editFrags.canCut },
+      { role: 'copy', enabled: editFrags.canCopy },
+      { role: 'paste', enabled: editFrags.canPaste },
+      { role: 'delete', enabled: editFrags.canDelete },
+      { role: 'selectAll', enabled: editFrags.canSelectAll },
+      { type: 'separator' },
+      { role: 'toggleDevTools' },
+    ])
+    menu.popup()
+  })
   const fileUrl = generateHtml(id, './renderer.js', mainFuncName)
   window.loadURL(fileUrl)
   window.on('closed', (): void => {

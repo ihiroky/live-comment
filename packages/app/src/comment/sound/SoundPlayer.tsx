@@ -40,6 +40,7 @@ const useStyles = makeStyles({
   item: {
     display: 'flex',
     flexWrap: 'nowrap',
+    fontSize: '13px',
   },
   command: {
     fontSize: 'small',
