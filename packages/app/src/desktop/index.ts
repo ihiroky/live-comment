@@ -185,7 +185,7 @@ function showCommentWindow(): void {
     return
   }
   commentWindow_ = createCommentWindow()
-  // Add switch to make this always-on-top
+  commentWindow_?.setMenu(null)
   commentWindow_?.on('closed', (): void => {
     commentWindow_ = null
     mainWindow_?.close()
