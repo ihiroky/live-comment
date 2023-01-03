@@ -49,7 +49,7 @@ contextBridge.exposeInMainWorld('comment', {
   request: (): Promise<SettingsV1> => {
     return ipcRenderer.invoke(CHANNEL_REQUEST_SCREEN_PROPS)
   },
-  send: (message: Message): Promise<void> => {
-    return ipcRenderer.invoke(CHANNEL_LOG_SEND, message)
+  send: (message: Message | null): Promise<void> => {
+    return message ? ipcRenderer.invoke(CHANNEL_LOG_SEND, message) : Promise.resolve()
   },
 })

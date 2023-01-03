@@ -27,7 +27,7 @@ declare global {
     }
     comment: {
       request: () => Promise<SettingsV1>
-      send: (m: Message) => Promise<void>
+      send: (m: Message | null) => Promise<void>
     }
   }
 }
@@ -117,7 +117,7 @@ export function settingsMain(): void {
   )
 }
 
-function login(apiUrl: string, settings: SettingsV1): Promise<Message> {
+function login(apiUrl: string, settings: SettingsV1): Promise<Message | null> {
   const message: AcnMessage = {
     type: 'acn',
     room: settings.general.room,
@@ -140,16 +140,12 @@ function login(apiUrl: string, settings: SettingsV1): Promise<Message> {
     res.ok
       ? res.json()
       : Promise.resolve({ type: 'error', error: 'ERROR', message: 'Fetch failed' })
-  ).then((m: Message): Message => {
+  ).then((m: Message): Message | null=> {
     if (!isAcnOkMessage(m)) {
       return m
     }
     window.localStorage.setItem('token', m.attrs.token)
-    const loginOk: CommentMessage = {
-      type: 'comment',
-      comment: 'Login successfully.',
-    }
-    return loginOk
+    return null
   })
 }
 

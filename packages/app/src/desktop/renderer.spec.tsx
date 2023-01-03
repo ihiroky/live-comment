@@ -67,10 +67,7 @@ describe('commentMain', () => {
       onError: expect.any(Function)
     })
     expect(window.localStorage.getItem('token')).toBe('tokenValue')
-    expect(window.comment.send).toBeCalledWith({
-      type: 'comment',
-      comment: 'Login successfully.',
-    })
+    expect(window.comment.send).toBeCalledWith(null)
   })
 
   test('Login failed', async () => {
