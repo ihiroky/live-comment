@@ -87,14 +87,16 @@ function getWorkArea(index: number | undefined): [electron.Rectangle, number] {
 }
 
 
-function applySettings(mainWindow: electron.BrowserWindow, settings: Settings.SettingsV1): void {
+function applyMainWindowSettings(settings: Settings.SettingsV1): void {
+  if (mainWindow_ === null) {
+    return
+  }
   const [workArea, actualScreen] = getWorkArea(settings.general.screen)
   if (actualScreen !== settings.general.screen) {
     settings.general.screen = actualScreen
   }
-  mainWindow.setBounds(workArea)
-  mainWindow.loadURL(`file://${path.resolve('resources/screen.html')}`)
-  mainWindow.webContents.setZoomFactor(Number(settings.general.zoom) / 100)
+  mainWindow_.setBounds(workArea)
+  mainWindow_.webContents.setZoomFactor(Number(settings.general.zoom) / 100)
 }
 
 async function asyncLoadSettings(): Promise<Settings.SettingsV1> {
@@ -119,9 +121,9 @@ async function asyncSaveSettings(_: electron.IpcMainInvokeEvent, settings: Setti
     await fs.promises.writeFile(userConfigPath, contents, { encoding: 'utf8', mode: 0o600 })
     log.debug(`[asyncSaveSettings] Screen settings updated: ${contents}`)
 
-    if (mainWindow_) {
-      applySettings(mainWindow_, settings)
-    }
+    applyMainWindowSettings(settings)
+    mainWindow_?.reload()
+    commentWindow_?.reload()
   } catch (e: unknown) {
     log.warn('[asyncSaveSettings] Failed to save user configuration.', e)
   }
@@ -142,15 +144,8 @@ function showTrayIcon(): void {
 }
 
 async function asyncShowMainWindow(): Promise<void> {
-  // TODO toggle dev tools of main window from setting form
-
   // Needed not to be hidden by full screen apps on Mac.
   electron.app.dock?.hide()
-
-  if (mainWindow_ !== null) {
-    showCommentWindow()
-    return
-  }
 
   const settings = await asyncLoadSettings()
   mainWindow_ = new electron.BrowserWindow({
@@ -166,7 +161,8 @@ async function asyncShowMainWindow(): Promise<void> {
   })
   mainWindow_.setAlwaysOnTop(true, 'screen-saver')
   mainWindow_.setVisibleOnAllWorkspaces(true)
-  applySettings(mainWindow_, settings)
+  mainWindow_.loadURL(`file://${path.resolve('resources/screen.html')}`)
+  applyMainWindowSettings(settings)
   mainWindow_.setIgnoreMouseEvents(true)
   if (process.argv.includes('--open-dev-tools')) {
     mainWindow_.webContents.openDevTools({ mode: 'detach' })
@@ -174,10 +170,9 @@ async function asyncShowMainWindow(): Promise<void> {
   mainWindow_.on('closed', (): void => {
     mainWindow_ = null
   })
-  mainWindow_.on('show', (): void => {
+  mainWindow_.webContents.on('did-finish-load', (): void => {
     showCommentWindow()
   })
-  mainWindow_.show()
 }
 
 function showCommentWindow(): void {
