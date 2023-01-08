@@ -56,6 +56,7 @@ function createSubWindow(
   const window = new electron.BrowserWindow({
     width,
     height,
+    show: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -86,6 +87,9 @@ function createSubWindow(
   })
   const fileUrl = generateHtml(id, './renderer.js', mainFuncName)
   window.loadURL(fileUrl)
+  window.on('ready-to-show', (): void => {
+    window.show()
+  })
   window.on('closed', (): void => {
     delete openWindows_[id]
   })

@@ -91,7 +91,7 @@ const useStyles = makeStyles({
   sound: {
     overflow: 'hidden',
     resize: 'horizontal',
-    width: '100%',
+    width: 200,
     height: '100%',
     '& iframe': {
       overflow: 'auto',
@@ -222,7 +222,7 @@ export const Comment: FC<CommentProps> = (props: CommentProps): JSX.Element => {
   const checkBoxMeta: Array<{ label: string, name: string, key: OptionKey}> = [
     { label: 'Auto scroll', name: 'auto_scroll', key: 'autoScroll' },
     { label: 'Send with Ctrl+Enter', name: 'send_with_ctrl_enter', key: 'sendWithCtrlEnter' },
-    { label: 'Open DDD', name: 'open_ddd', key: 'openSoundPanel' },
+    { label: 'DDD', name: 'open_ddd', key: 'openSoundPanel' },
   ]
   return (
     <div className={style.App}>
