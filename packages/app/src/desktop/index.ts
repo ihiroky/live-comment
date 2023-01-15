@@ -7,7 +7,7 @@ import {
   registerAppRootProtocol,
   createSettingsWindow,
   createPollWindow,
-  createCommentWindow,
+  handleContextMenu,
 } from './subwindows'
 import {
   CHANNEL_REQUEST_SETTINGS,
@@ -25,6 +25,8 @@ let commentWindow_: electron.BrowserWindow | null = null
 
 // https://www.electronjs.org/docs/faq#my-apps-tray-disappeared-after-a-few-minutes
 let tray_: electron.Tray | null = null
+
+const PRELOAD_PATH = 'dist/desktop/preload.js'
 
 function moveToRootDirectory(): void {
   const exePath = electron.app.getPath('exe')
@@ -133,9 +135,10 @@ function showTrayIcon(): void {
   if (tray_) {
     tray_.destroy()
   }
+  const preloadPath = path.resolve(PRELOAD_PATH)
   const menu: electron.Menu = electron.Menu.buildFromTemplate([
-    { label: 'Settings', click: createSettingsWindow },
-    { label: 'Poll', click: createPollWindow },
+    { label: 'Settings', click: () => createSettingsWindow(preloadPath) },
+    { label: 'Poll', click: () => createPollWindow(preloadPath) },
     { label: 'Quit', role: 'quit' }
   ])
   tray_ = new electron.Tray(path.resolve('resources/icon.png'))
@@ -156,7 +159,7 @@ async function asyncShowMainWindow(): Promise<void> {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.resolve('dist/desktop/preload.js')
+      preload: path.resolve(PRELOAD_PATH),
     }
   })
   mainWindow_.setAlwaysOnTop(true, 'screen-saver')
@@ -179,13 +182,29 @@ function showCommentWindow(): void {
   if (commentWindow_ !== null) {
     return
   }
-  commentWindow_ = createCommentWindow()
-  commentWindow_?.setMenu(null)
-  commentWindow_?.on('closed', (): void => {
+
+  // Comment requires local storage. But a BrowserWindow created by subwindow.ts
+  // (using data schema) can't use local storage. So create BrowserWindow directly.
+  const window = new electron.BrowserWindow({
+    width: 800,
+    height: 600,
+    show: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.resolve(PRELOAD_PATH),
+    },
+  })
+  window.webContents.on('context-menu', handleContextMenu)
+  window.loadURL(`file://${path.resolve('resources/comment.html')}`)
+  window.setMenu(null)
+  window.on('ready-to-show', window.show)
+  window.on('closed', (): void => {
     commentWindow_ = null
     mainWindow_?.close()
     electron.app.quit()
   })
+  commentWindow_ = window
 }
 
 async function asyncGetDesktopThumnail(

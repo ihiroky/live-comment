@@ -1,0 +1,26 @@
+<html>
+ <head>
+  <title>Comment</title>
+  <style>
+html {
+  height: 100%;
+}
+body {
+  margin: 0px;
+  overflow: hidden;
+  height: 100%;
+}
+#root {
+  height: 100%;
+}
+  </style>
+ </head>
+ <body>
+  <div id="root"></div>
+  <script type="module" src="./renderer.js"></script>
+  <script type="module">
+import { commentMain } from './renderer.js';
+commentMain();
+  </script>
+ </body>
+</html>

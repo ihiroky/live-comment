@@ -1,4 +1,2 @@
 resources/**/*.js
 resources/**/*.css
-resources/**/*.html
-^resources/screen.html

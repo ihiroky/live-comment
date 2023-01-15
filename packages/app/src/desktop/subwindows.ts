@@ -1,30 +1,16 @@
 import electron from 'electron'
-import fs from 'fs'
 import path from 'path'
 import { getLogger } from '../common/Logger'
 
 const log = getLogger('Subwindows')
 const openWindows_: Record<string, electron.BrowserWindow> = {}
 const APP_ROOT_PROTOCOL = 'approot'
-const APP_ROOT_DIR = 'resources'
 
-function generateHtml(title: string, src: string, mainFunc: string): string {
-  const html = `<html>
+function getHtmlDataUrl(title: string, src: string, mainFunc: string): string {
+  return `data:text/html;charset=utf-8,
+<html>
  <head>
   <title>${title}</title>
-  <style>
-html {
-  height: 100%;
-}
-body {
-  margin: 0px;
-  overflow: hidden;
-  height: 100%;
-}
-#root {
-  height: 100%;
-}
-  </style>
  </head>
  <body>
   <div id="root"></div>
@@ -35,13 +21,28 @@ ${mainFunc}();
   </script>
  </body>
 </html>`
-  const filePath = path.resolve(`${APP_ROOT_DIR}/${mainFunc}.html`)
-  fs.writeFileSync(filePath, html)
-  return `file://${filePath}`
+}
+
+export function handleContextMenu(_: electron.Event, params: electron.ContextMenuParams): void {
+  const editFrags = params.editFlags
+  const menu = electron.Menu.buildFromTemplate([
+    { role: 'undo', enabled: editFrags.canUndo },
+    { role: 'redo', enabled: editFrags.canRedo },
+    { type: 'separator' },
+    { role: 'cut', enabled: editFrags.canCut },
+    { role: 'copy', enabled: editFrags.canCopy },
+    { role: 'paste', enabled: editFrags.canPaste },
+    { role: 'delete', enabled: editFrags.canDelete },
+    { role: 'selectAll', enabled: editFrags.canSelectAll },
+    { type: 'separator' },
+    { role: 'toggleDevTools' },
+  ])
+  menu.popup()
 }
 
 function createSubWindow(
   id: string,
+  preload: string,
   width: number,
   height: number,
   mainFuncName: string
@@ -56,39 +57,17 @@ function createSubWindow(
   const window = new electron.BrowserWindow({
     width,
     height,
-    show: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.resolve(`dist/desktop/preload.js`)
+      preload,
     },
   })
-  window.webContents.on('context-menu', (_: electron.Event, params: electron.ContextMenuParams): void => {
-    const editFrags = params.editFlags
-    const alwaysOnTop = window.isAlwaysOnTop()
-    const menu = electron.Menu.buildFromTemplate([
-      {
-        label: alwaysOnTop ? 'Cancel always on top' : 'Always on top',
-        click: () => window.setAlwaysOnTop(!alwaysOnTop)
-      },
-      { type: 'separator' },
-      { role: 'undo', enabled: editFrags.canUndo },
-      { role: 'redo', enabled: editFrags.canRedo },
-      { type: 'separator' },
-      { role: 'cut', enabled: editFrags.canCut },
-      { role: 'copy', enabled: editFrags.canCopy },
-      { role: 'paste', enabled: editFrags.canPaste },
-      { role: 'delete', enabled: editFrags.canDelete },
-      { role: 'selectAll', enabled: editFrags.canSelectAll },
-      { type: 'separator' },
-      { role: 'toggleDevTools' },
-    ])
-    menu.popup()
-  })
-  const fileUrl = generateHtml(id, './renderer.js', mainFuncName)
-  window.loadURL(fileUrl)
-  window.on('ready-to-show', (): void => {
-    window.show()
+  const dataUrl = getHtmlDataUrl(id, './renderer.js', mainFuncName)
+  window.webContents.on('context-menu', handleContextMenu)
+  window.loadURL(dataUrl, {
+    // https://github.com/electron/electron/issues/20700
+    baseURLForDataURL: `${APP_ROOT_PROTOCOL}://resources/`,
   })
   window.on('closed', (): void => {
     delete openWindows_[id]
@@ -97,7 +76,6 @@ function createSubWindow(
   return window
 }
 
-// TODO remove since unused
 export function registerAppRootProtocol(): void {
   if (!electron.app.isReady) {
     throw new Error('app is not ready.')
@@ -113,14 +91,10 @@ export function registerAppRootProtocol(): void {
   )
 }
 
-export function createSettingsWindow(): void {
-  createSubWindow('SettingsForm', 600, 700, 'settingsMain')
+export function createSettingsWindow(preload: string): void {
+  createSubWindow('SettingsForm', preload, 600, 700, 'settingsMain')
 }
 
-export function createPollWindow(): void {
-  createSubWindow('Poll', 900, 700, 'pollMain')
-}
-
-export function createCommentWindow(): electron.BrowserWindow | null {
-  return createSubWindow('Comment', 800, 600, 'commentMain')
+export function createPollWindow(preload: string): void {
+  createSubWindow('Poll', preload, 900, 700, 'pollMain')
 }
