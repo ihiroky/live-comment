@@ -1,6 +1,6 @@
 {
   "name": "live-comment",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "private": true,
   "main": "dist/desktop/index.js",
   "homepage": "./",
