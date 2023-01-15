@@ -23,7 +23,9 @@ jobs:
         run: |
           yarn --cwd packages/app/ clean
           yarn --cwd packages/app/ build-extension
-          test "${GITHUB_REF#refs/heads/}" != "main" && (cd packages/app/ && node scripts/beta_manifest.mjs) || echo 'No manifest modification.'
+          [[ "${GITHUB_REF##*/}" =~ v[0-9]+\.[0-9]+\.[0-9] ]] \
+            && echo 'No manifest modification.' \
+            || (cd packages/app/ && node scripts/beta_manifest.mjs)
         env:
           LC_WS_URL: wss://${{ inputs.host }}/app
           LC_API_URL: https://${{ inputs.host }}/api
