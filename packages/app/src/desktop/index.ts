@@ -26,7 +26,7 @@ let commentWindow_: electron.BrowserWindow | null = null
 // https://www.electronjs.org/docs/faq#my-apps-tray-disappeared-after-a-few-minutes
 let tray_: electron.Tray | null = null
 
-const PRELOAD_PATH = path.resolve('dist/desktop/preload.js')
+const PRELOAD_PATH = 'dist/desktop/preload.js'
 
 function moveToRootDirectory(): void {
   const exePath = electron.app.getPath('exe')
@@ -135,9 +135,10 @@ function showTrayIcon(): void {
   if (tray_) {
     tray_.destroy()
   }
+  const preloadPath = path.resolve(PRELOAD_PATH)
   const menu: electron.Menu = electron.Menu.buildFromTemplate([
-    { label: 'Settings', click: () => createSettingsWindow(PRELOAD_PATH) },
-    { label: 'Poll', click: () => createPollWindow(PRELOAD_PATH) },
+    { label: 'Settings', click: () => createSettingsWindow(preloadPath) },
+    { label: 'Poll', click: () => createPollWindow(preloadPath) },
     { label: 'Quit', role: 'quit' }
   ])
   tray_ = new electron.Tray(path.resolve('resources/icon.png'))
@@ -158,7 +159,7 @@ async function asyncShowMainWindow(): Promise<void> {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: PRELOAD_PATH,
+      preload: path.resolve(PRELOAD_PATH),
     }
   })
   mainWindow_.setAlwaysOnTop(true, 'screen-saver')
@@ -191,7 +192,7 @@ function showCommentWindow(): void {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: PRELOAD_PATH,
+      preload: path.resolve(PRELOAD_PATH),
     },
   })
   window.webContents.on('context-menu', handleContextMenu)
