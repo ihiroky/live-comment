@@ -5,6 +5,7 @@ export type AppState = {
     key: number
     comment: string
     pinned: boolean
+    ts: number
   }[]
   polls: {
     key: number

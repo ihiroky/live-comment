@@ -80,12 +80,13 @@ export function useWebSocketOnMessage(
     let updateState = true
     if (isCommentMessage(message)) {
       const comment = message.comment
+      const ts = message.ts ?? 0
       const pinned = !!message.pinned
       if (comments.length === maxMessageCount) {
         comments.shift()
       }
       const key = counterRef.current++
-      comments.push({ key, comment, pinned })
+      comments.push({ key, comment, pinned, ts })
     } else if (isPollStartMessage(message)) {
       assertNotNullable(message.from, 'PollStartMessage.from')
       const key = counterRef.current++

@@ -35,10 +35,12 @@ function createAppState(autoScroll: boolean): AppState {
       key: 10,
       comment: 'comment1',
       pinned: true,
+      ts: 12345,
     }, {
       key: 20,
       comment: 'comment2',
       pinned: false,
+      ts: 23456,
     }],
     polls: [{
       key: 11,
@@ -219,7 +221,8 @@ test('onMessage which receives comment message add a comment entry', () => {
       {
         key: 0,
         comment: comment.comment,
-        pinned: false
+        pinned: false,
+        ts: 0,
       }
     ]
   })
@@ -259,7 +262,8 @@ test('onMessage drop old comment if count of comments exceeds maxMessageCount', 
       {
         key: 0,
         comment: comment.comment,
-        pinned: false
+        pinned: false,
+        ts: 0
       }
     ]
   })

@@ -24,6 +24,7 @@ export interface Message {
 export interface CommentMessage extends Message {
   type: 'comment'
   comment: string
+  ts?: number
   pinned?: boolean
 }
 
@@ -55,6 +56,7 @@ export interface ErrorMessage extends Message {
 export interface ApplicationMessage extends Message {
   type: 'app'
   cmd: string
+  ts?: number
 }
 
 export function isCommentMessage(m: unknown): m is CommentMessage {
