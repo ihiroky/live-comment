@@ -125,8 +125,14 @@ const log = getLogger('App')
 type OptionKey = 'autoScroll' | 'sendWithCtrlEnter' | 'openSoundPanel'
 
 function getBooleanOptionValue(key: OptionKey, defalutValue: boolean): boolean {
-  const s = window.localStorage.getItem(key)
-  return s !== null ? !!s : defalutValue
+  try {
+    const s = window.localStorage.getItem(key)
+    return s !== null ? !!s : defalutValue
+  } catch (e: unknown) {
+    // Throws DOMException on accessing window.localStorage in data schema
+    return false
+  }
+
 }
 
 function setBooleanOptionValue(key: OptionKey, value: boolean): void {
