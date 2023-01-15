@@ -23,7 +23,7 @@ jobs:
         run: |
           yarn --cwd packages/app/ clean
           yarn --cwd packages/app/ build-extension
-          [[ "${GITHUB_REF##*/} =~ v[0-9]+\.[0-9]+\.[0-9] ]] \
+          [[ "${GITHUB_REF##*/}" =~ v[0-9]+\.[0-9]+\.[0-9] ]] \
             && echo 'No manifest modification.' \
             || (cd packages/app/ && node scripts/beta_manifest.mjs)
         env:
