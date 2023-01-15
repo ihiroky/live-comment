@@ -27,10 +27,12 @@ function createAppState(): AppState {
       key: 1,
       comment: 'comment1',
       pinned: true,
+      ts: 12345,
     }, {
       key: 2,
       comment: 'comment2',
       pinned: false,
+      ts: 23456,
     }],
     polls: [{
       key: 11,

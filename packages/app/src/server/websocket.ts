@@ -177,6 +177,7 @@ function onConnected(
       if (dropPlaySoundMessage(m, client)) {
         return
       }
+      m.ts = Date.now()
       broadcast(server, client, m)
     } else if (isAcnMessage(m)) {
       authenticate(client, m, configuration)

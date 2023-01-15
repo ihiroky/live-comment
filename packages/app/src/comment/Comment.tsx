@@ -117,6 +117,12 @@ const useStyles = makeStyles({
     padding: 10,
     margin: '10px 20px',
   },
+  messageTime: {
+    textAlign: 'right',
+    fontWeight: 'lighter',
+    fontSize: 'small',
+
+  },
   'options': {}
 })
 
@@ -132,7 +138,6 @@ function getBooleanOptionValue(key: OptionKey, defalutValue: boolean): boolean {
     // Throws DOMException on accessing window.localStorage in data schema
     return false
   }
-
 }
 
 function setBooleanOptionValue(key: OptionKey, value: boolean): void {
@@ -250,9 +255,12 @@ export const Comment: FC<CommentProps> = (props: CommentProps): JSX.Element => {
         <div className={style.main}>
           <div className={style['message-list']} ref={messageListDivRef}>
             {
-              state.comments.map(
-                (m: CommentState['comments'][number]) => <p key={m.key} className={style.message}>{m.comment}</p>
-              )
+              state.comments.map((m: CommentState['comments'][number]) => (
+                <p key={m.key} className={style.message}>
+                  <div>{m.comment}</div>
+                  <div className={style.messageTime}>{new Date(m.ts).toLocaleString()}</div>
+                </p>
+              ))
             }
             {
               state.polls.map(poll =>

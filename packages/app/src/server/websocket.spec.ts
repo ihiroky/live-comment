@@ -296,28 +296,36 @@ test('An unauthenticated session is closed if exists on boardcasting', () => {
 })
 
 test('Broardcast in the sender room', () => {
-  const { server, session } = callOnConnection()
-  expect(session.on).toBeCalledWith('message', expect.any(Function))
-  const onMessage = jest.mocked(session.on).mock.calls[0][1]
+  const now = Date.now
+  try {
+    Date.now = () => 1234567890
 
-  session.room = 'room'
-  const anotherRoomSession = new WebSocket('') as ClientSession
-  anotherRoomSession.room = 'another room'
-  const sameSession = new WebSocket('') as ClientSession
-  sameSession.room = session.room
-  const comment: CommentMessage = {
-    type: 'comment',
-    comment: 'some comment.',
+    const { server, session } = callOnConnection()
+    expect(session.on).toBeCalledWith('message', expect.any(Function))
+    const onMessage = jest.mocked(session.on).mock.calls[0][1]
+
+    session.room = 'room'
+    const anotherRoomSession = new WebSocket('') as ClientSession
+    anotherRoomSession.room = 'another room'
+    const sameSession = new WebSocket('') as ClientSession
+    sameSession.room = session.room
+    const comment: CommentMessage = {
+      type: 'comment',
+      comment: 'some comment.',
+      ts: 1234567890
+    }
+    server.clients = new Set([session, anotherRoomSession, sameSession])
+    onMessage.bind(session)(JSON.stringify(comment))
+
+    const sentComment = Object.assign({}, comment)
+    sentComment.from = session.id
+    const packet = JSON.stringify(sentComment)
+    expect(session.send).toBeCalledWith(packet, expect.any(Function))
+    expect(anotherRoomSession.send).not.toBeCalled()
+    expect(sameSession.send).toBeCalledWith(packet, expect.any(Function))
+  } finally {
+    Date.now = now
   }
-  server.clients = new Set([session, anotherRoomSession, sameSession])
-  onMessage.bind(session)(JSON.stringify(comment))
-
-  const sentComment = Object.assign({}, comment)
-  sentComment.from = session.id
-  const packet = JSON.stringify(sentComment)
-  expect(session.send).toBeCalledWith(packet, expect.any(Function))
-  expect(anotherRoomSession.send).not.toBeCalled()
-  expect(sameSession.send).toBeCalledWith(packet, expect.any(Function))
 })
 
 test('Drop PlaySoundMessage within 3000 ms', () => {
@@ -336,14 +344,20 @@ test('Drop PlaySoundMessage within 3000 ms', () => {
   }
   server.clients = new Set([session, anotherRoomSession, sameSession])
 
+  let firstTime = 0
+  let secondTime = 0
+
   // Within 3000 ms
   session.lastPlaySoundReceivedTime = 0
   withFakeTimers(() => {
     onMessage.bind(session)(JSON.stringify(playSound))
+    firstTime = Date.now()
     jest.advanceTimersByTime(3000)
     onMessage.bind(session)(JSON.stringify(playSound))
+    secondTime = Date.now()
   })
   const sentPlaySound = Object.assign({}, playSound)
+  sentPlaySound.ts = firstTime
   sentPlaySound.from = session.id
   const packet = JSON.stringify(sentPlaySound)
   expect(session.send).toHaveBeenNthCalledWith(1, packet, expect.any(Function))
@@ -352,11 +366,17 @@ test('Drop PlaySoundMessage within 3000 ms', () => {
   session.lastPlaySoundReceivedTime = 0
   withFakeTimers(() => {
     onMessage.bind(session)(JSON.stringify(playSound))
+    firstTime = Date.now()
     jest.advanceTimersByTime(3001)
     onMessage.bind(session)(JSON.stringify(playSound))
+    secondTime = Date.now()
   })
-  expect(session.send).toHaveBeenNthCalledWith(2, packet, expect.any(Function))
-  expect(session.send).toHaveBeenNthCalledWith(3, packet, expect.any(Function))
+  sentPlaySound.ts = firstTime
+  const packet2 = JSON.stringify(sentPlaySound)
+  expect(session.send).toHaveBeenNthCalledWith(2, packet2, expect.any(Function))
+  sentPlaySound.ts = secondTime
+  const packet3 = JSON.stringify(sentPlaySound)
+  expect(session.send).toHaveBeenNthCalledWith(3, packet3, expect.any(Function))
 })
 
 test('Write log and remove session from health check on error', () => {
