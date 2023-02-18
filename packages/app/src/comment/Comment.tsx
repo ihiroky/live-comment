@@ -144,10 +144,20 @@ function setBooleanOptionValue(key: OptionKey, value: boolean): void {
   window.localStorage.setItem(key, value ? 't' : '')
 }
 
+function isCtrlEnterDisabled(): boolean {
+  return /iPhone|iPad|Android/.test(navigator.userAgent)
+}
+
 const autoScroll = getBooleanOptionValue('autoScroll', true)
-const sendWithCtrlEnter = getBooleanOptionValue('sendWithCtrlEnter', true)
+const sendWithCtrlEnter = getBooleanOptionValue('sendWithCtrlEnter', !isCtrlEnterDisabled())
 const openSoundPanel = getBooleanOptionValue('openSoundPanel', true)
 
+const checkBoxMeta: Array<{ label: string, name: string, key: OptionKey}> = [
+  { label: 'Auto scroll', name: 'auto_scroll', key: 'autoScroll' },
+  { label: 'Send with Ctrl+Enter', name: 'send_with_ctrl_enter', key: 'sendWithCtrlEnter' },
+  { label: 'DDD', name: 'open_ddd', key: 'openSoundPanel' },
+]
+isCtrlEnterDisabled() && checkBoxMeta.splice(1, 1)
 export const Comment: FC<CommentProps> = (props: CommentProps): JSX.Element => {
   // TODO Divide state
   const token = useToken()
@@ -230,11 +240,6 @@ export const Comment: FC<CommentProps> = (props: CommentProps): JSX.Element => {
 
   const style = useStyles()
 
-  const checkBoxMeta: Array<{ label: string, name: string, key: OptionKey}> = [
-    { label: 'Auto scroll', name: 'auto_scroll', key: 'autoScroll' },
-    { label: 'Send with Ctrl+Enter', name: 'send_with_ctrl_enter', key: 'sendWithCtrlEnter' },
-    { label: 'DDD', name: 'open_ddd', key: 'openSoundPanel' },
-  ]
   return (
     <div className={style.App}>
       <div className={style.nav}>
