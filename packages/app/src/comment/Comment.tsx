@@ -58,25 +58,25 @@ const useStyles = makeStyles({
     borderRadius: 6,
     padding: 10,
     margin: 10,
-    minWidth: 300,
     width: '95%',
     height: 'calc(100% - 40px)', /* 40px: margin + padding */
+    display: 'flex',
+    flexDirection: 'column',
     '& form': {
-      width: '100%',
+      display: 'flex',
       margin: 0,
       '& input[type="text"]': {
+        flexGrow: 1,
         border: 'none',
         padding: 6,
         margin: '10px 0px',
         borderRadius: 6,
-        width: '85%'
+        width: '100%',
       },
       '& input[type="submit"]': {
-        width: '10%',
-        maxWidth: '5vw',
         border: 'none',
         padding: '6px 3px',
-        marginTop: 10,
+        marginTop: 'auto',
         marginBottom: 10,
         marginLeft: 3,
         borderRadius: 6,
@@ -88,7 +88,7 @@ const useStyles = makeStyles({
       }
     },
   },
-  sound: {
+  openSound: {
     overflow: 'hidden',
     resize: 'horizontal',
     width: 200,
@@ -103,19 +103,34 @@ const useStyles = makeStyles({
       resize: 'horizontal',
     },
   },
+  closeSound: {
+    top: 0,
+    left: 0,
+    width: 0,
+    height: 0,
+    '& iframe': {
+      border: 0,
+      margin: 0,
+      padding: 0,
+      width: 0,
+      height: 0,
+    },
+  },
   'message-list': {
-    /* 52px: send form height, 42px: option form height */
-    height: 'calc(100% - 52px - 42px)',
-    wordWrap: 'break-word',
-    overflowY: 'auto',
-    margin: 'auto',
+    flexGrow: 1,
   },
   message: {
     textAlign: 'left',
     backgroundColor: '#99ffcc',
     borderRadius: 6,
     padding: 10,
-    margin: '10px 20px',
+    margin: '10px 0px',
+  },
+  messageContent: {
+    marginLeft: 0,
+    marginRight: 0,
+    overflowWrap: 'anywhere',
+    hyphens: 'auto',
   },
   messageTime: {
     textAlign: 'right',
@@ -144,20 +159,20 @@ function setBooleanOptionValue(key: OptionKey, value: boolean): void {
   window.localStorage.setItem(key, value ? 't' : '')
 }
 
-function isCtrlEnterDisabled(): boolean {
+function isMobiles(): boolean {
   return /iPhone|iPad|Android/.test(navigator.userAgent)
 }
 
 const autoScroll = getBooleanOptionValue('autoScroll', true)
-const sendWithCtrlEnter = getBooleanOptionValue('sendWithCtrlEnter', !isCtrlEnterDisabled())
-const openSoundPanel = getBooleanOptionValue('openSoundPanel', true)
+const sendWithCtrlEnter = getBooleanOptionValue('sendWithCtrlEnter', !isMobiles())
+const openSoundPanel = getBooleanOptionValue('openSoundPanel', window.innerWidth >= 500)
 
 const checkBoxMeta: Array<{ label: string, name: string, key: OptionKey}> = [
   { label: 'Auto scroll', name: 'auto_scroll', key: 'autoScroll' },
   { label: 'Send with Ctrl+Enter', name: 'send_with_ctrl_enter', key: 'sendWithCtrlEnter' },
   { label: 'DDD', name: 'open_ddd', key: 'openSoundPanel' },
 ]
-isCtrlEnterDisabled() && checkBoxMeta.splice(1, 1)
+isMobiles() && checkBoxMeta.splice(1, 1)
 export const Comment: FC<CommentProps> = (props: CommentProps): JSX.Element => {
   // TODO Divide state
   const token = useToken()
@@ -250,21 +265,20 @@ export const Comment: FC<CommentProps> = (props: CommentProps): JSX.Element => {
         <div>
           { token.value ? (
             <>
-              { state.openSoundPanel ? (
-                <div className={style.sound}>
-                  <iframe ref={soundPanelRef} src={getSoundPageUrl(props.navigate)} allow="autoplay 'src'" />
-                </div>
-              ) : null }
-            </>) : null }
+              <div className={ state.openSoundPanel ? style.openSound : style.closeSound }>
+                <iframe ref={soundPanelRef} src={getSoundPageUrl(props.navigate)} allow="autoplay 'src'" />
+              </div>
+            </>) : null
+          }
         </div>
         <div className={style.main}>
           <div className={style['message-list']} ref={messageListDivRef}>
             {
               state.comments.map((m: CommentState['comments'][number]) => (
-                <p key={m.key} className={style.message}>
-                  <div>{m.comment}</div>
+                <div key={m.key} className={style.message}>
+                  <div className={style.messageContent}>{m.comment}</div>
                   <div className={style.messageTime}>{new Date(m.ts).toLocaleString()}</div>
-                </p>
+                </div>
               ))
             }
             {

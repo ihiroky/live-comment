@@ -65,7 +65,7 @@ export class SendCommentForm extends Component<PropsType, StateType> {
 
   render(): ReactNode {
     return (
-      <form onSubmit={(e) => { e.preventDefault() }}>
+      <form action='javascript:void()' onSubmit={(e) => { e.preventDefault() }}>
         <input
           type="text"
           value={this.state.comment}
