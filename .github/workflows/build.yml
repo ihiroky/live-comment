@@ -74,7 +74,7 @@ jobs:
           args: -c electron-builder-config.json
 
       - name: Archive artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: live-comment-for-${{ matrix.os }}-${{ github.run_number }}
           path: packages/app/dist/live-comment*
@@ -85,8 +85,8 @@ jobs:
     needs: check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
           cache: 'yarn'
@@ -137,7 +137,7 @@ jobs:
           asset_content_type: application/zip
 
       - name: Archive artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: server-apps-${{ github.run_number }}
           path: build/apps/
