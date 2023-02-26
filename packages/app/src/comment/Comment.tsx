@@ -58,7 +58,7 @@ const useStyles = makeStyles({
     borderRadius: 6,
     padding: 10,
     margin: 10,
-    width: '95%',
+    width: '100%',
     height: 'calc(100% - 40px)', /* 40px: margin + padding */
     display: 'flex',
     flexDirection: 'column',
