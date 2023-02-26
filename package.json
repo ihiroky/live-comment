@@ -1,6 +1,6 @@
 {
   "name": "live-comment",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "main": "index.js",
   "author": "Hiroki Itoh <ihiroky@gmail.com>",
   "license": "MIT",
