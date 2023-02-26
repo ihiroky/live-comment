@@ -65,6 +65,7 @@ const useStyles = makeStyles({
     '& form': {
       display: 'flex',
       margin: 0,
+      padding: '0px 10px',
       '& input[type="text"]': {
         flexGrow: 1,
         border: 'none',
@@ -74,6 +75,8 @@ const useStyles = makeStyles({
         width: '100%',
       },
       '& input[type="submit"]': {
+        width: '15%',
+        maxWidth: 75,
         border: 'none',
         padding: '6px 3px',
         marginTop: 'auto',
@@ -83,7 +86,6 @@ const useStyles = makeStyles({
       },
       '& $options': {
         width: '90%',
-        padding: '0px 4%',
         fontSize: 8,
       }
     },
@@ -118,6 +120,7 @@ const useStyles = makeStyles({
   },
   'message-list': {
     flexGrow: 1,
+    overflowY: 'auto',
   },
   message: {
     textAlign: 'left',
