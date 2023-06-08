@@ -10,5 +10,7 @@
     }
   ],
   "jwtPrivateKeyPath": "./config/DO_NOT_USE-jwt.key.sample",
-  "jwtPublicKeyPath":  "./config/DO_NOT_USE-jwt.key.pub.sample"
+  "jwtPublicKeyPath":  "./config/DO_NOT_USE-jwt.key.pub.sample",
+  "soundDirPath": "./config/sounds",
+  "corsOrigins": ["http://localhost:8888"]
 }

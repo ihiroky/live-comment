@@ -41,6 +41,7 @@ beforeEach(async () => {
     }],
     jwtPrivateKeyPath: `${__dirname}/../../config/DO_NOT_USE-jwt.key.sample`,
     jwtPublicKeyPath: `${__dirname}/../../config/DO_NOT_USE-jwt.key.pub.sample`,
+    corsOrigins: ['http://localhost:8888'],
   }))
   const argv = {
     configPath,

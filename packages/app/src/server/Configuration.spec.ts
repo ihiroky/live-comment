@@ -40,6 +40,7 @@ function writeConfig(filePath: string, cfg?: Record<string, unknown>): void {
     ],
     jwtPrivateKeyPath: path.join(testDataRoot, 'jwt.key'),
     jwtPublicKeyPath: path.join(testDataRoot, 'jwt.key.pub'),
+    corsOrigins: ['/https://w+\\.live-comment\\.ga$/', 'http://localhost:8888']
   }
   fs.writeFileSync(filePath, JSON.stringify(config))
   if (!cfg) {
@@ -203,6 +204,28 @@ test('jwtPublicKeyPath is not a file.', async () => {
     .toThrow(`${jwtPublicKeyPath} is not a file.`)
 })
 
+test('No corsOrigins', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
+  const soundFilePath = path.join(testDataRoot, 'soundFile.zip')
+  const checksumPath = path.join(testDataRoot, 'soundFile.zip.md5')
+  const jwtPrivateKeyPath = path.join(testDataRoot, 'jwt.key')
+  const jwtPublicKeyPath = path.join(testDataRoot, 'jwt.key.pub')
+  writeConfig(configPath, {
+    rooms: [{ room: ' room', hash: 'hash' }],
+    soundFilePath,
+    jwtPrivateKeyPath,
+    jwtPublicKeyPath,
+  })
+  createFile(soundFilePath)
+  createFile(checksumPath)
+  createFile(jwtPrivateKeyPath)
+  createFile(jwtPublicKeyPath)
+
+  await expect(loadConfigAsync(configPath, 0))
+    .rejects
+    .toThrow('corsOrigins is not defined.')
+})
+
 test('Default port is 8080', async () => {
   const configPath = path.join(testDataRoot, 'test.json')
   writeConfig(configPath)
@@ -281,4 +304,21 @@ test('Reload when timestamp gets newer', async () => {
   await sut.reloadIfUpdatedAsync()
 
   expect(sut['cache']).not.toBe(cache.content)
+})
+
+test('Get CORS origins regexp', async () => {
+  const configPath = path.join(testDataRoot, 'test.json')
+  writeConfig(configPath)
+  argv.configPath = configPath
+
+  const cache = await loadConfigAsync(configPath, 0)
+  assertNotNullable(cache.content, 'cache.content must be defined.')
+  const sut = new Configuration(argv, cache.content, cache.stat.mtimeMs)
+
+  if (!(sut.corsOrigins[0] instanceof RegExp)) {
+    throw new Error('sut.corsOrigins[0] is not a RegExp.')
+  }
+  expect(sut.corsOrigins[0].source).toBe('https:\\/\\/w+\\.live-comment\\.ga$')
+  expect(sut.corsOrigins[1]).toBe('http://localhost:8888')
+  expect(sut.corsOrigins).toHaveLength(2)
 })
