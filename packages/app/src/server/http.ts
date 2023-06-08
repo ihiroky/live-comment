@@ -324,7 +324,8 @@ export function createApp(configuration: Configuration): Express {
   const app = express()
   const acnAznMiddleware = acnAznMiddlewareBase.bind(null, configuration)
   const corsMiddleware = cors({
-    origin: [/https:\/\/\w+\.live-comment.ga$/, 'http://localhost:8888']
+    //origin: [/https:\/\/\w+\.live-comment.ga$/, 'http://localhost:8888']
+    origin: configuration.corsOrigins
   })
 
   app.use(express.json())

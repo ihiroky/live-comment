@@ -25,6 +25,7 @@ type ServerConfig = Readonly<{
   jwtPrivateKey: Buffer
   jwtPublicKeyPath: string
   jwtPublicKey: Buffer
+  corsOrigins: string[]
 }>
 
 const log = getLogger('Configuration')
@@ -59,6 +60,11 @@ async function buildConfig(json: string): Promise<ServerConfig> {
 
   const jwtPrivateKey = await fsp.readFile(c.jwtPrivateKeyPath)
   const jwtPublicKey = await fsp.readFile(c.jwtPublicKeyPath)
+
+  if (!Array.isArray(c.corsOrigins) || c.corsOrigins.length === 0) {
+    throw new Error('corsOrigins is not defined.')
+  }
+
   return {
     ...c,
     jwtPrivateKey,
@@ -125,5 +131,11 @@ export class Configuration {
 
   get soundDirPath(): string {
     return this.cache.soundDirPath
+  }
+
+  get corsOrigins(): (RegExp | string)[] {
+    return this.cache.corsOrigins.map((o) => {
+      return (o.startsWith('/') && o.endsWith('/')) ? new RegExp(o.slice(1, -1)) : o
+    })
   }
 }
