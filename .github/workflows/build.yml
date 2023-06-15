@@ -148,10 +148,4 @@ jobs:
     needs: check
     uses: ./.github/workflows/build-extension.yml
     with:
-      host: g1.live-comment.ga
-
-  browser-extension-for-o1:
-    needs: check
-    uses: ./.github/workflows/build-extension.yml
-    with:
-      host: o1.live-comment.ga
+      host: rokiscreen.is.techtouch.jp
