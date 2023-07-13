@@ -1,5 +1,5 @@
 import { useExistsSounds, usePlaySound, useSoundMetadata } from './hooks'
-import { renderHook, act } from '@testing-library/react-hooks'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import { get, update, getAll } from './db'
 import { Zlib } from 'unzip'
 import { basename } from 'path'
@@ -62,7 +62,7 @@ describe('useExistsSounds', () => {
       text: () => Promise.resolve('cs')
     } as Response)
 
-    const { result, waitFor } = renderHook(() => useExistsSounds('https://host/', 'token', 'room'))
+    const { result } = renderHook(() => useExistsSounds('https://host/', 'token', 'room'))
     await waitFor(() => expect(result.current).toBe(true))
 
     expect(result.current).toBe(true)
@@ -234,14 +234,14 @@ describe('useExistsSounds', () => {
 
 describe('useSoundMetadata', () => {
   test('Empty if no sound', async () => {
-    const { result, waitFor } = renderHook(() => useSoundMetadata('room', false))
+    const { result } = renderHook(() => useSoundMetadata('room', false))
 
     await waitFor(() => expect(result.current).toEqual([]))
   })
 
   test('No stored data', async () => {
     jest.mocked(getAll).mockResolvedValue([])
-    const { result, waitFor } = renderHook(() => useSoundMetadata('room', true))
+    const { result } = renderHook(() => useSoundMetadata('room', true))
 
     await waitFor(() => expect(result.current).toEqual([{}, {}]))
   })
@@ -254,7 +254,7 @@ describe('useSoundMetadata', () => {
       return Promise.resolve([obj0, obj1, obj2])
     })
 
-    const { result, waitFor } = renderHook(() => useSoundMetadata('room', true))
+    const { result } = renderHook(() => useSoundMetadata('room', true))
 
     await waitFor(() => expect(result.current).toEqual([
       {
@@ -277,7 +277,7 @@ describe('useSoundMetadata', () => {
       return Promise.resolve([obj1])
     })
 
-    const { result, waitFor } = renderHook(() => useSoundMetadata('room', true))
+    const { result } = renderHook(() => useSoundMetadata('room', true))
 
     await waitFor(() => expect(result.current).toEqual([
       {
@@ -319,7 +319,7 @@ describe('usePlaySound', () => {
 
   test('No sound', async () => {
     jest.mocked(get).mockResolvedValue(null)
-    const { result, waitFor } = renderHook(() => usePlaySound('room'))
+    const { result } = renderHook(() => usePlaySound('room'))
     const playSound = result.current
     const onFinish = jest.fn()
 
@@ -330,7 +330,7 @@ describe('usePlaySound', () => {
 
   test('Decode sound and play it', async () => {
     jest.mocked(get).mockResolvedValue({ data: new Uint8Array() })
-    const { result, waitFor } = renderHook(() => usePlaySound('room'))
+    const { result } = renderHook(() => usePlaySound('room'))
     const playSound = result.current
     const onFinish = jest.fn()
 
@@ -363,7 +363,7 @@ describe('usePlaySound', () => {
 
   test('Decode failed', async () => {
     jest.mocked(get).mockResolvedValue({ data: new Uint8Array() })
-    const { result, waitFor } = renderHook(() => usePlaySound('room'))
+    const { result } = renderHook(() => usePlaySound('room'))
     const playSound = result.current
     const onFinish = jest.fn()
 

@@ -1,5 +1,5 @@
 import { Alert, AlertColor, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, InputLabel, Slider, Snackbar, Tooltip } from '@mui/material'
-import { makeStyles } from '@mui/styles'
+import { styled } from '@mui/system'
 import { fetchWithTimeout, isObject } from '@/common/utils'
 import { FC, useState, useCallback, ChangeEvent } from 'react'
 
@@ -104,11 +104,9 @@ type Props = {
   volumeChanged: (volume: number) => void
 }
 
-const useStyles = makeStyles({
-  item: {
-    paddingLeft: 6,
-    paddingRight: 6,
-  },
+const ItemDiv = styled('div')({
+  paddingLeft: 6,
+  paddingRight: 6,
 })
 
 export const Preferences: FC<Props> = ({url, room, token, volume, volumeChanged}: Props): JSX.Element => {
@@ -188,17 +186,15 @@ export const Preferences: FC<Props> = ({url, room, token, volume, volumeChanged}
     setUploadStatus('uploading')
   }, [url, token, selectedFile])
 
-  const style = useStyles()
-
   return (
     <div className="">
-      <div className={style.item}>
+      <ItemDiv>
         <div>
           <InputLabel htmlFor="volume">Volume:</InputLabel>
           <Slider aria-label="Volume" id="volume" value={volume} onChange={onVolumeChanged} max={100} />
         </div>
-      </div>
-      <div className={style.item}>
+      </ItemDiv>
+      <ItemDiv>
         <div>
           <div>
             <InputLabel htmlFor="sound">Sound:</InputLabel>
@@ -226,7 +222,7 @@ export const Preferences: FC<Props> = ({url, room, token, volume, volumeChanged}
             </div>
           </div>
         </div>
-      </div>
+      </ItemDiv>
     </div>
   )
 }
