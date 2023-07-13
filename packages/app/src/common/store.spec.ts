@@ -131,7 +131,7 @@ describe('ChromeStore', () => {
           reject(new Error(`Unexpected key: ${k}`))
           return
         }
-        const ret = k.reduce<Record<string, unknown>>((a, c) => {
+        const ret = (k as string[]).reduce<Record<string, unknown>>((a, c) => {
           if (c === 'k0') {
             a[c] = { s: 's0', n: 123 }
           } else if (c === 'k1') {

@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import { ClientSession, createWebSocketServer } from './websocket'
 import WebSocket from 'ws'
 import { Configuration, loadConfigAsync } from './Configuration'
