@@ -26,10 +26,10 @@ jobs:
 
       - name: Run checks
         run: |
-          npx eslint --ext ts,tsx --max-warnings 0 packages/app/src
-          npx -w packages/app tsc -b
-          npx -w packages/esbuild-plugin-copy-files tsc -b
-          npx jest --reporters=default --reporters=jest-junit --coverage --coverageDirectory reports/coverage
+          npx -y eslint --ext ts,tsx --max-warnings 0 packages/app/src
+          npx -y -w packages/app tsc -b
+          npx -y -w packages/esbuild-plugin-copy-files tsc -b
+          npx -y jest --reporters=default --reporters=jest-junit --coverage --coverageDirectory reports/coverage
         shell: bash
 
       - name: Test report
@@ -70,8 +70,8 @@ jobs:
 
       - name: Build apps
         run: |
-          npx -w packages/app clean
-          npx -w packages/app build-desktop
+          npm -w packages/app run clean
+          npm -w packages/app run build-desktop
         env:
           NODE_ENV: production
 
@@ -104,15 +104,15 @@ jobs:
       - run: |
           npm c set fetch-retry-maxtimeout 180000
           npm ci
-          npm ci -w packages/app
-          npm ci -w packages/esbuild-plugin-copy-files
-          npm ci -w packages/unzip
+          npm -w packages/app ci
+          npm -w packages/esbuild-plugin-copy-files ci
+          npm -w packages/unzip ci
 
       - name: Build apps
         run: |
-          npx -w packages/app clean
-          npx -w packages/app build-comment
-          npx -w packages/app build-servers
+          npm -w packages/app run clean
+          npm -w packages/app run build-comment
+          npm -w packages/app run build-servers
 
       - name: Create release directory tree
         run: |

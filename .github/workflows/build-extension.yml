@@ -19,12 +19,13 @@ jobs:
           cache: 'npm'
       - run: |
           npm c set fetch-retry-maxtimeout 180000
+          npm ci
           npm ci -w packages/app
 
       - name: Build apps
         run: |
-          npx -w packages/app clean
-          npx -w packages/app build-extension
+          npm -w packages/app run clean
+          npm -w packages/app run build-extension
           test "${GITHUB_REF#refs/heads/}" != "main" && (cd packages/app/ && node scripts/beta_manifest.mjs) || echo 'No manifest modification.'
         env:
           LC_WS_URL: wss://${{ inputs.host }}/app
