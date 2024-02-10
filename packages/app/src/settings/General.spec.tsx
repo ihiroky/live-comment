@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import userEvent from '@testing-library/user-event'
 import { General } from './General'
@@ -191,7 +191,8 @@ test('Enable GPU acceleration update', async () => {
 test('Screen selector', async () => {
   const props = prepare()
 
-  render(<General {...props} screen={{ data: 0, error: false }} />)
+  //render(<General {...props} screen={{ data: 0, error: false }} />)
+  /*
   const screen0 = await waitFor(() => screen.getByRole('button', { name: 's0' }))
   userEvent.click(screen0)
 
@@ -201,6 +202,24 @@ test('Screen selector', async () => {
   expect(items[2].textContent).toBe('s2')
 
   userEvent.click(items[1])
+  await waitFor(async () => {
+    expect(props.onUpdate).toHaveBeenCalledWith('screen', '1', false)
+  })
+  */
+
+  const { rerender } = render(<General {...props} screen={{ data: 0, error: false }} />)
+  rerender(<General {...props} screen={{ data: 0, error: false }} />)
+  await new Promise(e => { setTimeout(e, 1000) })
+
+  const combobox = screen.getByRole('combobox', { name: /Screen/ })
+  userEvent.click(combobox)
+  await waitFor(() => {
+    screen.getByText('s0', { selector: 'li' })
+    screen.getByText('s1', { selector: 'li' })
+    screen.getByText('s2', { selector: 'li' })
+  })
+
+  userEvent.click(screen.getByText('s1', { selector: 'li' }))
   await waitFor(async () => {
     expect(props.onUpdate).toHaveBeenCalledWith('screen', '1', false)
   })

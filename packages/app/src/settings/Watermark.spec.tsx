@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import userEvent from '@testing-library/user-event'
 import { Watermark } from './Watermark'
@@ -127,16 +127,21 @@ test('Position selector', async () => {
   const props = createProps()
 
   render(<Watermark {...props} position={{ data: 'bottom-right', error: false }} />)
-  const p0 = await waitFor(() => screen.getByRole('button', { name: /bottom-right/ }))
-  userEvent.click(p0)
-  const listbox = within(screen.getByRole('listbox'))
-  const items = listbox.getAllByText(/(top|bottom)-(left|right)/)
 
-  expect(items[0].textContent).toBe('top-left')
-  expect(items[1].textContent).toBe('top-right')
-  expect(items[2].textContent).toBe('bottom-left')
-  expect(items[3].textContent).toBe('bottom-right')
-  // TODO Select an item
+  const combobox = screen.getByRole('combobox', { name: /Position/ })
+  userEvent.click(combobox)
+  await waitFor(() => {
+    screen.getByText('bottom-right', { selector: 'li' })
+    screen.getByText('bottom-left', { selector: 'li' })
+    screen.getByText('top-right', { selector: 'li' })
+    screen.getByText('top-left', { selector: 'li' })
+  })
+
+  userEvent.click(screen.getByText('bottom-left', { selector: 'li' }))
+  await waitFor(async () => {
+    expect(props.onUpdate).toHaveBeenCalledWith('position', 'bottom-left', false)
+  })
+
 })
 
 test('noComments update', async () => {

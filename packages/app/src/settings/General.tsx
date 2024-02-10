@@ -193,8 +193,9 @@ export const General: FC<GeneralProps> = (props: GeneralProps): JSX.Element => {
         <ScreenDiv>
           { screenOptions.length > 0 &&
             <div>
-              <InputLabel shrink htmlFor="screen-select">Screen</InputLabel>
+              <InputLabel shrink htmlFor="screen-select" id="screen-select-label">Screen</InputLabel>
               <Select
+                labelId='screen-select-label'
                 id="screen-select"
                 name="screen-name"
                 value={props.screen.data}
