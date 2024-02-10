@@ -20,7 +20,6 @@ jobs:
       - run: |
           npm c set fetch-retry-maxtimeout 180000
           npm ci
-          npm ci -w packages/app
 
       - name: Build apps
         run: |

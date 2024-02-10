@@ -20,16 +20,12 @@ jobs:
       - run: |
           npm c set fetch-retry-maxtimeout 180000
           npm ci
-          npm ci -w packages/app
-          npm ci -w packages/esbuild-plugin-copy-files
-          npm ci -w packages/unzip
 
       - name: Run checks
         run: |
           npm run lint
-          npx run test
-          npx -y -w packages/app tsc -b
-          npx -y -w packages/esbuild-plugin-copy-files tsc -b
+          npm run test
+          npm run typecheck
         shell: bash
 
       - name: Test report
@@ -64,9 +60,6 @@ jobs:
       - run: |
           npm c set fetch-retry-maxtimeout 180000
           npm ci
-          npm ci -w packages/app
-          npm ci -w packages/esbuild-plugin-copy-files
-          npm ci -w packages/unzip
 
       - name: Build apps
         run: |
@@ -104,9 +97,6 @@ jobs:
       - run: |
           npm c set fetch-retry-maxtimeout 180000
           npm ci
-          npm -w packages/app ci
-          npm -w packages/esbuild-plugin-copy-files ci
-          npm -w packages/unzip ci
 
       - name: Build apps
         run: |
