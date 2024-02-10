@@ -23,7 +23,7 @@ jest.mock('../store', () => {
       },
     },
     sync: () => Promise.resolve(),
-    update: jest.fn((k, v) => {
+    update: jest.fn((k: string, v) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (storeMock.cache[k] as any) = v
       callbacks.forEach(c => c())
