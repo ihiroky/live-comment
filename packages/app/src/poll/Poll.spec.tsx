@@ -1,5 +1,6 @@
 import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import '@testing-library/jest-dom'
 import { Poll } from './Poll'
 import { PollMessage } from './types'
 import { assertNotNullable } from '@/common/assert'
@@ -39,26 +40,41 @@ test('Edit, poll and display result', async () => {
   // Edit poll
   const titleInput = screen.getByPlaceholderText('Input title.')
   // Add description zero
-  userEvent.type(titleInput, 'A title')
+  userEvent.type(titleInput, '{selectall}{del}A title')
   const descInput0 = screen.getByPlaceholderText('Write a new entry description.')
   userEvent.type(descInput0, 'A description zero')
   const addButton0 = screen.getByRole('button', { name: 'Add' })
   userEvent.click(addButton0)
+  await waitFor(() => {
+    screen.getByText('A description zero')
+  })
   // Add description one
   const descInput1 = screen.getByPlaceholderText('Write a new entry description.')
   userEvent.type(descInput1, 'A description one')
   const addButton1 = screen.getByRole('button', { name: 'Add' })
   userEvent.click(addButton1)
+  await waitFor(() => {
+    screen.getByText('A description one')
+  })
   // Remove first entry (description zero)
   const delButtons = screen.getAllByRole('button', { name: 'Del' })
   userEvent.click(delButtons[0])
+  await waitFor(async () => {
+    expect(screen.queryByText('A description zero')).not.toBeInTheDocument()
+  })
   // Add description two
   const descInput2 = screen.getByPlaceholderText('Write a new entry description.')
   userEvent.type(descInput2, 'A description two')
   const addButton2 = screen.getByRole('button', { name: 'Add' })
   userEvent.click(addButton2)
-  const okButton = screen.getByRole('button', { name: 'OK' })
+  await waitFor(() => {
+    screen.getByText('A description two')
+  })
   // Go to poll
+  const okButton = screen.getByRole('button', { name: 'OK' })
+  await waitFor(() => {
+    expect(okButton).toBeEnabled()
+  })
   userEvent.click(okButton)
   expect(onCreated).toBeCalled()
 
@@ -113,6 +129,9 @@ test('Edit, poll and display result', async () => {
   expect(onPollClosed).toBeCalled()
 
   // Show result list
+  await waitFor(() => {
+    screen.getByRole('button', { name: 'Close' })
+  })
   const closeButton = screen.getByRole('button', { name: 'Close' })
   userEvent.click(closeButton)
   expect(onResultClosed).toBeCalled()

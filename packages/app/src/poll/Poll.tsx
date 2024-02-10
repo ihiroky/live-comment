@@ -1,8 +1,8 @@
 import { FC, useState, useCallback, useEffect } from 'react'
 import { Grid, Paper, InputBase } from '@mui/material'
-import makeStyles from '@mui/styles/makeStyles'
+import { styled } from '@mui/system'
 import { getLogger } from '@/common/Logger'
-import { getRandomInteger } from '@/common/utils'
+import { createRandomString, getRandomInteger } from '@/common/utils'
 import { Mode, Update, PollEntry } from './types'
 import { Choice } from './Choice'
 import { PollEdit } from './PollEdit'
@@ -23,44 +23,51 @@ type Props = {
   onResultClosed?: () => void
 }
 
-const usePollStyles = makeStyles(() => ({
-  root: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ui: {
-    width: '800px',
-    padding: '16px',
-    overflowWrap: 'normal',
-  },
-  title: {
-    width: '100%',
-    paddingBottom: '8px',
-    fontSize: '32px',
-    fontWeight: 'bolder',
-  },
-  description: {
-    width: '100%',
-    fontSize: '24px',
-    overflowWrap: 'break-word',
-  },
-  top: {
-    fontWeight: 'bold'
-  }
-}))
+const RootDiv = styled('div')({
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: '100%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+})
+
+const UiPaper = styled(Paper)({
+  width: '800px',
+  padding: '16px',
+  overflowWrap: 'normal',
+})
+
+const StyledInputBase = styled(InputBase)({
+  width: '100%',
+  paddingBottom: '8px',
+  fontSize: '32px',
+  fontWeight: 'bolder',
+})
+
+function ChoiceClassStyle({ descClassName, topClassName}: {
+  descClassName: string
+  topClassName: string
+}): JSX.Element {
+  const css =
+`.${descClassName} {
+  width: 100%;
+  fontSize: 24px;
+  overflowWrap: break-word;
+}
+.${topClassName} {
+  fontWeight: bold;
+}`
+  return <style>${css}</style>
+}
 
 export const Poll: FC<Props> = (props: Props): JSX.Element => {
   const [title, setTitle] = useState<string>(props.title)
   const [entries, setEntries] = useState<PollEntry[]>([])
   const [mode, setMode] = useState<Mode>('edit')
   const [data, setData] = useState<PollResultProps['data']>(null)
-  const classes = usePollStyles()
 
   const onRemoveEntry = useCallback((index: number): void => {
     entries.splice(index, 1)
@@ -123,13 +130,16 @@ export const Poll: FC<Props> = (props: Props): JSX.Element => {
     setData(newData)
   }, [entries, title])
 
+  const rn = createRandomString(6)
+  const descClassName = 'description-' + rn
+  const topClassName = 'top-' + rn
   return (
-    <div className={classes.root}>
-      <Paper className={classes.ui} elevation={3}>
+    <RootDiv>
+      <ChoiceClassStyle descClassName={descClassName} topClassName={topClassName} />
+      <UiPaper elevation={3}>
         <Grid container spacing={1}>
           <Grid item xs={12}>
-            <InputBase
-              className={classes.title}
+            <StyledInputBase
               autoFocus
               multiline
               readOnly={mode !== 'edit'}
@@ -141,15 +151,15 @@ export const Poll: FC<Props> = (props: Props): JSX.Element => {
           <PollResult mode={mode} data={data} onClosed={onClosed} onTypeChanged={onResultTypeChanged}>
             <Choice
               mode={mode}
-              descClass={classes.description}
-              topClass={classes.top}
+              descClass={descClassName}
+              topClass={topClassName}
               entries={entries}
               onRemoveEntry={onRemoveEntry}
             />
           </PollResult>
           <PollEdit
             mode={mode}
-            descClass={classes.description}
+            descClass={descClassName}
             entryCount={entries.length}
             onEntryAdded={onEntryAdded}
             onOk={onOk}
@@ -171,7 +181,7 @@ export const Poll: FC<Props> = (props: Props): JSX.Element => {
               : null
           }
         </Grid>
-      </Paper>
-    </div>
+      </UiPaper>
+    </RootDiv>
   )
 }
