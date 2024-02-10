@@ -7,7 +7,7 @@
   "author": "ihiroky@gmail.com",
   "license": "MIT",
   "scripts": {
-    "build": "yarn tsc --emitDeclarationOnly && node build.mjs"
+    "build": "npx tsc --emitDeclarationOnly && node build.mjs"
   },
   "devDependencies": {
     "@types/jest": "^28.1.4",

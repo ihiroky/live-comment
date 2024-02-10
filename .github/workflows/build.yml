@@ -16,14 +16,20 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: 'yarn'
-      - run: yarn install --frozen-lockfile --network-timeout 180000
+          cache: 'npm'
+      - run: |
+          npm c set fetch-retry-maxtimeout 180000
+          npm ci
+          npm ci -w packages/app
+          npm ci -w packages/esbuild-plugin-copy-files
+          npm ci -w packages/unzip
 
       - name: Run checks
         run: |
-          yarn eslint --ext ts,tsx --max-warnings 0 packages/app/src
-          yarn --cwd packages/app/ tsc -b
-          yarn jest --reporters=default --reporters=jest-junit --coverage --coverageDirectory reports/coverage
+          npx eslint --ext ts,tsx --max-warnings 0 packages/app/src
+          npx -w packages/app tsc -b
+          npx -w packages/esbuild-plugin-copy-files tsc -b
+          npx jest --reporters=default --reporters=jest-junit --coverage --coverageDirectory reports/coverage
         shell: bash
 
       - name: Test report
@@ -54,13 +60,18 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: 'yarn'
-      - run: yarn install --frozen-lockfile --network-timeout 180000
+          cache: 'npm'
+      - run: |
+          npm c set fetch-retry-maxtimeout 180000
+          npm ci
+          npm ci -w packages/app
+          npm ci -w packages/esbuild-plugin-copy-files
+          npm ci -w packages/unzip
 
       - name: Build apps
         run: |
-          yarn --cwd packages/app/ clean
-          yarn --cwd packages/app/ build-desktop
+          npx -w packages/app clean
+          npx -w packages/app build-desktop
         env:
           NODE_ENV: production
 
@@ -89,14 +100,19 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: 'yarn'
-      - run: yarn install --frozen-lockfile --network-timeout 180000
+          cache: 'npm'
+      - run: |
+          npm c set fetch-retry-maxtimeout 180000
+          npm ci
+          npm ci -w packages/app
+          npm ci -w packages/esbuild-plugin-copy-files
+          npm ci -w packages/unzip
 
       - name: Build apps
         run: |
-          yarn --cwd packages/app/ clean
-          yarn --cwd packages/app/ build-comment
-          yarn --cwd packages/app/ build-servers
+          npx -w packages/app clean
+          npx -w packages/app build-comment
+          npx -w packages/app build-servers
 
       - name: Create release directory tree
         run: |

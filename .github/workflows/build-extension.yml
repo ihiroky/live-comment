@@ -16,13 +16,15 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: 'yarn'
-      - run: yarn install --frozen-lockfile --network-timeout 180000
+          cache: 'npm'
+      - run: |
+          npm c set fetch-retry-maxtimeout 180000
+          npm ci -w packages/app
 
       - name: Build apps
         run: |
-          yarn --cwd packages/app/ clean
-          yarn --cwd packages/app/ build-extension
+          npx -w packages/app clean
+          npx -w packages/app build-extension
           test "${GITHUB_REF#refs/heads/}" != "main" && (cd packages/app/ && node scripts/beta_manifest.mjs) || echo 'No manifest modification.'
         env:
           LC_WS_URL: wss://${{ inputs.host }}/app
