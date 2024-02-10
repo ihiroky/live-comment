@@ -69,7 +69,8 @@ beforeEach(async () => {
       on: jest.fn(),
     } as any // eslint-disable-line @typescript-eslint/no-explicit-any
   })
-  jest.mocked(http.IncomingMessage).mockImplementation(() => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  jest.mocked(http.IncomingMessage).mockImplementation((): any => {
     return {
       socket: {
         remoteAddress: 'remoteAddress',

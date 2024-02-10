@@ -165,7 +165,8 @@ describe('useExistsSounds', () => {
         blob: () => Promise.resolve({ arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)) }),
       } as Response)
     const soundFiles = ['firework000.mp3', 'pegion000.wav', 'quiz000.mp3', 'quiz-correct000.mp3', 'quiz-wrong000.mp3', 'filenameonly.wav']
-    jest.mocked(Zlib.Unzip).mockImplementation(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    jest.mocked(Zlib.Unzip).mockImplementation((): any => {
       return {
         decompress(fn: string): Uint8Array { return decompressImpl(fn) },
         getFilenames(): string[] { return soundFiles.concat('manifest.json') },
@@ -314,7 +315,8 @@ describe('usePlaySound', () => {
     } as any // eslint-disable-line @typescript-eslint/no-explicit-any
     audioContext.createGain = jest.fn<typeof audioContext.createGain>(() => gain)
     audioContext.decodeAudioData = jest.fn<typeof audioContext.decodeAudioData>()
-    jest.mocked(global.AudioContext).mockImplementation(() => audioContext)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    jest.mocked(global.AudioContext).mockImplementation((): any => audioContext)
   })
 
   test('No sound', async () => {

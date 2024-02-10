@@ -43,7 +43,8 @@ describe('checkTargetTabStatus', () => {
         id: tabId,
       } as chrome.tabs.Tab,
     }
-    jest.mocked(store.cache).aggressive = true
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(jest.mocked(store.cache) as any).aggressive = true
 
     checkTargetTabStatus(message, sender)
 
@@ -69,7 +70,8 @@ describe('checkTargetTabStatus', () => {
         id: tabId,
       } as chrome.tabs.Tab,
     }
-    jest.mocked(store.cache).aggressive = false
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(jest.mocked(store.cache) as any).aggressive = false
 
     checkTargetTabStatus(message, sender)
 
@@ -90,8 +92,10 @@ describe('checkTargetTabStatus', () => {
         id: tabId,
       } as chrome.tabs.Tab,
     }
-    jest.mocked(store.cache).aggressive = false
-    jest.mocked(store.cache).showCommentTabs = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(jest.mocked(store.cache) as any).aggressive = false
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(jest.mocked(store.cache) as any).showCommentTabs = {
       tabIds: { 1: true }
     }
 
