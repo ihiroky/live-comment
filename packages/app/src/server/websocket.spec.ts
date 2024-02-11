@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import { ClientSession, createWebSocketServer } from './websocket'
 import WebSocket from 'ws'
 import { Configuration, loadConfigAsync } from './Configuration'
@@ -66,7 +69,8 @@ beforeEach(async () => {
       on: jest.fn(),
     } as any // eslint-disable-line @typescript-eslint/no-explicit-any
   })
-  jest.mocked(http.IncomingMessage).mockImplementation(() => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  jest.mocked(http.IncomingMessage).mockImplementation((): any => {
     return {
       socket: {
         remoteAddress: 'remoteAddress',

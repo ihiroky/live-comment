@@ -1,4 +1,4 @@
-import { plugins, onwarn, watch } from './c.js'
+import { plugins, onwarn, watch } from './c.mjs'
 import { mkdirSync } from 'fs'
 import { apps, toRollupCopyPluginFormat, entryPointsToOutFiles } from '../scripts/apps.mjs'
 import path from 'node:path'

@@ -1,5 +1,4 @@
-import { getByRole, getByText, queryByRole, render } from '@testing-library/react'
-import { renderHook } from '@testing-library/react-hooks'
+import { getByRole, getByText, queryByRole, render, renderHook, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
 import { Choice, useBlinkCountedUpEntries } from './Choice'
@@ -140,7 +139,7 @@ describe('blink', () => {
     }
 
     // requestAnimationFrame is not called entries increase.
-    const { rerender, waitFor } = renderHook(
+    const { rerender } = renderHook(
       (props) => useBlinkCountedUpEntries(props.entries, props.blinkClass),
       {
         initialProps: props

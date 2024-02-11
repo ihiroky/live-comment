@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import { Configuration, loadConfigAsync,  } from './Configuration'
 import fs from 'fs'
 import os from 'os'

@@ -8,7 +8,7 @@
   "scripts": {
     "lint": "eslint --ext ts,tsx --max-warnings 0 packages",
     "typecheck": "tsc -p packages/app/tsconfig.json --noEmit",
-    "test": "jest"
+    "test": "jest --reporters=default --reporters=jest-junit --coverage --coverageDirectory reports/coverage"
   },
   "workspaces": {
     "packages": [

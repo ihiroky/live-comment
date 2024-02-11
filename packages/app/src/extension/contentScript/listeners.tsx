@@ -1,6 +1,6 @@
 import { CommentEvent, Ping, Pong, TargetTab } from '../types'
 import { getLogger } from '@/common/Logger'
-import { makeStyles } from '@mui/styles'
+import { styled } from '@mui/system'
 import { createMessageSource, MessageScreen, PublishableMessageSource } from '@/screen/MessageScreen'
 import { ComponentProps, StrictMode } from 'react'
 import { createRoot, Root } from 'react-dom/client'
@@ -10,11 +10,9 @@ const log = getLogger('contentScriptListeners')
 
 const ROOT_ID = '_lc_root'
 
-const useStyles = makeStyles({
-  app: {
-    position: 'fixed',
-    inset: 0,
-  }
+const AppDiv = styled('div')({
+  position: 'fixed',
+  inset: 0,
 })
 
 function createRootElement(): Element | DocumentFragment {
@@ -43,12 +41,11 @@ function createRootElement(): Element | DocumentFragment {
 }
 
 function App(props: ComponentProps<typeof MessageScreen>): JSX.Element {
-  const styles = useStyles()
   return (
     <StrictMode>
-      <div className={styles.app}>
+      <AppDiv>
         <MessageScreen {...props} />
-      </div>
+      </AppDiv>
     </StrictMode>
   )
 }

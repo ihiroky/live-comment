@@ -1,4 +1,4 @@
-import { plugins, onwarn, watch } from './c.js'
+import { plugins, onwarn, watch } from './c.mjs'
 import { apps } from '../scripts/apps.mjs'
 
 export default [

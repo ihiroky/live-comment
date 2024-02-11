@@ -10,7 +10,7 @@ import {
   MenuItem,
   SelectChangeEvent,
 } from '@mui/material'
-import makeStyles from '@mui/styles/makeStyles'
+import { styled } from '@mui/system'
 import { GeneralSettings } from './types'
 import {
   TextFieldMetadata,
@@ -25,24 +25,25 @@ type ScreenProps = {
 
 const log = getLogger('settings/General')
 
-const useStyles = makeStyles({
-  root: {
-    width: '80vw',
-    margin: 'auto',
-    paddingTop: '24px',
-    paddingBottom: '24px',
-  },
-  fields: {
-    marginTop: '8px',
-    marginBottom: '8px',
-  },
-  screen: {
-    marginTop: '8px',
-    marginBottom: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  }
+const RootDiv = styled('div')({
+  width: '80vw',
+  margin: 'auto',
+  paddingTop: '24px',
+  paddingBottom: '24px',
+})
+
+const FieldsDiv = styled('div')({
+  marginTop: '8px',
+  marginBottom: '8px',
+})
+
+const ScreenDiv = styled('div')({
+  marginTop: '8px',
+  marginBottom: '8px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between'
+
 })
 
 
@@ -147,11 +148,9 @@ export const General: FC<GeneralProps> = (props: GeneralProps): JSX.Element => {
     props.onUpdate('gpu', String(e.target.checked), false)
   }
 
-  const classes = useStyles()
-
   return (
-    <div className={classes.root}>
-      <div className={classes.fields}>
+    <RootDiv>
+      <FieldsDiv>
         <Grid container spacing={1}>
           {props.useStandaloneSettings && (
             <>
@@ -191,11 +190,12 @@ export const General: FC<GeneralProps> = (props: GeneralProps): JSX.Element => {
           }
           label="Enable GPU Acceleration (restart me to enable)"
         />
-        <div className={classes.screen}>
+        <ScreenDiv>
           { screenOptions.length > 0 &&
             <div>
-              <InputLabel shrink htmlFor="screen-select">Screen</InputLabel>
+              <InputLabel shrink htmlFor="screen-select" id="screen-select-label">Screen</InputLabel>
               <Select
+                labelId='screen-select-label'
                 id="screen-select"
                 name="screen-name"
                 value={props.screen.data}
@@ -213,8 +213,8 @@ export const General: FC<GeneralProps> = (props: GeneralProps): JSX.Element => {
             style={{ paddingLeft: '10px' }}
             src={screenOptions.find((p: ScreenProps, i: number): boolean => i === props.screen.data)?.thumbnailDataUrl}
           />
-        </div>
-      </div>
-    </div>
+        </ScreenDiv>
+      </FieldsDiv>
+    </RootDiv>
   )
 }

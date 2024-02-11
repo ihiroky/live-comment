@@ -1,6 +1,6 @@
 import { FC, ChangeEvent, FormEvent, useState, useCallback, useEffect } from 'react'
 import { TextField, Button, Grid } from '@mui/material'
-import makeStyles from '@mui/styles/makeStyles'
+import { styled } from '@mui/system'
 import {
   AcnMessage,
   isAcnOkMessage,
@@ -22,36 +22,40 @@ interface TextFieldState {
   helperText: string
 }
 
-const useStyles = makeStyles({
-  root: {
-    minWidth: '300px',
-    maxWidth: '600px',
-    minHeight: '300px',
-    height: '600px',
-    margin: 'auto',
-    padding: '8px',
-  },
-  logo: {
-    display: 'flex',
-    margin: 'auto',
-  },
-  logoCredit: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    fontSize: 'x-small',
-  },
-  notification: {
-    color: 'red'
-  },
-  texts: {
-    padding: '8px'
-  },
-  options: {
-    padding: '8px'
-  },
-  buttons: {
-    padding: '8px'
-  },
+const RootForm = styled('form')({
+  minWidth: '300px',
+  maxWidth: '600px',
+  minHeight: '300px',
+  height: '600px',
+  margin: 'auto',
+  padding: '8px',
+})
+
+const LogoImg = styled('img')({
+  display: 'flex',
+  margin: 'auto',
+})
+
+const LogCreditDiv = styled('div')({
+  display: 'flex',
+  justifyContent: 'flex-end',
+  fontSize: 'x-small',
+})
+
+const NotificationDiv = styled('div')({
+  color: 'red'
+})
+
+const TextsDiv = styled('div')({
+  padding: '8px'
+})
+
+const OptionsDiv = styled('div')({
+  padding: '8px'
+})
+
+const ButtonsDiv = styled('div')({
+  padding: '8px'
 })
 
 const log = getLogger('LoginForm')
@@ -157,15 +161,11 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
     return room.helperText.length > 0 || password.helperText.length > 0
   }, [room.helperText, password.helperText])
 
-  const classes = useStyles()
   return (
-    <form className={classes.root} onSubmit={onSubmit}>
+    <RootForm onSubmit={onSubmit}>
       <div>
-        <img
-          className={classes.logo}
-          src="./logo.png"
-        />
-        <div className={classes.logoCredit}>
+        <LogoImg src="./logo.png"/>
+        <LogCreditDiv>
           Image by
           <a href="https://www.sasagawa-brand.co.jp/tada/detail.php?id=1145&cid=4&cid2=14"
             target="_blank"
@@ -174,10 +174,10 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
           <a href="https://github.com/ihiroky/live-comment"
             target="_blank"
             rel="noreferrer">Live Comment</a>.
-        </div>
+        </LogCreditDiv>
       </div>
-      <div className={classes.texts}>
-        <div role="status" className={classes.notification}>{notification.message}</div>
+      <TextsDiv>
+        <NotificationDiv role="status">{notification.message}</NotificationDiv>
         <TextField
           fullWidth
           label="Room"
@@ -199,20 +199,20 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
           margin="normal"
           onChange={onTextFieldChange}
         />
-      </div>
-      <div className={classes.options}>
+      </TextsDiv>
+      <OptionsDiv>
         <LabeledCheckbox
           label="Login enabled for 30 days" name="login_30_days" checked={keepLogin}
           onChange={setKeepLogin}
         />
-      </div>
-      <div className={classes.buttons}>
+      </OptionsDiv>
+      <ButtonsDiv>
         <Grid container alignItems="center" justifyContent="center">
           <Grid item>
             <Button variant="outlined" type="submit" disabled={hasError()}>Enter</Button>
           </Grid>
         </Grid>
-      </div>
-    </form>
+      </ButtonsDiv>
+    </RootForm>
   )
 }

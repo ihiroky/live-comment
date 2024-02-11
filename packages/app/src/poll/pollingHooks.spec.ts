@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-hooks'
+import { renderHook, waitFor } from '@testing-library/react'
 import { useAcnOk, useOnClick, useOnClose, useOnMessage, useOnOpen, useOnUnmount } from './pollingHooks'
 import { AcnMessage, AcnOkMessage, CommentMessage } from '@/common/Message'
 import { PollEntry, PollMessage, PollStartMessage, Progress, Update } from './types'
@@ -42,7 +42,7 @@ test('useAcnOk create defered to send PollStartMessage', async () => {
     rws: createReconnectableWebSocket(),
   }
 
-  const { result, waitFor } = renderHook((p) => useAcnOk(p.pollId, p.title, p.rws), {
+  const { result } = renderHook((p) => useAcnOk(p.pollId, p.title, p.rws), {
     initialProps: props
   })
   const defered = result.current
@@ -265,7 +265,7 @@ test('onUnmount clear progress and send finish message', async () => {
   const pollIdRef = {
     current: 2
   }
-  const { unmount, waitFor } = renderHook(p => useOnUnmount(p.progresssRef, p.rws, p.pollIdRef), {
+  const { unmount } = renderHook(p => useOnUnmount(p.progresssRef, p.rws, p.pollIdRef), {
     initialProps: {
       progresssRef,
       rws,

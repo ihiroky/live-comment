@@ -15,15 +15,17 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
-          cache: 'yarn'
-      - run: yarn install --frozen-lockfile --network-timeout 180000
+          node-version: 18.16.0
+          cache: 'npm'
+      - run: |
+          npm c set fetch-retry-maxtimeout 180000
+          npm ci
 
       - name: Run checks
         run: |
-          yarn eslint --ext ts,tsx --max-warnings 0 packages/app/src
-          yarn --cwd packages/app/ tsc -b
-          yarn jest --reporters=default --reporters=jest-junit --coverage --coverageDirectory reports/coverage
+          npm run lint
+          npm run test
+          npm run typecheck
         shell: bash
 
       - name: Test report
@@ -53,14 +55,16 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
-          cache: 'yarn'
-      - run: yarn install --frozen-lockfile --network-timeout 180000
+          node-version: 18.16.0
+          cache: 'npm'
+      - run: |
+          npm c set fetch-retry-maxtimeout 180000
+          npm ci
 
       - name: Build apps
         run: |
-          yarn --cwd packages/app/ clean
-          yarn --cwd packages/app/ build-desktop
+          npm -w packages/app run clean
+          npm -w packages/app run build-desktop
         env:
           NODE_ENV: production
 
@@ -88,15 +92,17 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
-          cache: 'yarn'
-      - run: yarn install --frozen-lockfile --network-timeout 180000
+          node-version: 18.16.0
+          cache: 'npm'
+      - run: |
+          npm c set fetch-retry-maxtimeout 180000
+          npm ci
 
       - name: Build apps
         run: |
-          yarn --cwd packages/app/ clean
-          yarn --cwd packages/app/ build-comment
-          yarn --cwd packages/app/ build-servers
+          npm -w packages/app run clean
+          npm -w packages/app run build-comment
+          npm -w packages/app run build-servers
 
       - name: Create release directory tree
         run: |
