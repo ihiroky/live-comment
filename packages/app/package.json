@@ -15,10 +15,10 @@
     "build": "node scripts/build.mjs",
     "watch": "node scripts/watch.mjs",
     "serve": "node scripts/serve.mjs",
-    "build-comment": "NODE_ENV=production rollup -c rollup/comment.js",
+    "build-comment": "NODE_ENV=production rollup -c rollup/comment.mjs",
     "build-desktop": "rollup -c rollup/desktop.mjs",
-    "build-servers": "NODE_ENV=production rollup -c rollup/server.js",
-    "build-extension": "NODE_ENV=production rollup -c rollup/extension.js",
+    "build-servers": "NODE_ENV=production rollup -c rollup/server.mjs",
+    "build-extension": "NODE_ENV=production rollup -c rollup/extension.mjs",
     "start-desktop": "electron . --open-dev-tools --verbose",
     "lint": "eslint --ext ts,tsx --max-warnings 0 src"
   },
