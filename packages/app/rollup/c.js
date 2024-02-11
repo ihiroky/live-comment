@@ -44,6 +44,9 @@ export function onwarn(warning, defaultHandler) {
   ) {
     return
   }
+  if (warning.code === 'MODULE_LEVEL_DIRECTIVE') {
+    return
+  }
   defaultHandler(warning)
 }
 
