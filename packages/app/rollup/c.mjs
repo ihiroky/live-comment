@@ -15,7 +15,9 @@ function hungup_workaround_for_github_actions_on_windows() {
     order: 'post',
     closeBundle() {
       if (os.platform() === 'win32' && !process.env.ROLLUP_WATCH) {
-        setTimeout(() => process.exit(0), 3000)
+        // eslint-disable-next-line no-console
+        console.info('Call process.exit(0) to prevent hungup on Windows')
+        setTimeout(() => process.exit(0))
       }
     },
   }
@@ -37,8 +39,12 @@ export function plugins(targets) {
     commonjs(),
     json(),
     process.env.NODE_ENV === 'production' && terser(),
-    hungup_workaround_for_github_actions_on_windows(),
   ]
+}
+
+export function plugins_for_last_process(targets) {
+  const p = plugins(targets)
+  return p.concat(hungup_workaround_for_github_actions_on_windows())
 }
 
 const ignoreWarnPath = [

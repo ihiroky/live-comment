@@ -1,4 +1,4 @@
-import { plugins, onwarn, watch, } from './c.mjs'
+import { plugins, plugins_for_last_process, onwarn, watch, } from './c.mjs'
 import { apps, entryPointsToOutFiles } from '../scripts/apps.mjs'
 
 const entryPoints = apps.desktop.entryPoints
@@ -34,7 +34,7 @@ export default [{
     format: 'es'
   },
   external: ['electron'],
-  plugins: plugins(),
+  plugins: plugins_for_last_process(), // Hung up workaround for github actions on Windows
   onwarn,
   watch,
 }]
