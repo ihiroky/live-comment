@@ -5,8 +5,21 @@ import { terser } from 'rollup-plugin-terser'
 import replace from '@rollup/plugin-replace'
 import json from '@rollup/plugin-json'
 import copy from 'rollup-plugin-copy'
+import os from 'node:os'
 
 export const env = process.env.NODE_ENV || 'development'
+
+function hungup_workaround_for_github_actions_on_windows() {
+  return {
+    name: 'windows_hugnup_workaround',
+    order: 'post',
+    closeBundle() {
+      if (os.platform() === 'win32' && !process.env.ROLLUP_WATCH) {
+        setTimeout(() => process.exit(0), 3000)
+      }
+    },
+  }
+}
 
 export function plugins(targets) {
   return  [
@@ -24,6 +37,7 @@ export function plugins(targets) {
     commonjs(),
     json(),
     process.env.NODE_ENV === 'production' && terser(),
+    hungup_workaround_for_github_actions_on_windows(),
   ]
 }
 
