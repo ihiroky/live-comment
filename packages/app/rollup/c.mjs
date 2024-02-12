@@ -5,7 +5,6 @@ import terser from '@rollup/plugin-terser'
 import replace from '@rollup/plugin-replace'
 import json from '@rollup/plugin-json'
 import copy from 'rollup-plugin-copy'
-import os from 'node:os'
 
 export const env = process.env.NODE_ENV || 'development'
 
@@ -16,7 +15,7 @@ function hungup_workaround_for_github_actions() {
     closeBundle() {
       if (!process.env.ROLLUP_WATCH) {
         // eslint-disable-next-line no-console
-        console.info('Call process.exit(0) to prevent hungup on Windows')
+        console.info('Call process.exit(0) to prevent hungup')
         setTimeout(() => process.exit(0))
       }
     },
