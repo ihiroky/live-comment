@@ -12,10 +12,10 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18.16.0
+          node-version: 20
           cache: 'npm'
       - run: |
           npm c set fetch-retry-maxtimeout 180000
@@ -78,7 +78,7 @@ jobs:
           args: -c electron-builder-config.json
 
       - name: Archive artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: live-comment-for-${{ matrix.os }}-${{ github.run_number }}
           path: packages/app/dist/live-comment*

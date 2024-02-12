@@ -7,10 +7,6 @@ function pad(name) {
   return name.padEnd(16)
 }
 
-function cmd(cmd) {
-  return path.join('node_modules', '.bin', cmd)
-}
-
 const streamingMain = 'dist/bundle/server/streaming.js'
 if (!fs.existsSync(streamingMain)) {
   fs.mkdirSync(path.dirname(streamingMain), { recursive: true, mode: 0o755 })
@@ -31,12 +27,14 @@ const commands = [{
 }, {
   name: pad('stream:serve'),
   prefixColor: 'magenta',
-  command: `${cmd('nodemon')} -w ${streamingMain} ${streamingMain} -- -l DEBUG -p 8080`,
+  // command: `${cmd('nodemon')} -w ${streamingMain} ${streamingMain} -- -l DEBUG -p 8080`,
+  command: `${process.execPath} --watch ${streamingMain} -l DEBUG -p 8080`,
 },
 {
   name: pad('api:serve'),
   prefixColor: 'green',
-  command: `${cmd('nodemon')} -w ${apiMain} ${apiMain} -- -l DEBUG -p 9080`,
+  // command: `${cmd('nodemon')} -w ${apiMain} ${apiMain} -- -l DEBUG -p 9080`,
+  command: `${process.execPath} --watch ${apiMain} -l DEBUG -p 9080`
 }]
 
 console.info(`Serving: ${commands.map(c => '\n ' + c.name.trim()).join('')}`)
