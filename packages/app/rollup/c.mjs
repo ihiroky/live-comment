@@ -9,12 +9,12 @@ import os from 'node:os'
 
 export const env = process.env.NODE_ENV || 'development'
 
-function hungup_workaround_for_github_actions_on_windows() {
+function hungup_workaround_for_github_actions() {
   return {
     name: 'windows_hugnup_workaround',
     order: 'post',
     closeBundle() {
-      if (os.platform() === 'win32' && !process.env.ROLLUP_WATCH) {
+      if (!process.env.ROLLUP_WATCH) {
         // eslint-disable-next-line no-console
         console.info('Call process.exit(0) to prevent hungup on Windows')
         setTimeout(() => process.exit(0))
@@ -44,7 +44,7 @@ export function plugins(targets) {
 
 export function plugins_for_last_process(targets) {
   const p = plugins(targets)
-  return p.concat(hungup_workaround_for_github_actions_on_windows())
+  return p.concat(hungup_workaround_for_github_actions())
 }
 
 const ignoreWarnPath = [
