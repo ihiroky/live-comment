@@ -13,12 +13,11 @@ type StateType = {
 }
 
 const FormInputText = styled('input')({
-  flexGrow: 1,
   border: 'none',
   padding: 6,
   margin: '10px 0px',
   borderRadius: 6,
-  width: '100%',
+  width: 'calc(99% - min(15%, 75px))',
 })
 
 const FormInputSubmit = styled('input')({

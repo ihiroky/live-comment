@@ -77,7 +77,7 @@ const FormOptions = styled('div')({
   fontSize: 8,
 })
 
-const OpenSoundDiv = styled('button')({
+const OpenSoundDiv = styled('div')({
   overflow: 'hidden',
   resize: 'horizontal',
   width: 200,
