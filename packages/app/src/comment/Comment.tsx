@@ -12,7 +12,7 @@ import { styled } from '@mui/system'
 import { useWebSocketOnOpen, useWebSocketOnClose, useWebSocketOnMessage } from './webSocketHooks'
 import { useOnPoll, useOnClosePoll } from './pollHooks'
 import { useToken } from './utils/token'
-import { getSoundPageUrl, gotoLoginPage } from './utils/pages'
+import { getSoundPageUrl, getToken, gotoLoginPage, removeToken } from './utils/pages'
 import { NavigateFunction } from 'react-router-dom'
 
 type CommentProps = {
@@ -204,12 +204,13 @@ export const Comment: FC<CommentProps> = (props: CommentProps): JSX.Element => {
     })
   }, [state])
   const backToLogin = useCallback((): void => {
-    window.localStorage.removeItem('token')
+    // TODO call logout
+    removeToken()
     gotoLoginPage(props.navigate)
   }, [props.navigate])
 
   useEffect((): (() => void) => {
-    const token = window.localStorage.getItem('token')
+    const token = getToken()
     if (!token) {
       gotoLoginPage(props.navigate)
     }

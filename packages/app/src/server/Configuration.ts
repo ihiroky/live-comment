@@ -18,7 +18,27 @@ function isRoom(obj: unknown): obj is ServerConfig['rooms'][number] {
   return typeof obj.room === 'string' && typeof obj.hash === 'string'
 }
 
-type ServerConfig = Readonly<{
+export type SamlConfig = {
+  cookieSecret: string
+  path: string
+  entryPoint: string
+  issuer: string      // Entity ID
+  certPaths: string[] // Path to IDP certificate
+  certs: string[]
+  decryption?: {
+    keyPath: string
+    key: string
+    certPath: string
+    cert: string
+  }
+  signing?: {
+    keyPath: string
+    key: string
+    certPaths: string[]
+    certs: string[]
+  }
+}
+export type ServerConfig = Readonly<{
   rooms: Room[]
   soundDirPath: string
   jwtPrivateKeyPath: string
@@ -26,11 +46,48 @@ type ServerConfig = Readonly<{
   jwtPublicKeyPath: string
   jwtPublicKey: Buffer
   corsOrigins: string[]
+  saml?: SamlConfig
 }>
 
 const log = getLogger('Configuration')
 
+function assertProperty(object: Record<string, string>, prop: string): void {
+  if (!object[prop] || object[prop].length === 0) {
+    throw new Error(`${prop} is empty or undefined.`)
+  }
+}
+
+async function readKeyOrCertAsync(json: Record<string, string>, pathPropName: string): Promise<string> {
+  assertProperty(json, pathPropName)
+  const path = json[pathPropName]
+  const stat = await fsp.stat(path)
+  if (!stat.isFile()) {
+    throw new Error(`${json[pathPropName]} is not a file.`)
+  }
+  const buffer = await fsp.readFile(path)
+  return buffer.toString()
+}
+
+async function readCertsAsync(json: Record<string, string>, pathsPropName: string): Promise<string[]> {
+  assertProperty(json, pathsPropName)
+  const paths = json[pathsPropName]
+  if (!Array.isArray(paths)) {
+    throw new Error(`${pathsPropName} is not an array.`)
+  }
+  for (const path of paths) {
+    const stat = await fsp.stat(path)
+    if (!stat.isFile()) {
+      throw new Error(`${path} is not a file.`)
+    }
+  }
+  const buffers = await Promise.all(paths.map(path => fsp.readFile(path)))
+  return buffers.map(buffer => buffer.toString())
+}
+
 async function buildConfig(json: string): Promise<ServerConfig> {
+
+  // Ensure completeness of ServerConfig in this function.
+
   const c = JSON.parse(json)
 
   if (!Array.isArray(c.rooms) || c.rooms.length === 0) {
@@ -42,35 +99,31 @@ async function buildConfig(json: string): Promise<ServerConfig> {
     }
   }
 
-  if (!c.jwtPrivateKeyPath) {
-    throw new Error('jwtPrivateKeyPath is not defined.')
-  }
-  const jwtPrivateKeyStat = await fsp.stat(c.jwtPrivateKeyPath)
-  if (!jwtPrivateKeyStat.isFile()) {
-    throw new Error(`${c.jwtPrivateKeyPath} is not a file.`)
-  }
-
-  if (!c.jwtPublicKeyPath) {
-    throw new Error('jwtPublicKeyPath is not defined.')
-  }
-  const jwtPublicKeyStat = await fsp.stat(c.jwtPublicKeyPath)
-  if (!jwtPublicKeyStat.isFile()) {
-    throw new Error(`${c.jwtPublicKeyPath} is not a file.`)
-  }
-
-  const jwtPrivateKey = await fsp.readFile(c.jwtPrivateKeyPath)
-  const jwtPublicKey = await fsp.readFile(c.jwtPublicKeyPath)
+  c.jwtPrivateKey = await readKeyOrCertAsync(c, 'jwtPrivateKeyPath')
+  c.jwtPublicKey = await readKeyOrCertAsync(c, 'jwtPublicKeyPath')
 
   if (!Array.isArray(c.corsOrigins) || c.corsOrigins.length === 0) {
     throw new Error('corsOrigins is not defined.')
   }
 
-  return {
-    ...c,
-    jwtPrivateKey,
-    jwtPublicKey,
+  if (c.saml) {
+    assertProperty(c.saml, 'cookieSecret')
+    assertProperty(c.saml, 'path')
+    assertProperty(c.saml, 'entryPoint')
+    assertProperty(c.saml, 'issuer')
+    c.saml.certs = await readCertsAsync(c.saml, 'certPaths')
+    if (c.saml.decryption) {
+      c.saml.decryption.key = await readKeyOrCertAsync(c.saml.decryption, 'keyPath')
+      c.saml.decryption.cert = await readKeyOrCertAsync(c.saml.decryption, 'certPath')
+    }
+    if (c.saml.signing) {
+      c.saml.signing.key = await readKeyOrCertAsync(c.saml.signing, 'keyPath')
+      c.saml.signing.certs = await readCertsAsync(c.saml.signing, 'certPaths')
+    }
   }
+  return c
 }
+
 export async function loadConfigAsync(
   path: string,
   lastUpdated: number
@@ -92,6 +145,19 @@ export class Configuration {
 
   readonly port: number
   readonly logLevel: LogLevel
+  readonly saml: {
+    cookieSecret: string
+    path: string
+    entryPoint: string
+    issuer: string
+    cert: string[]
+    privateKey?: string
+    decryptionPvk?: string
+
+    // for generating SP metadata
+    decryptionCert?: string
+    signingCert?: string[]
+  } | undefined
 
   constructor(argv: Argv, cache: ServerConfig, lastupdated: number) {
     log.setLevel(argv.loglevel)
@@ -100,6 +166,19 @@ export class Configuration {
     this.cache = cache
     this.port = argv.port
     this.logLevel = argv.loglevel
+    if (cache.saml) {
+      this.saml = {
+        cookieSecret: cache.saml.cookieSecret,
+        path: cache.saml.path,
+        entryPoint: cache.saml.entryPoint,
+        issuer: cache.saml.issuer,
+        cert: cache.saml.certs,
+        privateKey: cache.saml.signing?.key,
+        signingCert: cache.saml.signing?.certs,
+        decryptionPvk: cache.saml.decryption?.key,
+        decryptionCert: cache.saml.decryption?.cert,
+      }
+    }
   }
 
   async reloadIfUpdatedAsync(): Promise<void> {

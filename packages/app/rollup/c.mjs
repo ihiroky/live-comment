@@ -29,6 +29,7 @@ export function plugins(targets) {
       'process.env.NODE_ENV': `"${env}"`,
       'process.env.LC_WS_URL': `"${process.env.LC_WS_URL ?? ''}"`,
       'process.env.LC_API_URL': `"${process.env.LC_API_URL ?? ''}"`,
+      'process.env.LC_APP_URL': `"${process.env.LC_APP_URL ?? ''}"`,
       'preventAssignment': true
     }),
     nodeResolve({

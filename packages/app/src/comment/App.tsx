@@ -4,6 +4,7 @@ import { BrowserRouter, HashRouter, Navigate, Route, Routes, useNavigate } from 
 import { Comment } from './Comment'
 import { LoginForm } from './LoginForm'
 import { SoundPlayer } from './sound/SoundPlayer'
+import { SelectRoom } from './SelectRoom'
 
 const defaultWsUrl = process.env.NODE_ENV === 'production'
   ? (process.env.LC_WS_URL || `wss://${window.location.hostname}/app`)
@@ -31,10 +32,13 @@ const AppRoutes = (props: Props): JSX.Element => {
   const wsUrl = props.wsUrl || defaultWsUrl
   const apiUrl = props.apiUrl || defaultApiUrl
   const navigate = useNavigate()
+  // trim tail slash
+
   return (
     <Routes>
       <Route path='/' element={<Navigate replace to='/login' />} />
       <Route path='/login' element={<LoginForm apiUrl={apiUrl} navigate={navigate} />} />
+      <Route path='/rooms' element={<SelectRoom apiUrl={apiUrl} navigate={navigate} />} />
       { !isSoundPage ? (
         <Route path='/comment' element={
           <Comment url={wsUrl} maxMessageCount={1024} navigate={navigate} {...props} />

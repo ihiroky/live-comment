@@ -1,13 +1,16 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
+import { jest, test } from '@jest/globals'
 import { LoginForm } from './LoginForm'
 import { createHash } from '@/common/utils'
 import { assertNotNullable } from '@/common/assert'
-import { gotoCommentPage } from './utils/pages'
-import { jest, test } from '@jest/globals'
+import { login, gotoCommentPage, setToken, getToken, goto } from './utils/pages'
+import { serverConfigStore } from './utils/serverConfigStore'
+import { AcnOkMessage, ErrorMessage } from '@/common/Message'
 
 jest.mock('./utils/pages')
+jest.mock('./utils/serverConfigStore')
 
 afterEach(() => {
   window.localStorage.clear()
@@ -20,35 +23,37 @@ function getPasswordInput(): Element {
 }
 
 test('Room text field and its helper text', async () => {
-  render(<LoginForm apiUrl="" />)
-  const noInputHelperText = 'Input room name'
+  jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: false })
 
-  const helperText = screen.getByText(noInputHelperText)
-  expect(helperText).toBeVisible()
+  render(<LoginForm apiUrl="" />)
 
   const input = screen.getByRole('textbox')
   userEvent.type(input, 'r')
+  userEvent.type(input, '{selectall}{backspace}')
   await waitFor(() => {
-    expect(helperText).not.toBeVisible()
+    const helperText = screen.getByText(/Input room name/)
+    expect(helperText).toBeVisible()
   })
 })
 
 test('Password field and its helper text', async () => {
-  render(<LoginForm apiUrl="" />)
-  const noInputHelperText = 'Input password of the room'
+  jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: false })
 
-  const helperText = screen.getByText(noInputHelperText)
-  expect(helperText).toBeVisible()
+  render(<LoginForm apiUrl="" />)
 
   const input = document.querySelector('input[name=\'password\']')
   assertNotNullable(input, 'input')
   userEvent.type(input, 'p')
+  userEvent.type(input, '{selectall}{backspace}')
   await waitFor(() => {
-    expect(helperText).not.toBeVisible()
+    const helperText = screen.getByText(/Input password/)
+    expect(helperText).toBeVisible()
   })
 })
 
 test('Login button is disabled if room is empty', async () => {
+  jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: false })
+
   render(<LoginForm apiUrl="" />)
 
   const roomInput = screen.getByRole('textbox')
@@ -64,6 +69,8 @@ test('Login button is disabled if room is empty', async () => {
 })
 
 test('Login button is disabled if password is empty', async () => {
+  jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: false })
+
   render(<LoginForm apiUrl="" />)
 
   const roomInput = screen.getByRole('textbox')
@@ -80,18 +87,25 @@ test('Login button is disabled if password is empty', async () => {
 
 test('Go to comment page if valid token exists', async () => {
   // exp: 9999999999999
-  window.localStorage.setItem('token', 'ewogICJhbGciOiAiSFMyNTYiLAogICJ0eXAiOiAiSldUIgp9.ewogICJyb29tIjogInJvb20iLAogICJleHAiOiA5OTk5OTk5OTk5OTk5Cn0')
+  jest.mocked(getToken).mockReturnValue('ewogICJhbGciOiAiSFMyNTYiLAogICJ0eXAiOiAiSldUIgp9.ewogICJyb29tIjogInJvb20iLAogICJleHAiOiA5OTk5OTk5OTk5OTk5Cn0')
+  jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: false })
 
   render(<LoginForm apiUrl="" />)
 
-  await waitFor(() => { expect(gotoCommentPage).toBeCalled() })
+  await waitFor(() => {
+    expect(login).not.toBeCalled()
+    expect(gotoCommentPage).toBeCalled()
+  })
 })
 
 test('Show notification if message is stored', async () => {
   const message = 'notification'
   window.localStorage.setItem('App.notification', JSON.stringify({ message }))
+  jest.mocked(getToken).mockReturnValue(null)
+  jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: false })
 
-  render(<LoginForm apiUrl="" />)
+  const { rerender } = render(<LoginForm apiUrl="" />)
+  rerender(<LoginForm apiUrl="" />)
 
   await waitFor(() => {
     const status = screen.getByRole('status')
@@ -100,16 +114,14 @@ test('Show notification if message is stored', async () => {
 })
 
 test('Submit crednetail then OK', async () => {
-  window.fetch = jest.fn<typeof window.fetch>().mockResolvedValue({
-    ok: true,
-    json: () => Promise.resolve({
-      type: 'acn',
-      attrs: {
-        token: 'token'
-      }
-    })
-  } as Response)
-  render(<LoginForm apiUrl="" />)
+  jest.mocked(login).mockResolvedValue({
+    type: 'acn',
+    attrs: {
+      token: 'token'
+    }
+  } as AcnOkMessage)
+  jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: false })
+  render(<LoginForm apiUrl="apiUrl" />)
 
   const roomInput = screen.getByRole('textbox')
   const passwordInput = getPasswordInput()
@@ -120,20 +132,19 @@ test('Submit crednetail then OK', async () => {
 
   userEvent.click(button)
   await waitFor(() => {
+    expect(login).toBeCalledWith('apiUrl', 'r', createHash('p'), false)
     expect(gotoCommentPage).toBeCalled()
   })
 })
 
 test('Submit credential then failed', async () => {
   const message = 'message'
-  window.fetch = jest.fn<typeof window.fetch>().mockResolvedValue({
-    ok: true,
-    json: () => Promise.resolve({
-      type: 'error',
-      error: 'ACN_FAILED',
-      message,
-    })
-  } as Response)
+  jest.mocked(login).mockResolvedValue({
+    type: 'error',
+    error: 'ACN_FAILED',
+    message,
+  } as ErrorMessage)
+  jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: false })
   render(<LoginForm apiUrl="" />)
 
   const roomInput = screen.getByRole('textbox')
@@ -151,11 +162,10 @@ test('Submit credential then failed', async () => {
 })
 
 test('Submit credential and unexpected message', async () => {
-  const unexpected = { type: 'hoge' }
-  window.fetch = jest.fn<typeof window.fetch>().mockResolvedValue({
-    ok: true,
-    json: () => Promise.resolve(unexpected)
-  } as Response)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const unexpected = { type: 'hoge' } as any
+  jest.mocked(login).mockResolvedValue(unexpected)
+  jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: false })
   render(<LoginForm apiUrl="" />)
 
   const roomInput = screen.getByRole('textbox')
@@ -173,12 +183,15 @@ test('Submit credential and unexpected message', async () => {
 })
 
 test('Keep login', async () => {
-  const unexpected = { type: 'hoge' }
-  window.fetch = jest.fn<typeof window.fetch>().mockResolvedValue({
-    ok: true,
-    json: () => Promise.resolve(unexpected)
-  } as Response)
-  render(<LoginForm apiUrl="" />)
+  jest.mocked(login).mockResolvedValue({
+    type: 'acn',
+    attrs: {
+      token: 'token',
+    },
+  } as AcnOkMessage)
+  jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: false })
+  const navigate = jest.fn()
+  render(<LoginForm apiUrl="apiUrl" navigate={navigate} />)
 
   const roomInput = screen.getByRole('textbox')
   const passwordInput = getPasswordInput()
@@ -191,13 +204,22 @@ test('Keep login', async () => {
 
   userEvent.click(button)
   await waitFor(() => {
-    expect(global.fetch).toBeCalled()
-    const init = jest.mocked(global.fetch).mock.calls[0][1]
-    expect(init?.body).toBe(JSON.stringify({
-      type: 'acn',
-      room: 'r',
-      longLife: true,
-      hash: createHash('p')
-    }))
+    expect(login).toBeCalledWith('apiUrl', 'r', createHash('p'), true)
+    expect(setToken).toBeCalledWith('token')
+    expect(gotoCommentPage).toBeCalledWith(navigate)
+  })
+})
+
+test('SAML login', async () => {
+  jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: false })
+  const { rerender} = render(<LoginForm apiUrl="apiUrl" />)
+  jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: true })
+  rerender(<LoginForm apiUrl="apiUrl" />)
+
+  const ssoLoginButton = await waitFor(() => screen.getByText(/SSO Login/))
+
+  userEvent.click(ssoLoginButton)
+  await waitFor(() => {
+    expect(goto).toBeCalledWith('apiUrl/saml/login')
   })
 })

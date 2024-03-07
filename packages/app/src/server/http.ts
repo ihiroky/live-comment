@@ -1,15 +1,25 @@
 import path from 'path'
 import express, { Express, NextFunction, Request, Response, Router } from 'express'
+import session from 'express-session'
+import bodyParser from 'body-parser'
+import cookieParser from 'cookie-parser'
 import cors from 'cors'
+import passport from 'passport'
+import { Strategy as SamlStrategy, Profile, VerifiedCallback } from '@node-saml/passport-saml'
 import fs from 'node:fs'
 import fsp from 'node:fs/promises'
 import { createHash } from 'node:crypto'
-import { AcnMessage, AcnOkMessage,  ErrorMessage, isAcnMessage, } from '@/common/Message'
+import { AcnMessage, AcnOkMessage, AcnRoomsMessage, ErrorMessage, isAcnMessage, } from '@/common/Message'
 import { getLogger } from '@/common/Logger'
 import { Configuration } from './Configuration'
 import { sign, verify } from './jwt'
 import { JwtPayload, TokenExpiredError } from 'jsonwebtoken'
 import { openZipFile, SoundFileDefinition } from '@/sound/file'
+
+const COOKIE_NAME_ID = 'nid'
+const APP_URL = process.env.NODE_ENV === 'production'
+  ? (process.env.LC_APP_URL || `https://${window.location.hostname}`)
+  : 'http://localhost:8888'
 
 const log = getLogger('http')
 
@@ -65,6 +75,7 @@ function login(
           res.status(200).json(ok)
         })
         .catch ((reason: unknown): void => {
+          log.error(reason)
           const error: ErrorMessage = {
             type: 'error',
             error: 'ACN_FAILED',
@@ -84,7 +95,30 @@ function login(
   res.status(401).json(error)
 }
 
-function logout(_: Request, res: Response): void {
+function rooms(req: Request, res: Response, configuration: Configuration): void {
+  if (!req.isAuthenticated()) {
+    const error: ErrorMessage = {
+      type: 'error',
+      error: 'ACN_FAILED',
+      message: 'SAML login required.'
+    }
+    res.status(401).json(error)
+    return
+  }
+
+  // TODO Select rooms for nid
+  const message: AcnRoomsMessage = {
+    type: 'acn',
+    nid: req.cookies[COOKIE_NAME_ID], // TODO req.user ?
+    rooms: configuration.rooms,
+  }
+  res.status(200).json(message)
+}
+
+function logout(req: Request, res: Response, c: Configuration): void {
+  if (c.saml) {
+    req.logOut({}, () => undefined)
+  }
   res.status(200).json({})
 }
 
@@ -262,85 +296,201 @@ async function sendSoundFileChecksum(res: Response, c: Configuration): Promise<v
   fs.createReadStream(filePath).pipe(res)
 }
 
-function createRouter(configuration: Configuration): Router {
+function createRouter(configuration: Configuration, samlStrategy: SamlStrategy | undefined): Router {
   const router = express.Router()
-  router.post('/login', function(req: Request, res: Response): void {
+  const acnAznMiddleware = acnAznMiddlewareBase.bind(null, configuration)
+  const corsMiddleware = cors({
+    origin: configuration.corsOrigins
+  })
+  const corsMiddlewareAllowCredentials = cors({
+    origin: configuration.corsOrigins,
+    credentials: true,
+  })
+
+  const loginPath = '/login'
+  router.options(loginPath, corsMiddleware)
+  router.post(loginPath, corsMiddleware, function(req: Request, res: Response): void {
     login(req, res, configuration)
   })
-  router.get('/logout', function(req: Request, res: Response): void {
-    logout(req, res)
+  const logoutPath = '/logout'
+  router.options(logoutPath, corsMiddleware)
+  router.get(logoutPath, corsMiddleware, function(req: Request, res: Response): void {
+    logout(req, res, configuration)
   })
-  router.get('/sound/file', function(req: Request, res: Response): Promise<void> {
+  const soundFilePath = '/sound/file'
+  router.options(soundFilePath, corsMiddleware)
+  router.get(soundFilePath, acnAznMiddleware, corsMiddleware, function(req: Request, res: Response): Promise<void> {
     return sendSoundFile(res, configuration)
   })
-  router.post('/sound/file', function(req: Request, res: Response): Promise<void> {
+  router.post(soundFilePath, acnAznMiddleware, corsMiddleware, function(req: Request, res: Response): Promise<void> {
     return recvSoundFile(req, res, configuration)
   })
-  router.get('/sound/checksum', function(req: Request, res: Response): Promise<void> {
-    log.debug('GET /sound/checksum')
+  const soundChecksumPath = '/sound/checksum'
+  router.options(soundChecksumPath, corsMiddleware)
+  router.get(soundChecksumPath, acnAznMiddleware, corsMiddleware, function(req: Request, res: Response): Promise<void> {
     return sendSoundFileChecksum(res, configuration)
   })
+  if (configuration.saml) {
+    const redirects = {
+      successRedirect: `${APP_URL}/rooms`,
+      failureRedirect: `${APP_URL}/login`
+    }
+    router.get('/saml/login', passport.authenticate('saml', redirects))
+    router.post(
+      configuration.saml.path,
+      bodyParser.urlencoded({ extended: false }),
+      passport.authenticate('saml', { failureRedirect: redirects.failureRedirect }),
+      function(req: Request, res: Response): void {
+        res.redirect(redirects.successRedirect)
+      }
+    )
+    const roomsPath = '/rooms'
+    router.options(roomsPath, corsMiddlewareAllowCredentials)
+    router.get(roomsPath, corsMiddlewareAllowCredentials, function(req: Request, res: Response): void {
+      rooms(req, res, configuration)
+    })
+    if (samlStrategy) {
+      const samlMetadataPath = '/saml/metadata'
+      router.options(samlMetadataPath, corsMiddleware)
+      router.head(samlMetadataPath, corsMiddleware, function (_: Request, res: Response) {
+        res.status(200).end()
+      })
+      router.get(samlMetadataPath, corsMiddleware, function (_: Request, res: Response) {
+        if (!configuration.saml) {
+          res.status(404).json({}) // This should not happen.
+          return
+        }
+        const metadata = samlStrategy.generateServiceProviderMetadata(
+          configuration.saml.decryptionCert || null, configuration.saml.signingCert
+        )
+        res.status(200).type('application/xml').send(metadata)
+      })
+    }
+  }
+
   return router
 }
 
 async function acnAznMiddlewareBase(c: Configuration, req: Request, res: Response, next: NextFunction): Promise<void> {
-  if (req.url !== '/login') {
-    try {
-      const jwtPayload = await verifyToken(req.headers, c)
-      if (jwtPayload === null){
-        const error: ErrorMessage = {
-          type: 'error',
-          error: 'ACN_FAILED',
-          message: 'Token expired'
-        }
-        res.status(403).json(error)
-        return
-      }
-      if (!jwtPayload.room) {
-        const error: ErrorMessage = {
-          type: 'error',
-          error: 'ACN_FAILED',
-          message: 'No room'
-        }
-        res.status(401).json(error)
-        return
-      }
-      res.locals.jwtPayload = jwtPayload
-    } catch (e: unknown) {
-      log.debug(e)
+  try {
+    const jwtPayload = await verifyToken(req.headers, c)
+    if (jwtPayload === null){
       const error: ErrorMessage = {
         type: 'error',
         error: 'ACN_FAILED',
-        message: String(e)
+        message: 'Token expired'
+      }
+      res.status(403).json(error)
+      return
+    }
+    if (!jwtPayload.room) {
+      const error: ErrorMessage = {
+        type: 'error',
+        error: 'ACN_FAILED',
+        message: 'No room'
       }
       res.status(401).json(error)
       return
     }
+    res.locals.jwtPayload = jwtPayload
+  } catch (e: unknown) {
+    log.debug(e)
+    const error: ErrorMessage = {
+      type: 'error',
+      error: 'ACN_FAILED',
+      message: String(e)
+    }
+    res.status(401).json(error)
+    return
   }
   next()
 }
 
-export function createApp(configuration: Configuration): Express {
-  const app = express()
-  const acnAznMiddleware = acnAznMiddlewareBase.bind(null, configuration)
-  const corsMiddleware = cors({
-    //origin: [/https:\/\/\w+\.live-comment.ga$/, 'http://localhost:8888']
-    origin: configuration.corsOrigins
+function setupSamlIfRequired(app: Express, configuration: Configuration): SamlStrategy | undefined {
+  if (!configuration.saml) {
+    return
+  }
+
+  console.info('Configure saml settings.')
+
+  passport.serializeUser(function (user: Express.User, done: (err: unknown, id: Express.User) => void) {
+    done(null, user)
   })
+  passport.deserializeUser(function (user: Express.User, done: (err: unknown, id: Express.User) => void) {
+    done(null, user)
+  })
+
+  const samlLoginCallback = (req: Request, profile: Profile | null | undefined, done: VerifiedCallback): void => {
+    console.info('saml login', profile)
+    if (!profile) {
+      done(null)
+      return
+    }
+    req.res?.cookie(COOKIE_NAME_ID, profile.nameID, {
+      httpOnly: true,
+      secure: true,
+    })
+    done(null, { id: profile.nameID })
+  }
+  const samlLogoutCallback = (req: Request, profile: Profile | null | undefined, done: VerifiedCallback): void => {
+    console.info('saml logout', profile)
+    profile ? done(null, { id: profile.nameID }) : done(null)
+  }
+  // Use MultiSamlStrategy to support multiple IDPs (if I'm multitenant SaaS, for example)
+  const samlStrategy = new SamlStrategy(
+    {
+      ...configuration.saml,
+      audience: false,
+      passReqToCallback: true,
+    },
+    samlLoginCallback,
+    samlLogoutCallback,
+  )
+
+  passport.use(samlStrategy)
+
+  app.use(cookieParser())
+  app.use(session({
+    resave: true,
+    saveUninitialized: true,
+    secret: configuration.saml.cookieSecret,
+  }))
+  app.use(passport.initialize())
+  app.use(passport.session())
+
+  return samlStrategy
+}
+
+export function createApp(
+  configuration: Configuration,
+  preHook = (app: Express) => app,
+  postHook = (app: Express) => app
+): Express {
+  const app = preHook(express())
+
+  const samlStrategy = setupSamlIfRequired(app, configuration)
 
   app.use(express.json())
   // TODO Limit should be configurable
   app.use(express.raw({ limit: '5mb', type: 'application/zip' }))
-  app.use(corsMiddleware)
   app.use(function (_, res, next) {
     res.removeHeader('X-Powered-By')
     res.removeHeader('ETag')
     res.header('Cache-Control', 'private, no-cache, must-revalidate')
     next()
   })
-  app.use(acnAznMiddleware)
-  const router = createRouter(configuration)
-  app.options('*', corsMiddleware) // include before other routes
+  const router = createRouter(configuration, samlStrategy)
   app.use(router)
-  return app
+  return postHook(app)
 }
+
+/*
+$ openssl req -x509 -new -newkey rsa:4096 -nodes -keyout config/DO_NOT_USE-idp-key.pem -out config/DO_NOT_USE-idp-cert.pem -days 10950
+Country Name (2 letter code) [AU]:JP
+State or Province Name (full name) [Some-State]:
+Locality Name (eg, city) []:Some-Town
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:
+Organizational Unit Name (eg, section) []:section
+Common Name (e.g. server FQDN or YOUR name) []:test-idp
+Email Address []:test@example.com
+*/

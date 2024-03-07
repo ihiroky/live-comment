@@ -5,10 +5,9 @@ import { AcnMessage, ErrorMessage, isAcnOkMessage } from '@/common/Message'
 import { assertNotNullable } from '@/common/assert'
 import { LogLevels } from '@/common/Logger'
 import { createHash } from '@/common/utils'
-import { Express } from 'express'
 import request from 'supertest'
 import { Argv } from './argv'
-import { Configuration, loadConfigAsync } from './Configuration'
+import { Configuration, loadConfigAsync, ServerConfig, SamlConfig } from './Configuration'
 import { createApp, saveSoundFile } from './http'
 import { sign } from 'jsonwebtoken'
 import crypto from 'node:crypto'
@@ -17,15 +16,52 @@ import os from 'os'
 import path from 'path'
 import { test, expect, beforeEach, afterEach } from '@jest/globals'
 
-let app: Express
-let configPath: string
-let soundDirPath: string
-let config: Configuration
+let simpleContext: Awaited<ReturnType<typeof prepareApp>>
+let configJsonSaml: ActualConfig
+let samlContext: Awaited<ReturnType<typeof prepareApp>> | undefined
+
+type ActualConfig = Omit<ServerConfig, 'jwtPrivateKey' | 'jwtPublicKey' | 'saml'> | {
+  saml: Omit<SamlConfig, 'certs' | 'decryption' | 'signing'> | {
+    decryption: Omit<SamlConfig['decryption'], 'key' | 'cert'>
+    signing: Omit<SamlConfig['signing'], 'key' | 'certs'>
+  }
+}
+
+async function prepareApp(c: ActualConfig, soundDirPath: string, makeReqAuthenticated = false) {
+  fs.mkdirSync(soundDirPath, { recursive: true })
+  const configPath = path.join(os.tmpdir(), `http.spec.json.${crypto.randomInt(0, 99999)}` )
+  fs.writeFileSync(configPath, JSON.stringify(c))
+
+  const argv: Argv = {
+    configPath,
+    port: 8080,
+    loglevel: LogLevels.INFO,
+  }
+  const cache = await loadConfigAsync(argv.configPath, 0)
+  assertNotNullable(cache.content, ('cache.content must be defined.'))
+  const config = new Configuration(argv, cache.content, cache.stat.mtimeMs)
+  const app = makeReqAuthenticated
+    ? createApp(
+      config,
+      (app) => app.use((req, _, next) => {
+        // make req.isAuthenticated() return true
+        req['user'] = { user: 'hoge' }
+        next()
+      })
+    )
+    : createApp(config)
+
+  return { soundDirPath, configPath, config, app }
+}
+
+async function prepareSamlApp(makeReqAuthenticated: boolean) {
+  samlContext = await prepareApp(configJsonSaml, path.join(os.tmpdir(), 'httpUnitTestSaml'), makeReqAuthenticated)
+  return samlContext
+}
 
 beforeEach(async () => {
-  soundDirPath = path.join(os.tmpdir(), 'httpUnitTest')
-  fs.mkdirSync(soundDirPath, { recursive: true })
-  const configJson = {
+  const soundDirPath = path.join(os.tmpdir(), 'httpUnitTestSimple')
+  const configJson: ActualConfig = {
     rooms: [
       {
         room: "test",
@@ -37,31 +73,49 @@ beforeEach(async () => {
     jwtPublicKeyPath:  `${__dirname}/../../config/DO_NOT_USE-jwt.key.pub.sample`,
     corsOrigins: ['http://localhost:8888'],
   }
-  configPath = path.join(os.tmpdir(), 'http.spec.json')
-  fs.writeFileSync(configPath, JSON.stringify(configJson))
+  simpleContext = await prepareApp(configJson, soundDirPath)
 
-  const argv: Argv = {
-    configPath,
-    port: 8080,
-    loglevel: LogLevels.INFO,
+  configJsonSaml = {
+    ...configJson,
+    saml: {
+      cookieSecret: 'hoge',
+      path: '/saml',
+      entryPoint: 'https://example.com/saml',
+      issuer: 'https://example.com',
+      certPaths: [
+        `${__dirname}/../../config/DO_NOT_USE-idp-cert.pem`,
+      ],
+      decryption: {
+        keyPath: `${__dirname}/../../config/DO_NOT_USE-decryption-key.pem`,
+        certPath: `${__dirname}/../../config/DO_NOT_USE-decryption-cert.pem`,
+      },
+      signing: {
+        keyPath: `${__dirname}/../../config/DO_NOT_USE-signing-key.pem`,
+        certPaths: [
+          `${__dirname}/../../config/DO_NOT_USE-signing-cert.pem`,
+        ],
+      },
+    }
   }
-  const cache = await loadConfigAsync(argv.configPath, 0)
-  assertNotNullable(cache.content, ('cache.content must be defined.'))
-  config = new Configuration(argv, cache.content, cache.stat.mtimeMs)
-  app = createApp(config)
 })
 
 afterEach(() => {
-  if (configPath) {
-    fs.rmSync(configPath)
+  const close = (c: Awaited<ReturnType<typeof prepareApp>> | undefined): void => {
+    if (c && c.configPath) {
+      fs.rmSync(c.configPath)
+    }
+    if (c && c.soundDirPath) {
+      fs.rmSync(c.soundDirPath, { recursive: true })
+    }
   }
-  if (soundDirPath) {
-    fs.rmSync(soundDirPath, { recursive: true })
-  }
+
+  close(simpleContext)
+  close(samlContext)
+  samlContext = undefined
 })
 
 test('Invalid message on login', async () => {
-  const res = await request(app)
+  const res = await request(simpleContext.app)
     .post('/login')
     .send({ hoge: 'hoge' })
 
@@ -80,7 +134,7 @@ test('Login OK', async () => {
     room: 'test',
     hash: createHash('test'),
   }
-  const res = await request(app)
+  const res = await request(simpleContext.app)
     .post('/login')
     .send(acn)
 
@@ -100,7 +154,7 @@ test('Invalid room', async () => {
     room: 'test0',
     hash: createHash('test'),
   }
-  const res = await request(app)
+  const res = await request(simpleContext.app)
     .post('/login')
     .send(acn)
 
@@ -114,7 +168,7 @@ test('Invalid room', async () => {
 })
 
 test('No authorization header', async () => {
-  const res = await request(app)
+  const res = await request(simpleContext.app)
     .get('/sound/file')
     .send()
 
@@ -128,7 +182,7 @@ test('No authorization header', async () => {
 })
 
 test('No bearer', async () => {
-  const res = await request(app)
+  const res = await request(simpleContext.app)
     .get('/sound/file')
     .set('Authorization', 'hoge')
     .send()
@@ -143,6 +197,7 @@ test('No bearer', async () => {
 })
 
 test('No jwt payload', async () => {
+  const { config, app } = simpleContext
   const jwt = sign({}, config.jwtPrivateKey, { expiresIn: '0s', algorithm: 'ES256' })
   const res = await request(app)
     .get('/sound/file')
@@ -166,7 +221,7 @@ khBw71PYdkE5Be63+rEey7CH9/nEaUgdipqUWkbJCqu3TIZ2Kk59dzLarWPP8Pkr
 S5nTR/40W8nCmhl3axYknwxhleDjiYU=
 -----END EC PRIVATE KEY-----`
   const jwt = sign({}, ec384Key, { expiresIn: '10s', algorithm: 'ES384' })
-  const res = await request(app)
+  const res = await request(simpleContext.app)
     .get('/sound/file')
     .set('Authorization', `Bearer ${jwt}`)
     .send()
@@ -181,6 +236,7 @@ S5nTR/40W8nCmhl3axYknwxhleDjiYU=
 })
 
 test('No room', async () => {
+  const { config, app } = simpleContext
   const jwt = sign({ /* no room */ }, config.jwtPrivateKey, { expiresIn: '10s', algorithm: 'ES256' })
   const res = await request(app)
     .get('/sound/file')
@@ -197,6 +253,7 @@ test('No room', async () => {
 })
 
 test('No sound file returns 404', async () => {
+  const { config, app } = simpleContext
   const jwt = sign({ room: 'test' }, config.jwtPrivateKey, { expiresIn: '10s', algorithm: 'ES256' })
   const res = await request(app)
     .get('/sound/file')
@@ -208,6 +265,7 @@ test('No sound file returns 404', async () => {
 })
 
 test('Get sound file', async () => {
+  const { config, app, soundDirPath } = simpleContext
   const room = 'test'
   const jwt = sign({ room }, config.jwtPrivateKey, { expiresIn: '10s', algorithm: 'ES256' })
   const soundFilePath = path.join(soundDirPath, 'test.zip')
@@ -224,6 +282,7 @@ test('Get sound file', async () => {
 })
 
 test('No checksum file', async () => {
+  const { config, app } = simpleContext
   const jwt = sign({ room: 'test' }, config.jwtPrivateKey, { expiresIn: '10s', algorithm: 'ES256' })
   const res = await request(app)
     .get('/sound/checksum')
@@ -235,6 +294,7 @@ test('No checksum file', async () => {
 })
 
 test('Get checksum of sound file', async () => {
+  const { config, app, soundDirPath } = simpleContext
   const jwt = sign({ room: 'test' }, config.jwtPrivateKey, { expiresIn: '10s', algorithm: 'ES256' })
   const soundFilePath = path.join(soundDirPath, 'test.md5')
   fs.writeFileSync(soundFilePath, 'content')
@@ -247,7 +307,25 @@ test('Get checksum of sound file', async () => {
   expect(res.text).toBe('content')
 })
 
+test('Get checksum of sound file with out autorization header', async () => {
+  const { app, soundDirPath } = simpleContext
+  const soundFilePath = path.join(soundDirPath, 'test.md5')
+  fs.writeFileSync(soundFilePath, 'content')
+  const res = await request(app)
+    .get('/sound/checksum')
+    .send()
+
+  const error: ErrorMessage = {
+    type: 'error',
+    error: 'ACN_FAILED',
+    message: 'Error: No authorization header'
+  }
+  expect(res.statusCode).toBe(401)
+  expect(res.body).toEqual(error)
+})
+
 test('Post sound file', async () => {
+  const { config, soundDirPath, app } = simpleContext
   const room = 'test'
   const jwt = sign({ room }, config.jwtPrivateKey, { expiresIn: '10s', algorithm: 'ES256' })
   const soundFilePath = path.join(soundDirPath, 'test.zip')
@@ -268,6 +346,7 @@ test('Post sound file', async () => {
 })
 
 test('Post no application/zip', async () => {
+  const { config, soundDirPath, app } = simpleContext
   const room = 'test'
   const jwt = sign({ room }, config.jwtPrivateKey, { expiresIn: '10s', algorithm: 'ES256' })
   const soundFilePath = path.join(soundDirPath, 'test.zip')
@@ -286,7 +365,26 @@ test('Post no application/zip', async () => {
   expect(fs.existsSync(soundFilePath)).toBe(false)
 })
 
+test('Post sound file with out autorization header', async () => {
+  const { app } = simpleContext
+  const zipToUpload = fs.readFileSync(path.resolve(__dirname, '../../config/sounds/test.zip'))
+
+  const res = await request(app)
+    .post('/sound/file')
+    .type('application/zip')
+    .send(zipToUpload)
+
+  const error: ErrorMessage = {
+    type: 'error',
+    error: 'ACN_FAILED',
+    message: 'Error: No authorization header'
+  }
+  expect(res.statusCode).toBe(401)
+  expect(res.body).toEqual(error)
+})
+
 test('Post zip which contains invalid content', async () => {
+  const { config, soundDirPath, app } = simpleContext
   const room = 'test'
   const jwt = sign({ room }, config.jwtPrivateKey, { expiresIn: '10s', algorithm: 'ES256' })
   const soundFilePath = path.join(soundDirPath, 'test.zip')
@@ -311,6 +409,7 @@ test('Post zip which contains invalid content', async () => {
 })
 
 test('Post zip file is backuped past 3 generations', async () => {
+  const { soundDirPath } = simpleContext
   const room = 'test'
   const zipPath = `${soundDirPath}/test.zip`
   const md5Path = `${soundDirPath}/test.md5`
@@ -343,4 +442,55 @@ test('Post zip file is backuped past 3 generations', async () => {
   assertFiles(zipFilesAfterRotate, md5FilesAfterRotate)
   expect(zipFilesAfterRotate).not.toEqual(zipFiles)
   expect(md5FilesAfterRotate).not.toEqual(md5Files)
+})
+
+test('/rooms returns the list of the rooms', async () => {
+  // https://github.com/jaredhanson/passport/blob/0575de90dc0e76c1b8ca9cc676af89bd301aec60/lib/http/request.js#L79
+  const { config, app } = await prepareSamlApp(true)
+  const nid = 'fuga'
+  const res = await request(app)
+    .get('/rooms')
+    .set('Cookie', `nid=${nid}`)
+    .send()
+
+  expect(res.statusCode).toBe(200)
+  expect(JSON.parse(res.text)).toEqual({
+    type: 'acn',
+    nid,
+    rooms: config.rooms,
+  })
+})
+
+test('/rooms return 401 if not authenticated', async () => {
+  const { app } = await prepareSamlApp(false)
+  const res = await request(app)
+    .get('/rooms')
+    .send()
+
+  expect(res.statusCode).toBe(401)
+  expect(JSON.parse(res.text)).toEqual({
+    type: 'error',
+    error: 'ACN_FAILED',
+    message: 'SAML login required.'
+  })
+})
+
+test('/logout', async () => {
+  const { app } = simpleContext
+  const res = await request(app)
+    .get('/logout')
+    .send()
+
+  expect(res.statusCode).toBe(200)
+  expect(res.text).toBe('{}')
+})
+
+test('/logout with SAML', async () => {
+  const { app } = await prepareSamlApp(true)
+  const res = await request(app)
+    .get('/logout')
+    .send()
+
+  expect(res.statusCode).toBe(200)
+  expect(res.text).toBe('{}')
 })
