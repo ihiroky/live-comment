@@ -113,6 +113,7 @@ const NoSoundIFrame = styled('iframe')({
 const MessageListDiv = styled('div')({
   flexGrow: 1,
   overflowY: 'auto',
+  // コメントのスライドアニメーション時に横スクロールバーが表示されるのを防ぐ
   overflowX: 'hidden',
 })
 
