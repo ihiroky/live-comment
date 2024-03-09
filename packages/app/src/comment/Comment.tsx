@@ -7,13 +7,14 @@ import { AppState as CommentState } from './types'
 import { isPlaySoundMessage, PlaySoundMessage } from '@/sound/types'
 import { PollControl } from './PollControl'
 import { LabeledCheckbox } from './LabeledCheckbox'
-import { FormGroup, Link } from '@mui/material'
+import { FormGroup, Link, Slide } from '@mui/material'
 import { styled } from '@mui/system'
 import { useWebSocketOnOpen, useWebSocketOnClose, useWebSocketOnMessage } from './webSocketHooks'
 import { useOnPoll, useOnClosePoll } from './pollHooks'
 import { useToken } from './utils/token'
 import { getSoundPageUrl, getToken, gotoLoginPage, removeToken } from './utils/pages'
 import { NavigateFunction } from 'react-router-dom'
+import { TransitionGroup } from 'react-transition-group'
 
 type CommentProps = {
   url: string
@@ -112,6 +113,8 @@ const NoSoundIFrame = styled('iframe')({
 const MessageListDiv = styled('div')({
   flexGrow: 1,
   overflowY: 'auto',
+  // コメントのスライドアニメーション時に横スクロールバーが表示されるのを防ぐ
+  overflowX: 'hidden',
 })
 
 const MessageDiv = styled('div')({
@@ -272,14 +275,18 @@ export const Comment: FC<CommentProps> = (props: CommentProps): JSX.Element => {
         </div>
         <MainDiv>
           <MessageListDiv ref={messageListDivRef}>
-            {
-              state.comments.map((m: CommentState['comments'][number]) => (
-                <MessageDiv key={m.key}>
-                  <MessageContentDiv>{m.comment}</MessageContentDiv>
-                  <MessageTimeDiv>{new Date(m.ts).toLocaleString()}</MessageTimeDiv>
-                </MessageDiv>
-              ))
-            }
+            <TransitionGroup>
+              {
+                state.comments.map((m: CommentState['comments'][number]) => (
+                  <Slide key={m.key} direction="left" mountOnEnter unmountOnExit>
+                    <MessageDiv>
+                      <MessageContentDiv>{m.comment}</MessageContentDiv>
+                      <MessageTimeDiv>{new Date(m.ts).toLocaleString()}</MessageTimeDiv>
+                    </MessageDiv>
+                  </Slide>
+                ))
+              }
+            </TransitionGroup>
             {
               state.polls.map(poll =>
                 <PollControl
