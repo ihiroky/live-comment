@@ -29,6 +29,7 @@ jobs:
         env:
           LC_WS_URL: wss://${{ inputs.host }}/app
           LC_API_URL: https://${{ inputs.host }}/api
+          LC_APP_URL: https://${{ inputs.host }}
           NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Create release directory tree

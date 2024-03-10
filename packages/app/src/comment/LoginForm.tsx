@@ -1,18 +1,23 @@
-import { FC, ChangeEvent, FormEvent, useState, useCallback, useEffect } from 'react'
-import { TextField, Button, Grid } from '@mui/material'
+import { FC, ChangeEvent, FormEvent, useState, useCallback, useEffect, useSyncExternalStore } from 'react'
+import { TextField, Button, Grid, Divider } from '@mui/material'
 import { styled } from '@mui/system'
 import {
-  AcnMessage,
   isAcnOkMessage,
   isErrorMessage,
   Message,
 } from '@/common/Message'
 import {
   createHash,
-  fetchWithTimeout,
 } from '@/common/utils'
+import { serverConfigStore } from './utils/serverConfigStore'
 import { getLogger } from '@/common/Logger'
-import { gotoCommentPage } from './utils/pages'
+import {
+  gotoCommentPage,
+  login,
+  getToken,
+  setToken,
+  goto,
+} from './utils/pages'
 import { LabeledCheckbox } from './LabeledCheckbox'
 import { NavigateFunction } from 'react-router-dom'
 import jwtDecode, { JwtPayload } from 'jwt-decode'
@@ -24,9 +29,9 @@ interface TextFieldState {
 
 const RootForm = styled('form')({
   minWidth: '300px',
-  maxWidth: '600px',
+  width: '400px',
   minHeight: '300px',
-  height: '600px',
+  height: '400px',
   margin: 'auto',
   padding: '8px',
 })
@@ -71,16 +76,16 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
   })
   const [room, setRoom] = useState<TextFieldState>({
     value: '',
-    helperText: 'Input room name',
+    helperText: '',
   })
   const [password, setPassword] = useState<TextFieldState>({
     value: '',
-    helperText: 'Input password of the room',
+    helperText: '',
   })
   const [keepLogin, setKeepLogin] = useState<boolean>(false)
 
   useEffect((): void => {
-    const token = window.localStorage.getItem('token')
+    const token = getToken()
     if (token) {
       const payload = jwtDecode<JwtPayload & { room: string }>(token)
       if ((payload.exp !== undefined) && (payload.exp > Date.now() / 1000)) {
@@ -98,39 +103,22 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
     setNotification(notification)
   }, [navigate])
 
+  useEffect((): void => {
+    serverConfigStore.update(apiUrl)
+  }, [apiUrl])
+
   const onSubmit = useCallback((e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
-    const message: AcnMessage = {
-      type: 'acn',
-      room: room.value,
-      longLife: keepLogin,
-      hash: createHash(password.value)
-    }
-    fetchWithTimeout(
-      `${apiUrl.replace(/\/+$/, '')}/login`,
-      {
-        method: 'POST',
-        cache: 'no-store',
-        mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(message)
-      },
-      3000
-    ).then((res: Response): Promise<Message> =>
-      res.ok
-        ? res.json()
-        : Promise.resolve({ type: 'error', error: 'ERROR', message: 'Fetch failed' })
-    ).then((m: Message): void => {
-      // TODO stay login if token is invalid
-      if (isAcnOkMessage(m)) {
-        window.localStorage.setItem('token', m.attrs.token)
+    login(apiUrl, room.value, createHash(password.value), keepLogin)
+      .then((m: Message): { message: string } | undefined => {
+        // TODO stay login if token is invalid
+        if (!isAcnOkMessage(m)) {
+          setNotification({ message: `Login failed (${ isErrorMessage(m) ? m.message : JSON.stringify(m)})` })
+          return
+        }
+        setToken(m.attrs.token)
         gotoCommentPage(navigate)
-        return
-      }
-      setNotification({ message: `Login failed (${ isErrorMessage(m) ? m.message : JSON.stringify(m)})` })
-    })
+      })
   }, [apiUrl, navigate, room.value, password.value, keepLogin])
 
   const onTextFieldChange = useCallback((e: ChangeEvent<HTMLInputElement>): void => {
@@ -143,7 +131,7 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
       case 'room': {
         setRoom({
           value: e.target.value,
-          helperText: error ? 'Input room name.' : ''
+          helperText: error ? 'Input room name' : ''
         })
         break
       }
@@ -161,6 +149,8 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
     return room.helperText.length > 0 || password.helperText.length > 0
   }, [room.helperText, password.helperText])
 
+  const serverConfig = useSyncExternalStore(serverConfigStore.subscribe, serverConfigStore.getSnapshot)
+
   return (
     <RootForm onSubmit={onSubmit}>
       <div>
@@ -176,12 +166,32 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
             rel="noreferrer">Live Comment</a>.
         </LogCreditDiv>
       </div>
+      { serverConfig.samlEnabled
+        ? (
+          <>
+            <ButtonsDiv>
+              <Grid container alignItems="center" justifyContent="center">
+                <Grid item>
+                  <Button sx={{ mt: 4, mb: 4}} variant="outlined" type="button"
+                    onClick={() => { goto(`${apiUrl}/saml/login`) }}
+                  >
+                    SSO Login
+                  </Button>
+                </Grid>
+              </Grid>
+            </ButtonsDiv>
+            <Divider>OR</Divider>
+          </>
+        )
+        : undefined
+      }
       <TextsDiv>
         <NotificationDiv role="status">{notification.message}</NotificationDiv>
         <TextField
           fullWidth
           label="Room"
           name="room"
+          variant="standard"
           value={room.value}
           error={room.value.length === 0}
           helperText={room.helperText}
@@ -193,6 +203,7 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
           label="Password"
           type="password"
           name="password"
+          variant="standard"
           value={password.value}
           error={password.value.length === 0}
           helperText={password.helperText}
