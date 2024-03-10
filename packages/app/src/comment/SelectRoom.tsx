@@ -121,7 +121,7 @@ const RoomSelectForm = ({ apiUrl, navigate, store }: {
   }, [navigate])
 
   // TODO: Change icon if anyone in the room.
-  console.error(store)
+  log.error(store)
   return (
     <>
       <Typography sx={{ mt: 4, mb: 0 }} variant="h6" component="div">Hi! {store.nid}.</Typography>

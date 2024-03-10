@@ -5,6 +5,7 @@ import {
 import { LogLevel, getLogger } from '@/common/Logger'
 import { isObject } from '@/common/utils'
 import { Argv } from './argv'
+import { assertNotNullable } from '@/common/assert'
 
 export type Room = Readonly<{
   room: string
@@ -38,6 +39,7 @@ export type SamlConfig = {
     certs: string[]
   }
 }
+
 export type ServerConfig = Readonly<{
   rooms: Room[]
   soundDirPath: string
@@ -51,33 +53,46 @@ export type ServerConfig = Readonly<{
 
 const log = getLogger('Configuration')
 
-function assertProperty(object: Record<string, string>, prop: string): void {
+function assertProperty(object: Record<string, string>, prop: string, prefix?: string): void {
   if (!object[prop] || object[prop].length === 0) {
-    throw new Error(`${prop} is empty or undefined.`)
+    throw new Error(`${prefix ? `${prefix}.${prop}` : prop} is empty or undefined.`)
   }
 }
 
-async function readKeyOrCertAsync(json: Record<string, string>, pathPropName: string): Promise<string> {
-  assertProperty(json, pathPropName)
+async function readKeyOrCertAsync(
+  json: Record<string, string>,
+  pathPropName: string,
+  prefix?: string
+): Promise<string> {
+  assertProperty(json, pathPropName, prefix)
   const path = json[pathPropName]
-  const stat = await fsp.stat(path)
-  if (!stat.isFile()) {
-    throw new Error(`${json[pathPropName]} is not a file.`)
-  }
-  const buffer = await fsp.readFile(path)
-  return buffer.toString()
-}
-
-async function readCertsAsync(json: Record<string, string>, pathsPropName: string): Promise<string[]> {
-  assertProperty(json, pathsPropName)
-  const paths = json[pathsPropName]
-  if (!Array.isArray(paths)) {
-    throw new Error(`${pathsPropName} is not an array.`)
-  }
-  for (const path of paths) {
+  try {
     const stat = await fsp.stat(path)
     if (!stat.isFile()) {
-      throw new Error(`${path} is not a file.`)
+      throw new Error(`${prefix ? `${prefix}.${pathPropName}` : pathPropName}: ${path} is not a file.`)
+    }
+    const buffer = await fsp.readFile(path)
+    return buffer.toString()
+  } catch (e: unknown) {
+    throw new Error(`${prefix ? `${prefix}.${pathPropName}` : pathPropName}: ${e}`)
+  }
+
+}
+
+async function readCertsAsync(json: Record<string, string>, pathsPropName: string, prefix?: string): Promise<string[]> {
+  assertProperty(json, pathsPropName, prefix)
+  const paths = json[pathsPropName]
+  if (!Array.isArray(paths)) {
+    throw new Error(`${prefix ? `${prefix}.${pathsPropName}` : pathsPropName} is not an array.`)
+  }
+  for (const path of paths) {
+    try {
+      const stat = await fsp.stat(path)
+      if (!stat.isFile()) {
+        throw new Error(`${prefix ? `${prefix}.${pathsPropName}` : pathsPropName} is not a file.`)
+      }
+    } catch (e: unknown) {
+      throw new Error(`${prefix ? `${prefix}.${pathsPropName}` : pathsPropName}: ${e}`)
     }
   }
   const buffers = await Promise.all(paths.map(path => fsp.readFile(path)))
@@ -107,19 +122,17 @@ async function buildConfig(json: string): Promise<ServerConfig> {
   }
 
   if (c.saml) {
-    assertProperty(c.saml, 'cookieSecret')
-    assertProperty(c.saml, 'path')
-    assertProperty(c.saml, 'entryPoint')
-    assertProperty(c.saml, 'issuer')
-    c.saml.certs = await readCertsAsync(c.saml, 'certPaths')
-    if (c.saml.decryption) {
-      c.saml.decryption.key = await readKeyOrCertAsync(c.saml.decryption, 'keyPath')
-      c.saml.decryption.cert = await readKeyOrCertAsync(c.saml.decryption, 'certPath')
-    }
-    if (c.saml.signing) {
-      c.saml.signing.key = await readKeyOrCertAsync(c.saml.signing, 'keyPath')
-      c.saml.signing.certs = await readCertsAsync(c.saml.signing, 'certPaths')
-    }
+    assertProperty(c.saml, 'cookieSecret', 'saml')
+    assertProperty(c.saml, 'path', 'saml')
+    assertProperty(c.saml, 'entryPoint', 'saml')
+    assertProperty(c.saml, 'issuer', 'saml')
+    c.saml.certs = await readCertsAsync(c.saml, 'certPaths', 'saml')
+    assertNotNullable(c.saml.decryption, 'saml.decryption')
+    c.saml.decryption.key = await readKeyOrCertAsync(c.saml.decryption, 'keyPath', 'saml.decryption')
+    c.saml.decryption.cert = await readKeyOrCertAsync(c.saml.decryption, 'certPath', 'saml.decryption')
+    assertNotNullable(c.saml.signing, 'saml.signing')
+    c.saml.signing.key = await readKeyOrCertAsync(c.saml.signing, 'keyPath', 'saml.signing')
+    c.saml.signing.certs = await readCertsAsync(c.saml.signing, 'certPaths', 'saml.signing')
   }
   return c
 }

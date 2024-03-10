@@ -340,7 +340,7 @@ function createRouter(configuration: Configuration, samlStrategy: SamlStrategy |
       configuration.saml.path,
       bodyParser.urlencoded({ extended: false }),
       passport.authenticate('saml', { failureRedirect: redirects.failureRedirect }),
-      function(req: Request, res: Response): void {
+      function(_: Request, res: Response): void {
         res.redirect(redirects.successRedirect)
       }
     )
@@ -411,7 +411,7 @@ function setupSamlIfRequired(app: Express, configuration: Configuration): SamlSt
     return
   }
 
-  console.info('Configure saml settings.')
+  log.info('Configure saml settings.')
 
   passport.serializeUser(function (user: Express.User, done: (err: unknown, id: Express.User) => void) {
     done(null, user)
@@ -421,7 +421,7 @@ function setupSamlIfRequired(app: Express, configuration: Configuration): SamlSt
   })
 
   const samlLoginCallback = (req: Request, profile: Profile | null | undefined, done: VerifiedCallback): void => {
-    console.info('saml login', profile)
+    log.info('saml login', profile)
     if (!profile) {
       done(null)
       return
@@ -433,7 +433,7 @@ function setupSamlIfRequired(app: Express, configuration: Configuration): SamlSt
     done(null, { id: profile.nameID })
   }
   const samlLogoutCallback = (req: Request, profile: Profile | null | undefined, done: VerifiedCallback): void => {
-    console.info('saml logout', profile)
+    log.info('saml logout', profile)
     profile ? done(null, { id: profile.nameID }) : done(null)
   }
   // Use MultiSamlStrategy to support multiple IDPs (if I'm multitenant SaaS, for example)
@@ -483,14 +483,3 @@ export function createApp(
   app.use(router)
   return postHook(app)
 }
-
-/*
-$ openssl req -x509 -new -newkey rsa:4096 -nodes -keyout config/DO_NOT_USE-idp-key.pem -out config/DO_NOT_USE-idp-cert.pem -days 10950
-Country Name (2 letter code) [AU]:JP
-State or Province Name (full name) [Some-State]:
-Locality Name (eg, city) []:Some-Town
-Organization Name (eg, company) [Internet Widgits Pty Ltd]:
-Organizational Unit Name (eg, section) []:section
-Common Name (e.g. server FQDN or YOUR name) []:test-idp
-Email Address []:test@example.com
-*/

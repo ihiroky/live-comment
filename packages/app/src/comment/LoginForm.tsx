@@ -86,7 +86,6 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
 
   useEffect((): void => {
     const token = getToken()
-    console.log('***token***', token)
     if (token) {
       const payload = jwtDecode<JwtPayload & { room: string }>(token)
       if ((payload.exp !== undefined) && (payload.exp > Date.now() / 1000)) {
@@ -95,7 +94,6 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
       }
     }
     const json = window.localStorage.getItem('App.notification')
-    console.log('***JSON***', json)
     if (!json) {
       setNotification({ message: '' })
       return
