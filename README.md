@@ -24,6 +24,11 @@ The release in this repository will not include the browser extension because it
 
 ## Start servers and clients for development
 
+### Fetch dependencies
+```bash
+npm install
+```
+
 ### Build and watch all applications
 ```bash
 npm -w packages/esbuild-plugin-copy-files/ run build
