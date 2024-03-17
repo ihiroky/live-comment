@@ -12,21 +12,5 @@
   "jwtPrivateKeyPath": "./config/DO_NOT_USE-jwt.key.sample",
   "jwtPublicKeyPath":  "./config/DO_NOT_USE-jwt.key.pub.sample",
   "soundDirPath": "./config/sounds",
-  "corsOrigins": ["http://localhost:8888"],
-  "saml": {
-    "cookieSecret": "Oh my secret",
-    "path": "/saml/acs",
-    "entryPoint": "http://localhost:7000/saml/sso",
-    "issuer": "live-comment",
-    "certPaths": ["config/DO_NOT_USE-idp-cert.pem"],
-    "decryption": {
-      "keyPath": "config/DO_NOT_USE-decryption-key.pem",
-      "certPath": "config/DO_NOT_USE-decryption-cert.pem"
-    },
-    "signing": {
-      "keyPath": "config/DO_NOT_USE-signing-key.pem",
-      "certPaths": ["config/DO_NOT_USE-signing-cert.pem"]
-    }
-
-  }
+  "corsOrigins": ["http://localhost:8888"]
 }
