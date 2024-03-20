@@ -6,5 +6,5 @@ cd $(dirname $0)
 
 for t in streaming api
 do
-  stop_process prod $t
+  stop_process testing $t
 done
