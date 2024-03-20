@@ -5,7 +5,6 @@ import {
 import { LogLevel, getLogger } from '@/common/Logger'
 import { isObject } from '@/common/utils'
 import { Argv } from './argv'
-import { assertNotNullable } from '@/common/assert'
 
 export type Room = Readonly<{
   room: string
@@ -20,12 +19,15 @@ function isRoom(obj: unknown): obj is ServerConfig['rooms'][number] {
 }
 
 export type SamlConfig = {
+  appUrl: string
   cookieSecret: string
-  path: string
+  callbackUrl: string
   entryPoint: string
   issuer: string      // Entity ID
   certPaths: string[] // Path to IDP certificate
   certs: string[]
+  wantAssertionsSigned: boolean | undefined
+  wantAuthnResponseSigned: boolean | undefined
   decryption?: {
     keyPath: string
     key: string
@@ -53,7 +55,7 @@ export type ServerConfig = Readonly<{
 
 const log = getLogger('Configuration')
 
-function assertProperty(object: Record<string, string>, prop: string, prefix?: string): void {
+function assertDefinedAndNotEmpty(object: Record<string, string>, prop: string, prefix?: string): void {
   if (!object[prop] || object[prop].length === 0) {
     throw new Error(`${prefix ? `${prefix}.${prop}` : prop} is empty or undefined.`)
   }
@@ -64,7 +66,7 @@ async function readKeyOrCertAsync(
   pathPropName: string,
   prefix?: string
 ): Promise<string> {
-  assertProperty(json, pathPropName, prefix)
+  assertDefinedAndNotEmpty(json, pathPropName, prefix)
   const path = json[pathPropName]
   try {
     const stat = await fsp.stat(path)
@@ -80,7 +82,7 @@ async function readKeyOrCertAsync(
 }
 
 async function readCertsAsync(json: Record<string, string>, pathsPropName: string, prefix?: string): Promise<string[]> {
-  assertProperty(json, pathsPropName, prefix)
+  assertDefinedAndNotEmpty(json, pathsPropName, prefix)
   const paths = json[pathsPropName]
   if (!Array.isArray(paths)) {
     throw new Error(`${prefix ? `${prefix}.${pathsPropName}` : pathsPropName} is not an array.`)
@@ -122,17 +124,24 @@ async function buildConfig(json: string): Promise<ServerConfig> {
   }
 
   if (c.saml) {
-    assertProperty(c.saml, 'cookieSecret', 'saml')
-    assertProperty(c.saml, 'path', 'saml')
-    assertProperty(c.saml, 'entryPoint', 'saml')
-    assertProperty(c.saml, 'issuer', 'saml')
-    c.saml.certs = await readCertsAsync(c.saml, 'certPaths', 'saml')
-    assertNotNullable(c.saml.decryption, 'saml.decryption')
-    c.saml.decryption.key = await readKeyOrCertAsync(c.saml.decryption, 'keyPath', 'saml.decryption')
-    c.saml.decryption.cert = await readKeyOrCertAsync(c.saml.decryption, 'certPath', 'saml.decryption')
-    assertNotNullable(c.saml.signing, 'saml.signing')
-    c.saml.signing.key = await readKeyOrCertAsync(c.saml.signing, 'keyPath', 'saml.signing')
-    c.saml.signing.certs = await readCertsAsync(c.saml.signing, 'certPaths', 'saml.signing')
+    const s = c.saml
+    assertDefinedAndNotEmpty(s, 'appUrl', 'saml')
+    s.appUrl = s.appUrl.replace(/\/+$/, '') // Remove trailing slashes
+    assertDefinedAndNotEmpty(s, 'cookieSecret', 'saml')
+    assertDefinedAndNotEmpty(s, 'callbackUrl', 'saml')
+    assertDefinedAndNotEmpty(s, 'entryPoint', 'saml')
+    assertDefinedAndNotEmpty(s, 'issuer', 'saml')
+    s.certs = await readCertsAsync(s, 'certPaths', 'saml')
+    s.wantAssertionsSigned = typeof s.wantAssertionsSigned === 'undefined' || !!s.wantAssertionsSigned
+    s.wantAuthnResponseSigned = typeof s.wantAuthnResponseSigned === 'undefined' || !!s.wantAuthnResponseSigned
+    if (s.decryption) {
+      s.decryption.key = await readKeyOrCertAsync(s.decryption, 'keyPath', 'saml.decryption')
+      s.decryption.cert = await readKeyOrCertAsync(s.decryption, 'certPath', 'saml.decryption')
+    }
+    if (s.signing) {
+      s.signing.key = await readKeyOrCertAsync(s.signing, 'keyPath', 'saml.signing')
+      s.signing.certs = await readCertsAsync(s.signing, 'certPaths', 'saml.signing')
+    }
   }
   return c
 }
@@ -159,11 +168,15 @@ export class Configuration {
   readonly port: number
   readonly logLevel: LogLevel
   readonly saml: {
+    appUrl: string
     cookieSecret: string
-    path: string
+    //path: string
+    callbackUrl: string
     entryPoint: string
     issuer: string
     cert: string[]
+    wantAssertionsSigned?: boolean
+    wantAuthnResponseSigned?: boolean
     privateKey?: string
     decryptionPvk?: string
 
@@ -181,11 +194,14 @@ export class Configuration {
     this.logLevel = argv.loglevel
     if (cache.saml) {
       this.saml = {
+        appUrl: cache.saml.appUrl,
         cookieSecret: cache.saml.cookieSecret,
-        path: cache.saml.path,
+        callbackUrl: cache.saml.callbackUrl,
         entryPoint: cache.saml.entryPoint,
         issuer: cache.saml.issuer,
         cert: cache.saml.certs,
+        wantAssertionsSigned: cache.saml.wantAssertionsSigned,
+        wantAuthnResponseSigned: cache.saml.wantAuthnResponseSigned,
         privateKey: cache.saml.signing?.key,
         signingCert: cache.saml.signing?.certs,
         decryptionPvk: cache.saml.decryption?.key,

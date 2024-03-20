@@ -17,9 +17,6 @@ import { JwtPayload, TokenExpiredError } from 'jsonwebtoken'
 import { openZipFile, SoundFileDefinition } from '@/sound/file'
 
 const COOKIE_NAME_ID = 'nid'
-const APP_URL = process.env.NODE_ENV === 'production'
-  ? (process.env.LC_APP_URL || `https://${window.location.hostname}`)
-  : 'http://localhost:8888'
 
 const log = getLogger('http')
 
@@ -332,12 +329,12 @@ function createRouter(configuration: Configuration, samlStrategy: SamlStrategy |
   })
   if (configuration.saml) {
     const redirects = {
-      successRedirect: `${APP_URL}/rooms`,
-      failureRedirect: `${APP_URL}/login`
+      successRedirect: `${configuration.saml.appUrl}/rooms`,
+      failureRedirect: `${configuration.saml.appUrl}/login`,
     }
     router.get('/saml/login', passport.authenticate('saml', redirects))
     router.post(
-      configuration.saml.path,
+      '/saml/acs',
       bodyParser.urlencoded({ extended: false }),
       passport.authenticate('saml', { failureRedirect: redirects.failureRedirect }),
       function(_: Request, res: Response): void {

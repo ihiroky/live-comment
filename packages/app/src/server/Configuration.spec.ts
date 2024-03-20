@@ -67,11 +67,14 @@ function writeConfigSaml(filePath: string, samlConfig?: Record<string, any>) {
     jwtPublicKeyPath: path.join(testDataRoot, 'jwt.key.pub'),
     corsOrigins: ['/https://w+\\.live-comment\\.ga$/', 'http://localhost:8888'],
     saml: samlConfig ?? {
+      appUrl: 'http://localhost:8888',
       cookieSecret: 'cookieSecret',
-      path: '/saml/acs',
+      callbackUrl: 'http://localhost:9080/saml/acs',
       entryPoint: 'https://idp.example.com/idp/SSOService.php',
       issuer: 'issuer',
       certPaths: [path.join(testDataRoot, 'idp.0.crt'), path.join(testDataRoot, 'idp.1.cert')],
+      wantAssertionsSigned: false,
+      wantAuthnResponseSigned: false,
       decryption: {
         keyPath:  path.join(testDataRoot, 'decrypt.key'),
         certPath: path.join(testDataRoot, 'decrypt.cert'),
@@ -299,10 +302,13 @@ describe('loadConfigAsync', () => {
     const sut = new Configuration(argv, cache.content, cache.stat.mtimeMs)
 
     expect(sut.saml).toEqual({
+      appUrl: 'http://localhost:8888',
       cookieSecret: 'cookieSecret',
-      path: '/saml/acs',
+      callbackUrl: 'http://localhost:9080/saml/acs',
       entryPoint: 'https://idp.example.com/idp/SSOService.php',
       issuer: 'issuer',
+      wantAssertionsSigned: false,
+      wantAuthnResponseSigned: false,
       cert: [
         fs.readFileSync(config.saml.certPaths[0]).toString(),
         fs.readFileSync(config.saml.certPaths[1]).toString(),
@@ -320,7 +326,8 @@ describe('loadConfigAsync', () => {
   test('Get SAML configuration without cookie secret', async () => {
     const configPath = path.join(testDataRoot, 'test.json')
     writeConfigSaml(configPath, {
-      path: '/saml/acs',
+      appUrl: 'http://localhost:8888',
+      callbackUrl: 'http://localhost:9080/saml/acs',
       entryPoint: 'https://idp.example.com/idp/SSOService.php',
       issuer: 'issuer',
       certPaths: [path.join(testDataRoot, 'idp.0.crt'), path.join(testDataRoot, 'idp.1.cert')],
@@ -334,12 +341,26 @@ describe('loadConfigAsync', () => {
       },
     })
 
-    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('cookieSecret is empty or undefined.')
+    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('saml.cookieSecret is empty or undefined.')
   })
 
-  test('Get SAML configuration without path', async () => {
+  test('Get SAML configuration without appUrl', async () => {
     const configPath = path.join(testDataRoot, 'test.json')
     writeConfigSaml(configPath, {
+      cookieSecret: 'cookieSecret',
+      callbackUrl: 'http://localhost:9080/saml/acs',
+      entryPoint: 'https://idp.example.com/idp/SSOService.php',
+      issuer: 'issuer',
+      certPaths: [path.join(testDataRoot, 'idp.0.crt'), path.join(testDataRoot, 'idp.1.cert')],
+    })
+
+    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('saml.appUrl is empty or undefined.')
+  })
+
+  test('Get SAML configuration without callbackUrl', async () => {
+    const configPath = path.join(testDataRoot, 'test.json')
+    writeConfigSaml(configPath, {
+      appUrl: 'http://localhost:8888',
       cookieSecret: 'cookieSecret',
       entryPoint: 'https://idp.example.com/idp/SSOService.php',
       issuer: 'issuer',
@@ -354,14 +375,15 @@ describe('loadConfigAsync', () => {
       },
     })
 
-    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('path is empty or undefined.')
+    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('saml.callbackUrl is empty or undefined.')
   })
 
   test('Get SAML configuration without entryPoint', async () => {
     const configPath = path.join(testDataRoot, 'test.json')
     writeConfigSaml(configPath, {
+      appUrl: 'http://localhost:8888',
       cookieSecret: 'cookieSecret',
-      path: '/saml/acs',
+      callbackUrl: 'http://localhost:9080/saml/acs',
       issuer: 'issuer',
       certPaths: [path.join(testDataRoot, 'idp.0.crt'), path.join(testDataRoot, 'idp.1.cert')],
       decryption: {
@@ -374,14 +396,15 @@ describe('loadConfigAsync', () => {
       },
     })
 
-    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('entryPoint is empty or undefined.')
+    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('saml.entryPoint is empty or undefined.')
   })
 
   test('Get SAML configuration without issuer', async () => {
     const configPath = path.join(testDataRoot, 'test.json')
     writeConfigSaml(configPath, {
+      appUrl: 'http://localhost:8888',
       cookieSecret: 'cookieSecret',
-      path: '/saml/acs',
+      callbackUrl: 'http://localhost:9080/saml/acs',
       entryPoint: 'https://idp.example.com/idp/SSOService.php',
       certPaths: [path.join(testDataRoot, 'idp.0.crt'), path.join(testDataRoot, 'idp.1.cert')],
       decryption: {
@@ -394,14 +417,15 @@ describe('loadConfigAsync', () => {
       },
     })
 
-    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('issuer is empty or undefined.')
+    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('saml.issuer is empty or undefined.')
   })
 
   test('Get SAML configuration without certPaths', async () => {
     const configPath = path.join(testDataRoot, 'test.json')
     writeConfigSaml(configPath, {
+      appUrl: 'http://localhost:8888',
       cookieSecret: 'cookieSecret',
-      path: '/saml/acs',
+      callbackUrl: 'http://localhost:9080/saml/acs',
       entryPoint: 'https://idp.example.com/idp/SSOService.php',
       issuer: 'issuer',
       decryption: {
@@ -414,14 +438,15 @@ describe('loadConfigAsync', () => {
       },
     })
 
-    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('certPaths is empty or undefined.')
+    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('saml.certPaths is empty or undefined.')
   })
 
   test('Get SAML configuration with non-array certPaths', async () => {
     const configPath = path.join(testDataRoot, 'test.json')
     writeConfigSaml(configPath, {
+      appUrl: 'http://localhost:8888',
       cookieSecret: 'cookieSecret',
-      path: '/saml/acs',
+      callbackUrl: 'http://localhost:9080/saml/acs',
       entryPoint: 'https://idp.example.com/idp/SSOService.php',
       issuer: 'issuer',
       certPaths: path.join(testDataRoot, 'idp.0.crt'),
@@ -435,14 +460,15 @@ describe('loadConfigAsync', () => {
       },
     })
 
-    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('certPaths is not an array.')
+    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('saml.certPaths is not an array.')
   })
 
   test('Get SAML configuration with empty array certPaths', async () => {
     const configPath = path.join(testDataRoot, 'test.json')
     writeConfigSaml(configPath, {
+      appUrl: 'http://localhost:8888',
       cookieSecret: 'cookieSecret',
-      path: '/saml/acs',
+      callbackUrl: 'http://localhost:9080/saml/acs',
       entryPoint: 'https://idp.example.com/idp/SSOService.php',
       issuer: 'issuer',
       certPaths: [],
@@ -456,14 +482,15 @@ describe('loadConfigAsync', () => {
       },
     })
 
-    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('certPaths is empty or undefined')
+    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('saml.certPaths is empty or undefined')
   })
 
   test('Get SAML configuration with empty array certPaths', async () => {
     const configPath = path.join(testDataRoot, 'test.json')
     writeConfigSaml(configPath, {
+      appUrl: 'http://localhost:8888',
       cookieSecret: 'cookieSecret',
-      path: '/saml/acs',
+      callbackUrl: 'http://localhost:9080/saml/acs',
       entryPoint: 'https://idp.example.com/idp/SSOService.php',
       issuer: 'issuer',
       certPaths: [],
@@ -477,14 +504,15 @@ describe('loadConfigAsync', () => {
       },
     })
 
-    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('certPaths is empty or undefined')
+    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('saml.certPaths is empty or undefined')
   })
 
   test('Get SAML configuration with certPaths no file', async () => {
     const configPath = path.join(testDataRoot, 'test.json')
     writeConfigSaml(configPath, {
+      appUrl: 'http://localhost:8888',
       cookieSecret: 'cookieSecret',
-      path: '/saml/acs',
+      callbackUrl: 'http://localhost:9080/saml/acs',
       entryPoint: 'https://idp.example.com/idp/SSOService.php',
       issuer: 'issuer',
       certPaths: [path.join(testDataRoot, 'idp.0.crt'), path.join(testDataRoot, 'idp.1.cert')],
@@ -502,28 +530,46 @@ describe('loadConfigAsync', () => {
     await expect(loadConfigAsync(configPath, 0)).rejects.toThrow(/idp\.1\.cert/)
   })
 
-  test('Get SAML configuration without decryption', async () => {
+  test('Get SAML configuration with default wantAssertionsSigned and wantAuthnResponseSigned', async () => {
     const configPath = path.join(testDataRoot, 'test.json')
     writeConfigSaml(configPath, {
+      appUrl: 'http://localhost:8888',
       cookieSecret: 'cookieSecret',
-      path: '/saml/acs',
+      callbackUrl: 'http://localhost:9080/saml/acs',
       entryPoint: 'https://idp.example.com/idp/SSOService.php',
       issuer: 'issuer',
       certPaths: [path.join(testDataRoot, 'idp.0.crt'), path.join(testDataRoot, 'idp.1.cert')],
-      signing: {
-        keyPath: path.join(testDataRoot, 'sign.key'),
-        certPaths: [path.join(testDataRoot, 'sign.0.crt'), path.join(testDataRoot, 'sign.1.cert')],
-      },
     })
 
-    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('Expected value (saml.decryption) not to be nullable, actually undefined.')
+    const actual = await loadConfigAsync(configPath, 0)
+    expect(actual.content?.saml?.wantAssertionsSigned).toBeTruthy()
+    expect(actual.content?.saml?.wantAuthnResponseSigned).toBeTruthy()
+  })
+
+  test('Get SAML configuration with non boolean wantAssertionsSigned and wantAuthnResponseSigned', async () => {
+    const configPath = path.join(testDataRoot, 'test.json')
+    writeConfigSaml(configPath, {
+      appUrl: 'http://localhost:8888',
+      cookieSecret: 'cookieSecret',
+      callbackUrl: 'http://localhost:9080/saml/acs',
+      entryPoint: 'https://idp.example.com/idp/SSOService.php',
+      issuer: 'issuer',
+      certPaths: [path.join(testDataRoot, 'idp.0.crt'), path.join(testDataRoot, 'idp.1.cert')],
+      wantAssertionsSigned: '',
+      wantAuthnResponseSigned: 1,
+    })
+
+    const actual = await loadConfigAsync(configPath, 0)
+    expect(actual.content?.saml?.wantAssertionsSigned).toBeFalsy()
+    expect(actual.content?.saml?.wantAuthnResponseSigned).toBeTruthy()
   })
 
   test('Get SAML configuration decryption.keyPath not a file', async () => {
     const configPath = path.join(testDataRoot, 'test.json')
     writeConfigSaml(configPath, {
+      appUrl: 'http://localhost:8888',
       cookieSecret: 'cookieSecret',
-      path: '/saml/acs',
+      callbackUrl: 'http://localhost:9080/saml/acs',
       entryPoint: 'https://idp.example.com/idp/SSOService.php',
       issuer: 'issuer',
       certPaths: [path.join(testDataRoot, 'idp.0.crt'), path.join(testDataRoot, 'idp.1.cert')],
@@ -544,8 +590,9 @@ describe('loadConfigAsync', () => {
   test('Get SAML configuration decryption.certPath not a file', async () => {
     const configPath = path.join(testDataRoot, 'test.json')
     writeConfigSaml(configPath, {
+      appUrl: 'http://localhost:8888',
       cookieSecret: 'cookieSecret',
-      path: '/saml/acs',
+      callbackUrl: 'http://localhost:9080/saml/acs',
       entryPoint: 'https://idp.example.com/idp/SSOService.php',
       issuer: 'issuer',
       certPaths: [path.join(testDataRoot, 'idp.0.crt'), path.join(testDataRoot, 'idp.1.cert')],
@@ -563,28 +610,12 @@ describe('loadConfigAsync', () => {
     await expect(loadConfigAsync(configPath, 0)).rejects.toThrow(/^saml.decryption.certPath: /)
   })
 
-  test('Get SAML configuration without signing', async () => {
-    const configPath = path.join(testDataRoot, 'test.json')
-    writeConfigSaml(configPath, {
-      cookieSecret: 'cookieSecret',
-      path: '/saml/acs',
-      entryPoint: 'https://idp.example.com/idp/SSOService.php',
-      issuer: 'issuer',
-      certPaths: [path.join(testDataRoot, 'idp.0.crt'), path.join(testDataRoot, 'idp.1.cert')],
-      decryption: {
-        keyPath: path.join(testDataRoot, 'decrypt.key'),
-        certPath: path.join(testDataRoot, 'decrypt.cert'),
-      },
-    })
-
-    await expect(loadConfigAsync(configPath, 0)).rejects.toThrow('Expected value (saml.signing) not to be nullable, actually undefined.')
-  })
-
   test('Get SAML configuration signing.keyPath is not a file', async () => {
     const configPath = path.join(testDataRoot, 'test.json')
     writeConfigSaml(configPath, {
+      appUrl: 'http://localhost:8888',
       cookieSecret: 'cookieSecret',
-      path: '/saml/acs',
+      callbackUrl: 'http://localhost:9080/saml/acs',
       entryPoint: 'https://idp.example.com/idp/SSOService.php',
       issuer: 'issuer',
       certPaths: [path.join(testDataRoot, 'idp.0.crt'), path.join(testDataRoot, 'idp.1.cert')],
@@ -605,8 +636,9 @@ describe('loadConfigAsync', () => {
   test('Get SAML configuration signing.certPaths is not a file', async () => {
     const configPath = path.join(testDataRoot, 'test.json')
     writeConfigSaml(configPath, {
+      appUrl: 'http://localhost:8888',
       cookieSecret: 'cookieSecret',
-      path: '/saml/acs',
+      callbackUrl: 'http://localhost:9080/saml/acs',
       entryPoint: 'https://idp.example.com/idp/SSOService.php',
       issuer: 'issuer',
       certPaths: [path.join(testDataRoot, 'idp.0.crt'), path.join(testDataRoot, 'idp.1.cert')],
@@ -734,14 +766,17 @@ describe('Configuration', () => {
     const sut = new Configuration(argv, cache.content, cache.stat.mtimeMs)
 
     expect(sut.saml).toEqual({
+      appUrl: 'http://localhost:8888',
       cookieSecret: 'cookieSecret',
-      path: '/saml/acs',
+      callbackUrl: 'http://localhost:9080/saml/acs',
       entryPoint: 'https://idp.example.com/idp/SSOService.php',
       issuer: 'issuer',
       cert: [
         fs.readFileSync(config.saml.certPaths[0]).toString(),
         fs.readFileSync(config.saml.certPaths[1]).toString(),
       ],
+      wantAssertionsSigned: false,
+      wantAuthnResponseSigned: false,
       decryptionPvk: fs.readFileSync(config.saml.decryption.keyPath).toString(),
       decryptionCert: fs.readFileSync(config.saml.decryption.certPath).toString(),
       privateKey: fs.readFileSync(config.saml.signing.keyPath).toString(),
