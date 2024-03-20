@@ -78,8 +78,9 @@ beforeEach(async () => {
   configJsonSaml = {
     ...configJson,
     saml: {
+      appUrl: 'http://localhost:8888',
       cookieSecret: 'hoge',
-      path: '/saml',
+      callbackUrl: 'http://localhost/saml',
       entryPoint: 'https://example.com/saml',
       issuer: 'https://example.com',
       certPaths: [
