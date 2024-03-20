@@ -102,11 +102,11 @@ beforeEach(async () => {
 
 afterEach(() => {
   const close = (c: Awaited<ReturnType<typeof prepareApp>> | undefined): void => {
-    if (c && c.configPath) {
-      fs.rmSync(c.configPath)
-    }
     if (c && c.soundDirPath) {
       fs.rmSync(c.soundDirPath, { recursive: true })
+    }
+    if (c && c.configPath) {
+      fs.rmSync(c.configPath, { recursive: true })
     }
   }
 
