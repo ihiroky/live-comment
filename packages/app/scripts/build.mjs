@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 import concurrently from 'concurrently'
-import path from 'node:path'
 
 function pad(name) {
   return name.padEnd(16)

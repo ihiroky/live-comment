@@ -23,7 +23,7 @@ function hungup_workaround_for_github_actions() {
 }
 
 export function plugins(targets) {
-  return  [
+  return [
     targets && copy({ targets, verbose: true }),
     replace({
       'process.env.NODE_ENV': `"${env}"`,
