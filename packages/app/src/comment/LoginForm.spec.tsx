@@ -1,3 +1,4 @@
+// @jest-environment jest-environment-jsdom
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
@@ -8,7 +9,6 @@ import { assertNotNullable } from '@/common/assert'
 import { login, gotoCommentPage, setToken, getToken, goto } from './utils/pages'
 import { serverConfigStore } from './utils/serverConfigStore'
 import { AcnOkMessage, ErrorMessage } from '@/common/Message'
-import { stubLocationOrigin } from '@/common/utils.spec'
 
 jest.mock('./utils/pages')
 jest.mock('./utils/serverConfigStore')
@@ -212,58 +212,63 @@ test('Keep login', async () => {
 })
 
 describe('SAML login', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let locationSpy: any
+
+  beforeEach(() => {
+    locationSpy = jest.spyOn(window, 'location', 'get')
+  })
+
+  afterEach(() => {
+    locationSpy.mockRestore()
+  })
+
   test('SAML login browser', async () => {
     jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: false })
+    locationSpy.mockReturnValue({ origin: 'http://localhost' })
 
     const { rerender} = render(<LoginForm apiUrl="apiUrl" origin="origin" />)
     jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: true })
     rerender(<LoginForm apiUrl="apiUrl" origin="origin" />)
     const ssoLoginButton = await waitFor(() => screen.getByText(/SSO Login/))
     userEvent.click(ssoLoginButton)
+    expect(window.location.origin).toBe('http://localhost')
     await waitFor(() => {
       expect(goto).toBeCalledWith('apiUrl/saml/login')
     })
   })
 
-  test('SAML login chrome extension or file', async () => {
+  test('SAML login chrome extension', async () => {
     jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: false })
     window.open = jest.fn<typeof window.open>()
-    const slo = stubLocationOrigin('chrome-extension://extension-id')
+    locationSpy.mockReturnValue({ origin: 'chrome-extension://extension-id' })
 
-    try {
-      const { rerender} = render(<LoginForm apiUrl="apiUrl" origin="origin" />)
-      jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: true })
-      rerender(<LoginForm apiUrl="apiUrl" origin="origin" />)
+    const { rerender} = render(<LoginForm apiUrl="apiUrl" origin="origin" />)
+    jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: true })
+    rerender(<LoginForm apiUrl="apiUrl" origin="origin" />)
 
-      const ssoLoginButton = await waitFor(() => screen.getByText(/SSO Login/))
+    const ssoLoginButton = await waitFor(() => screen.getByText(/SSO Login/))
 
-      userEvent.click(ssoLoginButton)
-      await waitFor(() => {
-        expect(window.open).toBeCalledWith('apiUrl/saml/login', 'saml-login', 'width=475,height=600')
-      })
-    } finally {
-      slo.restore()
-    }
+    userEvent.click(ssoLoginButton)
+    await waitFor(() => {
+      expect(window.open).toBeCalledWith('apiUrl/saml/login', 'saml-login', 'width=475,height=600')
+    })
   })
 
   test('SAML login Electron', async () => {
     jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: false })
     window.open = jest.fn<typeof window.open>()
-    const slo = stubLocationOrigin('file://a')
+    locationSpy.mockReturnValue({ origin: 'file://a' })
 
-    try {
-      const { rerender} = render(<LoginForm apiUrl="apiUrl" origin="origin" />)
-      jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: true })
-      rerender(<LoginForm apiUrl="apiUrl" origin="origin" />)
+    const { rerender} = render(<LoginForm apiUrl="apiUrl" origin="origin" />)
+    jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: true })
+    rerender(<LoginForm apiUrl="apiUrl" origin="origin" />)
 
-      const ssoLoginButton = await waitFor(() => screen.getByText(/SSO Login/))
+    const ssoLoginButton = await waitFor(() => screen.getByText(/SSO Login/))
 
-      userEvent.click(ssoLoginButton)
-      await waitFor(() => {
-        expect(window.open).toBeCalledWith('apiUrl/saml/login', 'saml-login', 'width=475,height=600')
-      })
-    } finally {
-      slo.restore()
-    }
+    userEvent.click(ssoLoginButton)
+    await waitFor(() => {
+      expect(window.open).toBeCalledWith('apiUrl/saml/login', 'saml-login', 'width=475,height=600')
+    })
   })
 })

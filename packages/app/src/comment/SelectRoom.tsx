@@ -4,10 +4,7 @@ import SpeakerNotesRounded from '@mui/icons-material/SpeakerNotesOutlined'
 import { Message, isAcnOkMessage, isAcnRoomsMessage, isErrorMessage } from '@/common/Message'
 import { gotoCommentPage, gotoLoginPage, login, removeToken, setToken } from './utils/pages'
 import { NavigateFunction } from 'react-router-dom'
-import { getLogger } from '@/common/Logger'
 import { fetchWithTimeout } from '@/common/utils'
-
-const log = getLogger('SelectRoom')
 
 const roomsStore = {
   snapshot: {
@@ -127,7 +124,6 @@ const RoomSelectForm = ({ apiUrl, navigate, store }: {
   }, [navigate])
 
   // TODO: Change icon if anyone in the room.
-  log.error(store)
   return (
     <>
       <Typography sx={{ mt: 4, mb: 0 }} variant="h6" component="div">Hi! {store.nid}.</Typography>
