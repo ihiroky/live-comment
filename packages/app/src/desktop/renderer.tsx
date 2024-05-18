@@ -166,7 +166,7 @@ const onClose = (ev: CloseEvent): void => {
   window.comment.send(comment)
 }
 
-function createServerUrls(hostOrUrl?: string): { ws?: string, api?: string } {
+function createServerUrls(hostOrUrl?: string): { ws?: string, api?: string, origin?: string } {
   if (!hostOrUrl) {
     return {}
   }
@@ -175,7 +175,8 @@ function createServerUrls(hostOrUrl?: string): { ws?: string, api?: string } {
   if (/^ws:\/\/localhost:8080\/?/.test(hostOrUrl) || /'http:\/\/localhost:9080'\/?/.test(hostOrUrl)) {
     return {
       ws: 'ws://localhost:8080',
-      api:'http://localhost:9080',
+      api: 'http://localhost:9080',
+      origin: 'http://localhost:8888',
     }
   }
 
@@ -184,10 +185,11 @@ function createServerUrls(hostOrUrl?: string): { ws?: string, api?: string } {
   const wsExec = wsUrlRe.exec(hostOrUrl)
   if (wsExec) {
     const protocol = wsExec[1] === 'wss' ? 'https' : 'http'
-    const host = wsExec[2]
+    const domain = wsExec[2]
     return {
       ws: hostOrUrl,
-      api: `${protocol}://${host}/api`
+      api: `${protocol}://${domain}/api`,
+      origin: `${protocol}://${domain}`,
     }
   }
   // TODO Check strictly
@@ -195,10 +197,11 @@ function createServerUrls(hostOrUrl?: string): { ws?: string, api?: string } {
   const apiExec = apiUrlRe.exec(hostOrUrl)
   if (apiExec) {
     const protocol = apiExec[1] === 'https' ? 'wss' : 'ws'
-    const host = apiExec[2]
+    const domain = apiExec[2]
     return {
-      ws: `${protocol}://${host}/app`,
+      ws: `${protocol}://${domain}/app`,
       api: hostOrUrl,
+      origin: `${protocol}://${domain}`,
     }
   }
 
@@ -209,6 +212,7 @@ function createServerUrls(hostOrUrl?: string): { ws?: string, api?: string } {
   return {
     ws: `wss://${hostOrUrl}/app`,
     api: `https://${hostOrUrl}/api`,
+    origin: `https://${hostOrUrl}`,
   }
 }
 

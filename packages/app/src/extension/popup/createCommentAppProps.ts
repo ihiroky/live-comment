@@ -32,6 +32,7 @@ export function createCommentAppProps(): Required<ComponentProps<typeof App>> {
   }
 
   const props: Required<ComponentProps<typeof App>> = {
+    origin: '',
     wsUrl: '',
     apiUrl: '',
     onMount: (): void => {

@@ -20,6 +20,8 @@ if (!fs.existsSync(apiMain)) {
   console.info('Create dummy api.js.')
 }
 
+const serverConfigPath = process.argv[2] || 'config/server.config.json'
+
 const commands = [{
   name: pad('comment:serve'),
   prefixColor: 'yellow',
@@ -27,14 +29,12 @@ const commands = [{
 }, {
   name: pad('stream:serve'),
   prefixColor: 'magenta',
-  // command: `${cmd('nodemon')} -w ${streamingMain} ${streamingMain} -- -l DEBUG -p 8080`,
-  command: `${process.execPath} --watch ${streamingMain} -l DEBUG -p 8080`,
+  command: `${process.execPath} --watch ${streamingMain} -l DEBUG -p 8080 -c ${serverConfigPath}`,
 },
 {
   name: pad('api:serve'),
   prefixColor: 'green',
-  // command: `${cmd('nodemon')} -w ${apiMain} ${apiMain} -- -l DEBUG -p 9080`,
-  command: `${process.execPath} --watch ${apiMain} -l DEBUG -p 9080`
+  command: `${process.execPath} --watch ${apiMain} -l DEBUG -p 9080 -c ${serverConfigPath}`
 }]
 
 console.info(`Serving: ${commands.map(c => '\n ' + c.name.trim()).join('')}`)

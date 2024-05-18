@@ -8,6 +8,7 @@ import {
 } from '@/common/Message'
 import {
   createHash,
+  isExtensionOrElectron,
 } from '@/common/utils'
 import { serverConfigStore } from './utils/serverConfigStore'
 import { getLogger } from '@/common/Logger'
@@ -66,11 +67,12 @@ const ButtonsDiv = styled('div')({
 const log = getLogger('LoginForm')
 
 type LoginFormProps = {
+  origin: string
   apiUrl: string
   navigate?: NavigateFunction
 }
 
-export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormProps): JSX.Element => {
+export const LoginForm: FC<LoginFormProps> = ({ origin, apiUrl, navigate }: LoginFormProps): JSX.Element => {
   const [notification, setNotification] = useState<{ message: string }>({
     message: ''
   })
@@ -103,23 +105,39 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
     setNotification(notification)
   }, [navigate])
 
-  useEffect((): void => {
+  const loginCallback = useCallback((m: Message): undefined => {
+    if (!isAcnOkMessage(m)) {
+      setNotification({ message: `Login failed (${ isErrorMessage(m) ? m.message : JSON.stringify(m)})` })
+      return
+    }
+    setToken(m.attrs.token)
+    gotoCommentPage(navigate)
+  }, [navigate])
+
+  useEffect((): () => void => {
     serverConfigStore.update(apiUrl)
-  }, [apiUrl])
+
+    const onMessage = (ev: MessageEvent): void => {
+      log.debug('[onMessage]', ev)
+      if (ev.origin !== origin) {
+        return
+      }
+      if (ev.data.type !== 'room' || typeof ev.data.room !== 'string' || typeof ev.data.hash !== 'string') {
+        setNotification({ message: 'Invalid message from SAML login window' })
+        return
+      }
+      login(apiUrl, ev.data.room, ev.data.hash, false).then(loginCallback)
+    }
+    window.addEventListener('message', onMessage)
+    return () => {
+      window.removeEventListener('message', onMessage)
+    }
+  }, [origin, apiUrl, loginCallback])
 
   const onSubmit = useCallback((e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
-    login(apiUrl, room.value, createHash(password.value), keepLogin)
-      .then((m: Message): { message: string } | undefined => {
-        // TODO stay login if token is invalid
-        if (!isAcnOkMessage(m)) {
-          setNotification({ message: `Login failed (${ isErrorMessage(m) ? m.message : JSON.stringify(m)})` })
-          return
-        }
-        setToken(m.attrs.token)
-        gotoCommentPage(navigate)
-      })
-  }, [apiUrl, navigate, room.value, password.value, keepLogin])
+    login(apiUrl, room.value, createHash(password.value), keepLogin).then(loginCallback)
+  }, [apiUrl, room.value, password.value, keepLogin, loginCallback])
 
   const onTextFieldChange = useCallback((e: ChangeEvent<HTMLInputElement>): void => {
     log.debug('[onTextFieldChanged]', e.target.name, e.target.value)
@@ -173,7 +191,11 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
               <Grid container alignItems="center" justifyContent="center">
                 <Grid item>
                   <Button sx={{ mt: 4, mb: 4}} variant="outlined" type="button"
-                    onClick={() => { goto(`${apiUrl}/saml/login`) }}
+                    //onClick={() => { goto(`${apiUrl}/saml/login`) }}
+                    onClick={() => { !isExtensionOrElectron()
+                      ? goto(`${apiUrl}/saml/login`)
+                      : window.open(`${apiUrl}/saml/login`, 'saml-login', 'width=475,height=600')
+                    }}
                   >
                     SSO Login
                   </Button>

@@ -98,6 +98,12 @@ const NotificationDiv = styled('div')({
 })
 
 function selectRoom(apiUrl: string, room: string, hash: string, navigate: NavigateFunction | undefined): void {
+  if (window.opener && window.name === 'saml-login') {
+    window.opener.postMessage({ type: 'room', room, hash }, '*')
+    window.close()
+    return
+  }
+
   login(apiUrl, room, hash, false)
     .then((m: Message): void => {
       if (!isAcnOkMessage(m)) {

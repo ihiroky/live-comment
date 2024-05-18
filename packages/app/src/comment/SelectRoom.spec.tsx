@@ -57,8 +57,33 @@ async function fetchAndRender(
 }
 
 describe('SelectRoom', () => {
-  test('Show room list, select a room and navigate to the room', async () => {
+  test('Send message to opener if this page is saml-login window', async () => {
+    const { apiUrl, navigate, response } = prepare()
+    jest.mocked(fetchWithTimeout).mockResolvedValue({
+      ok: true,
+      json: jest.fn(async () => response),
+    } as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+    jest.mocked(isAcnRoomsMessage).mockReturnValue(true)
+    window.opener = {
+      postMessage: jest.fn<typeof window.postMessage>(),
+    } as any // eslint-disable-line @typescript-eslint/no-explicit-any
+    window.name = 'saml-login'
+    window.close = jest.fn<typeof window.close>()
 
+    const { rooms } = await fetchAndRender(apiUrl, navigate, response.nid, response.rooms)
+    userEvent.click(rooms[0])
+
+    await waitFor(() => {
+      expect(window.opener.postMessage).toBeCalledWith({
+        type: 'room',
+        room: 'room1',
+        hash: 'hash1',
+      }, '*')
+      expect(window.close).toBeCalled()
+    })
+  })
+
+  test('Show room list, select a room and navigate to the room', async () => {
     const { apiUrl, navigate, response } = prepare()
     jest.mocked(fetchWithTimeout).mockResolvedValue({
       ok: true,
