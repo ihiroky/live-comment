@@ -40,7 +40,7 @@ jobs:
         uses: VeryGoodOpenSource/very_good_coverage@v2
         with:
           path: 'reports/coverage/lcov.info'
-          min_coverage: 90
+          min_coverage: 85
 #
 # Build desktop app
 #

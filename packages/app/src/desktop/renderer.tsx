@@ -10,6 +10,7 @@ import { ScreenProps } from '@/settings/types'
 import { MessageScreen, PublishableMessageSource, createMessageSource } from '@/screen/MessageScreen'
 import { App as CommentApp } from '@/comment/App'
 import { AcnMessage, CloseCode, CommentMessage, isAcnOkMessage, Message } from '@/common/Message'
+import { assertNotNullable } from '@/common/assert'
 
 declare global {
   interface Window {
@@ -56,9 +57,7 @@ export function screenMain(): void {
       )
     }
     const rootElement = document.getElementById('root')
-    if (!rootElement) {
-      throw new Error('Root element not found')
-    }
+    assertNotNullable(rootElement, 'Root element not found')
     const root = createRoot(rootElement)
     root.render(<App />)
   })
@@ -96,9 +95,7 @@ export function pollMain(): void {
     }
 
     const rootElement = document.getElementById('root')
-    if (!rootElement) {
-      throw new Error('Root element not found')
-    }
+    assertNotNullable(rootElement, 'Root element not found')
     const root = createRoot(rootElement)
     root.render(<App />)
   })
@@ -106,9 +103,7 @@ export function pollMain(): void {
 
 export function settingsMain(): void {
   const rootElement = document.getElementById('root')
-  if (!rootElement) {
-    throw new Error('Root element not found')
-  }
+  assertNotNullable(rootElement, 'Root element not found')
   const root = createRoot(rootElement)
   root.render(
     <StrictMode>
@@ -232,23 +227,29 @@ export function commentMain(): Promise<void> {
       window.comment.send(comment)
     }
 
-    const promise = urls.api
+    const promise = urls.api && settings.general.room && settings.general.password
       ? login(urls.api, settings).then(window.comment.send)
-      : Promise.resolve()
+      : urls.api ? Promise.resolve() : Promise.reject('No URL defined.')
+
+    const rootElement = document.getElementById('root')
+    assertNotNullable(rootElement, 'Root element not found')
+    const root = createRoot(rootElement)
 
     return promise.then((): void => {
       // TODO Display error when fetch returns an error.
-      const rootElement = document.getElementById('root')
-      if (!rootElement) {
-        throw new Error('Root element not found')
-      }
-      const root = createRoot(rootElement)
       root.render(
         <StrictMode>
           <CommentApp
             wsUrl={urls.ws} apiUrl={urls.api}
             onOpen={onOpen} onClose={onClose} onMessage={window.comment.send} onError={log.error}
           />
+        </StrictMode>
+      )
+    }).catch((e: unknown) => {
+      root.render(
+        <StrictMode>
+          <div>Check your settings, or contact your administrator for server status.</div>
+          <pre>{JSON.stringify(e)}</pre>
         </StrictMode>
       )
     })
