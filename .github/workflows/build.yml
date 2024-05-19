@@ -36,12 +36,11 @@ jobs:
           path: reports/jest-*.xml
           reporter: jest-junit
 
-      - name: Coverage report
-        uses: ihiroky/lcov-reporter-action@master
+      - name: Check coverage
+        uses: VeryGoodOpenSource/very_good_coverage@v2
         with:
-          name: Coverage report on ${{ matrix.os }}
-          github-token: ${{ secrets.github_token }}
-          lcov-file: reports/coverage/lcov.info
+          path: 'reports/coverage/lcov.info'
+          min_coverage: 90
 #
 # Build desktop app
 #
