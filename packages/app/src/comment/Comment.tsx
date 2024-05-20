@@ -1,6 +1,7 @@
 import { FC, useState, useCallback, useEffect, useRef } from 'react'
 import { Message } from '@/common/Message'
 import { getLogger } from '@/common/Logger'
+import { isMobiles } from '@/common/utils'
 import { useReconnectableWebSocket } from '@/wscomp/rws'
 import { SendCommentForm } from './SendCommentForm'
 import { AppState as CommentState } from './types'
@@ -154,10 +155,6 @@ function getBooleanOptionValue(key: OptionKey, defalutValue: boolean): boolean {
 
 function setBooleanOptionValue(key: OptionKey, value: boolean): void {
   window.localStorage.setItem(key, value ? 't' : '')
-}
-
-function isMobiles(): boolean {
-  return /iPhone|iPad|Android/.test(navigator.userAgent)
 }
 
 const autoScroll = getBooleanOptionValue('autoScroll', true)

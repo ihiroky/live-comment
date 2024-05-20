@@ -6,6 +6,9 @@ import { LoginForm } from './LoginForm'
 import { SoundPlayer } from './sound/SoundPlayer'
 import { SelectRoom } from './SelectRoom'
 
+const defaultOrigin = process.env.NODE_ENV === 'production'
+  ? (process.env.LC_ORIGIN_URL || window.location.origin)
+  : `http://localhost:8888`
 const defaultWsUrl = process.env.NODE_ENV === 'production'
   ? (process.env.LC_WS_URL || `wss://${window.location.hostname}/app`)
   : `ws://localhost:8080`
@@ -14,6 +17,7 @@ const defaultApiUrl = process.env.NODE_ENV === 'production'
   : `http://localhost:9080`
 
 type Props = {
+  origin?: string
   wsUrl?: string
   apiUrl?: string
   onMount?: () => void
@@ -26,9 +30,8 @@ type Props = {
 
 const isSoundPage = window.location.href.endsWith('/sound')
 
-
-
 const AppRoutes = (props: Props): JSX.Element => {
+  const origin = props.origin || defaultOrigin
   const wsUrl = props.wsUrl || defaultWsUrl
   const apiUrl = props.apiUrl || defaultApiUrl
   const navigate = useNavigate()
@@ -37,7 +40,7 @@ const AppRoutes = (props: Props): JSX.Element => {
   return (
     <Routes>
       <Route path='/' element={<Navigate replace to='/login' />} />
-      <Route path='/login' element={<LoginForm apiUrl={apiUrl} navigate={navigate} />} />
+      <Route path='/login' element={<LoginForm origin={origin} apiUrl={apiUrl} navigate={navigate} />} />
       <Route path='/rooms' element={<SelectRoom apiUrl={apiUrl} navigate={navigate} />} />
       { !isSoundPage ? (
         <Route path='/comment' element={
