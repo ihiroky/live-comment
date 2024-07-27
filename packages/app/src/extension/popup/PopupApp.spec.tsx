@@ -88,9 +88,12 @@ describe('On/off', () => {
       newWindowId,
       newWindowTabId
     })
-    jest.mocked(store.cache).logTab = { tabId: 0 }
-    jest.mocked(store.cache).showCommentTabs = { tabIds: {} }
-    jest.mocked(store.cache).aggressive = false
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(jest.mocked(store.cache) as any).logTab = { tabId: 0 }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(jest.mocked(store.cache) as any).showCommentTabs = { tabIds: {} }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(jest.mocked(store.cache) as any).aggressive = false
 
     render(<App store={store} currentTabId={currentTabId} />)
 
@@ -130,9 +133,12 @@ describe('On/off', () => {
       newWindowId,
       newWindowTabId
     })
-    jest.mocked(store.cache).logTab = { tabId: 0 }
-    jest.mocked(store.cache).showCommentTabs = { tabIds: {} }
-    jest.mocked(store.cache).aggressive = true
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(jest.mocked(store.cache) as any).logTab = { tabId: 0 }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(jest.mocked(store.cache) as any).showCommentTabs = { tabIds: {} }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(jest.mocked(store.cache) as any).aggressive = true
 
     const { rerender } = render(<App store={store} currentTabId={currentTabId} />)
 
@@ -190,9 +196,12 @@ describe('In this tab', () => {
       newWindowId,
       newWindowTabId
     })
-    jest.mocked(store.cache).logTab = { tabId: 0 }
-    jest.mocked(store.cache).showCommentTabs = { tabIds: {} }
-    jest.mocked(store.cache).aggressive = false
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(jest.mocked(store.cache) as any).logTab = { tabId: 0 }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(jest.mocked(store.cache) as any).showCommentTabs = { tabIds: {} }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(jest.mocked(store.cache) as any).aggressive = false
 
     const { rerender } = render(<App store={store} currentTabId={currentTabId} />)
 
@@ -252,9 +261,12 @@ describe('Aggressive mode', () => {
       newWindowId,
       newWindowTabId
     })
-    jest.mocked(store.cache).logTab = { tabId: 0 }
-    jest.mocked(store.cache).showCommentTabs = { tabIds: {} }
-    jest.mocked(store.cache).aggressive = true
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(jest.mocked(store.cache) as any).logTab = { tabId: 0 }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(jest.mocked(store.cache) as any).showCommentTabs = { tabIds: {} }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(jest.mocked(store.cache) as any).aggressive = true
 
     const { rerender } = render(<App store={store} currentTabId={currentTabId} />)
 

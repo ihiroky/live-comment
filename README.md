@@ -24,15 +24,20 @@ The release in this repository will not include the browser extension because it
 
 ## Start servers and clients for development
 
+### Fetch dependencies
+```bash
+npm install
+```
+
 ### Build and watch all applications
 ```bash
-yarn --cwd packages/esbuild-plugin-copy-files/ build
-yarn --cwd packages/app/ watch
+npm -w packages/esbuild-plugin-copy-files/ run build
+npm -w packages/app/ run watch
 ```
 
 ### Start servers
 ```bash
-yarn --cwd packages/app/ serve
+npm -w packages/app/ run serve
 # Start streaming server on port 8080
 # Start api server on port 9080
 # Start comment page server on port 8888 (http://localhost:8888/login)
@@ -40,7 +45,7 @@ yarn --cwd packages/app/ serve
 
 ### Start desktop application
 ```bash
-yarn --cwd packages/app/ start-desktop
+npm -w packages/app/ run start-desktop
 # And change Server URL to the streaming server (ws://localhost:8080/app) in its settings.
 ```
 

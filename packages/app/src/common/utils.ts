@@ -33,3 +33,24 @@ export function fetchWithTimeout(
     clearTimeout(timeout)
   }
 }
+
+export function createRandomString(columns: number): string {
+  const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  const charactersLength = characters.length
+  let result = ''
+  for (let i = 0; i < columns; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength))
+  }
+  return result
+}
+
+export function isMobiles(): boolean {
+  if (!navigator || !navigator.userAgent) {
+    throw new Error('No navigator.userAgent')
+  }
+  return /iPhone|iPad|Android/.test(navigator.userAgent)
+}
+
+export function isExtensionOrElectron(): boolean {
+  return window.location.origin.startsWith('chrome-extension://') || window.location.origin.startsWith('file://')
+}

@@ -10,6 +10,7 @@ import { ScreenProps } from '@/settings/types'
 import { MessageScreen, PublishableMessageSource, createMessageSource } from '@/screen/MessageScreen'
 import { App as CommentApp } from '@/comment/App'
 import { AcnMessage, CloseCode, CommentMessage, isAcnOkMessage, Message } from '@/common/Message'
+import { assertNotNullable } from '@/common/assert'
 
 declare global {
   interface Window {
@@ -56,9 +57,7 @@ export function screenMain(): void {
       )
     }
     const rootElement = document.getElementById('root')
-    if (!rootElement) {
-      throw new Error('Root element not found')
-    }
+    assertNotNullable(rootElement, 'Root element not found')
     const root = createRoot(rootElement)
     root.render(<App />)
   })
@@ -96,9 +95,7 @@ export function pollMain(): void {
     }
 
     const rootElement = document.getElementById('root')
-    if (!rootElement) {
-      throw new Error('Root element not found')
-    }
+    assertNotNullable(rootElement, 'Root element not found')
     const root = createRoot(rootElement)
     root.render(<App />)
   })
@@ -106,9 +103,7 @@ export function pollMain(): void {
 
 export function settingsMain(): void {
   const rootElement = document.getElementById('root')
-  if (!rootElement) {
-    throw new Error('Root element not found')
-  }
+  assertNotNullable(rootElement, 'Root element not found')
   const root = createRoot(rootElement)
   root.render(
     <StrictMode>
@@ -166,7 +161,7 @@ const onClose = (ev: CloseEvent): void => {
   window.comment.send(comment)
 }
 
-function createServerUrls(hostOrUrl?: string): { ws?: string, api?: string } {
+function createServerUrls(hostOrUrl?: string): { ws?: string, api?: string, origin?: string } {
   if (!hostOrUrl) {
     return {}
   }
@@ -175,7 +170,8 @@ function createServerUrls(hostOrUrl?: string): { ws?: string, api?: string } {
   if (/^ws:\/\/localhost:8080\/?/.test(hostOrUrl) || /'http:\/\/localhost:9080'\/?/.test(hostOrUrl)) {
     return {
       ws: 'ws://localhost:8080',
-      api:'http://localhost:9080',
+      api: 'http://localhost:9080',
+      origin: 'http://localhost:8888',
     }
   }
 
@@ -184,10 +180,11 @@ function createServerUrls(hostOrUrl?: string): { ws?: string, api?: string } {
   const wsExec = wsUrlRe.exec(hostOrUrl)
   if (wsExec) {
     const protocol = wsExec[1] === 'wss' ? 'https' : 'http'
-    const host = wsExec[2]
+    const domain = wsExec[2]
     return {
       ws: hostOrUrl,
-      api: `${protocol}://${host}/api`
+      api: `${protocol}://${domain}/api`,
+      origin: `${protocol}://${domain}`,
     }
   }
   // TODO Check strictly
@@ -195,10 +192,11 @@ function createServerUrls(hostOrUrl?: string): { ws?: string, api?: string } {
   const apiExec = apiUrlRe.exec(hostOrUrl)
   if (apiExec) {
     const protocol = apiExec[1] === 'https' ? 'wss' : 'ws'
-    const host = apiExec[2]
+    const domain = apiExec[2]
     return {
-      ws: `${protocol}://${host}/app`,
+      ws: `${protocol}://${domain}/app`,
       api: hostOrUrl,
+      origin: `${protocol}://${domain}`,
     }
   }
 
@@ -209,6 +207,7 @@ function createServerUrls(hostOrUrl?: string): { ws?: string, api?: string } {
   return {
     ws: `wss://${hostOrUrl}/app`,
     api: `https://${hostOrUrl}/api`,
+    origin: `https://${hostOrUrl}`,
   }
 }
 
@@ -228,23 +227,29 @@ export function commentMain(): Promise<void> {
       window.comment.send(comment)
     }
 
-    const promise = urls.api
+    const promise = urls.api && settings.general.room && settings.general.password
       ? login(urls.api, settings).then(window.comment.send)
-      : Promise.resolve()
+      : urls.api ? Promise.resolve() : Promise.reject('No URL defined.')
+
+    const rootElement = document.getElementById('root')
+    assertNotNullable(rootElement, 'Root element not found')
+    const root = createRoot(rootElement)
 
     return promise.then((): void => {
       // TODO Display error when fetch returns an error.
-      const rootElement = document.getElementById('root')
-      if (!rootElement) {
-        throw new Error('Root element not found')
-      }
-      const root = createRoot(rootElement)
       root.render(
         <StrictMode>
           <CommentApp
             wsUrl={urls.ws} apiUrl={urls.api}
             onOpen={onOpen} onClose={onClose} onMessage={window.comment.send} onError={log.error}
           />
+        </StrictMode>
+      )
+    }).catch((e: unknown) => {
+      root.render(
+        <StrictMode>
+          <div>Check your settings, or contact your administrator for server status.</div>
+          <pre>{JSON.stringify(e)}</pre>
         </StrictMode>
       )
     })

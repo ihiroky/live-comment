@@ -9,7 +9,7 @@ import {
   MenuItem,
   SelectChangeEvent,
 } from '@mui/material'
-import makeStyles from '@mui/styles/makeStyles'
+import { styled } from '@mui/system'
 import { WatermarkSettings, WatermarkPositions } from './types'
 import {
   TextFieldMetadata,
@@ -17,16 +17,11 @@ import {
 } from './createTextFieldMetadata'
 import { getLogger } from '@/common/Logger'
 
-const useStyles = makeStyles({
-  root: {
-    width: '80vw',
-    margin: 'auto',
-    paddingTop: '24px',
-    paddingBottom: '24px',
-  },
-  buttons: {
-    marginTop: '24px',
-  },
+const RootDiv = styled('div')({
+  width: '80vw',
+  margin: 'auto',
+  paddingTop: '24px',
+  paddingBottom: '24px',
 })
 
 const log = getLogger('settings/Watermark')
@@ -81,10 +76,8 @@ export const Watermark: FC<PropsWithChildren<WatermarkProps>> = (props: Watermar
     props.onUpdate('noComments', String(e.target.checked), false)
   }
 
-  const classes = useStyles()
-
   return (
-    <div className={classes.root}>
+    <RootDiv>
       {
         textFields.map((f: TextFieldMetadata<WatermarkSettings, unknown>): ReactNode => {
           const id = `wm-input-${f.name}`
@@ -136,6 +129,6 @@ export const Watermark: FC<PropsWithChildren<WatermarkProps>> = (props: Watermar
           label="No comments mode"
         />
       </div>
-    </div>
+    </RootDiv>
   )
 }

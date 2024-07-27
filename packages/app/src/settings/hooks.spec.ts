@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-hooks'
+import { renderHook, waitFor } from '@testing-library/react'
 import { useOnGeneralSettingsUpdate, useOnSubmit, useOnWatermarkSettingsUpdate, useSettingsState } from './hooks'
 import { GeneralSettingsState, Settings, SettingsRepository, SettingsState, WatermarkSettingsState } from './types'
 import { jest, test, expect, beforeEach } from '@jest/globals'
@@ -42,7 +42,7 @@ test('useSettingsState initial value', async () => {
       },
     })
   })
-  const { result, waitForNextUpdate } = renderHook(() => useSettingsState(mockRepository))
+  const { result } = renderHook(() => useSettingsState(mockRepository))
 
   expect(result.current.general).toEqual({
     url: { value: { data: '', error: false }, setValue: expect.any(Function) },
@@ -65,27 +65,28 @@ test('useSettingsState initial value', async () => {
     noComments: { value: { data: false, error: false }, setValue: expect.any(Function) },
   })
 
-  await waitForNextUpdate()
-
-  expect(result.current.general).toEqual({
-    url: { value: { data: 'url', error: false }, setValue: expect.any(Function) },
-    room: { value: { data: 'room', error: false }, setValue: expect.any(Function),},
-    password: { value: { data: 'password', error: false }, setValue: expect.any(Function) },
-    duration: { value: { data: '11', error: false }, setValue: expect.any(Function) },
-    zoom: { value: { data: '200', error: false }, setValue: expect.any(Function) },
-    screen: { value: { data: 1, error: false }, setValue: expect.any(Function) },
-    fontColor: { value: { data: 'red', error: false }, setValue: expect.any(Function) },
-    fontBorderColor: { value: { data: 'blue', error: false }, setValue: expect.any(Function) },
-    gpu: { value: { data: true, error: false }, setValue: expect.any(Function) },
-  })
-  expect(result.current.watermark).toEqual({
-    html: { value: { data: '<div></div>', error: false }, setValue: expect.any(Function) },
-    opacity: { value: { data: '1', error: false }, setValue: expect.any(Function) },
-    color: { value: { data: 'green', error: false }, setValue: expect.any(Function) },
-    fontSize: { value: { data: '96px', error: false }, setValue: expect.any(Function) },
-    position: { value: { data: 'top-left', error: false }, setValue: expect.any(Function) },
-    offset: { value: { data: '5%', error: false }, setValue: expect.any(Function) },
-    noComments: { value: { data: true, error: false }, setValue: expect.any(Function) },
+  // Wait for the requestSettings to be called
+  await waitFor(() => {
+    expect(result.current.general).toEqual({
+      url: { value: { data: 'url', error: false }, setValue: expect.any(Function) },
+      room: { value: { data: 'room', error: false }, setValue: expect.any(Function),},
+      password: { value: { data: 'password', error: false }, setValue: expect.any(Function) },
+      duration: { value: { data: '11', error: false }, setValue: expect.any(Function) },
+      zoom: { value: { data: '200', error: false }, setValue: expect.any(Function) },
+      screen: { value: { data: 1, error: false }, setValue: expect.any(Function) },
+      fontColor: { value: { data: 'red', error: false }, setValue: expect.any(Function) },
+      fontBorderColor: { value: { data: 'blue', error: false }, setValue: expect.any(Function) },
+      gpu: { value: { data: true, error: false }, setValue: expect.any(Function) },
+    })
+    expect(result.current.watermark).toEqual({
+      html: { value: { data: '<div></div>', error: false }, setValue: expect.any(Function) },
+      opacity: { value: { data: '1', error: false }, setValue: expect.any(Function) },
+      color: { value: { data: 'green', error: false }, setValue: expect.any(Function) },
+      fontSize: { value: { data: '96px', error: false }, setValue: expect.any(Function) },
+      position: { value: { data: 'top-left', error: false }, setValue: expect.any(Function) },
+      offset: { value: { data: '5%', error: false }, setValue: expect.any(Function) },
+      noComments: { value: { data: true, error: false }, setValue: expect.any(Function) },
+    })
   })
 })
 

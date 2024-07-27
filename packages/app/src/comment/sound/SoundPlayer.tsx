@@ -1,5 +1,5 @@
 import { FormControl, FormControlLabel, FormGroup, Grid, IconButton, Switch } from '@mui/material'
-import { makeStyles } from '@mui/styles'
+import { styled } from '@mui/system'
 import { getLogger } from '@/common/Logger'
 import { FC, MouseEvent, useState, useCallback, useEffect, useMemo } from 'react'
 import { isPlaySoundMessage, PlaySoundMessage } from '@/sound/types'
@@ -18,37 +18,42 @@ const CookieNames = [
 ] as const
 export type CookieName = typeof CookieNames[number]
 
-const useStyles = makeStyles({
-  title: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  controls: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  controlItem: {
-    display: 'flex',
-  },
-  list: {
-    overflowY: 'auto',
-    paddingTop: 6,
-    // title height(60px) + control height(60px) + paddingTop(6px)
-    height: 'calc(100% - 126px)',
-  },
-  item: {
-    display: 'flex',
-    flexWrap: 'nowrap',
-    fontSize: '13px',
-  },
-  command: {
-    fontSize: 'small',
-    opacity: 0.66
-  },
-  preferences: {
-    padding: '6px',
-  }
+const TitleDiv = styled('div')({
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+})
+
+const ControlsDiv = styled('div')({
+  display: 'flex',
+  flexDirection: 'column',
+})
+
+const ControlItemDiv = styled('div')({
+  display: 'flex',
+})
+
+const ListDiv = styled('div')({
+  overflowY: 'auto',
+  paddingTop: 6,
+  // title height(60px) + control height(60px) + paddingTop(6px)
+  height: 'calc(100% - 126px)',
+})
+
+const ItemDiv = styled('div')({
+  display: 'flex',
+  flexWrap: 'nowrap',
+  fontSize: '13px',
+})
+
+const CommandDiv = styled('div')({
+  fontSize: 'small',
+  opacity: 0.66
+})
+
+const PreferencesDiv = styled('div')({
+  display: 'flex',
+  padding: '6px',
 })
 
 const log = getLogger('sound/SoundPlayer')
@@ -73,7 +78,6 @@ export const SoundPlayer: FC<Props> = ({ url }: Props): JSX.Element => {
   const [sounds] = useSoundMetadata(token.payload.room, existsSounds)
   const playSound = usePlaySound(token.payload.room)
   const [playRequested, setPlayRequested] = useState<boolean>(false)
-  const style = useStyles()
   const onIconClick = useCallback((ev: MouseEvent<HTMLButtonElement>, id: string): void => {
     if (playRequested) {
       return
@@ -137,11 +141,11 @@ export const SoundPlayer: FC<Props> = ({ url }: Props): JSX.Element => {
   */
   return (
     <div style={{ width, height: '100%' }}>
-      <div className={style.title}>
+      <TitleDiv>
         <h3>Ding Dong Ding! 🔔</h3>
-      </div>
-      <div className={style.controls}>
-        <div className={style.controlItem}>
+      </TitleDiv>
+      <ControlsDiv>
+        <ControlItemDiv>
           <FormControl component="fieldset" variant="standard">
             <FormGroup>
               <FormControlLabel label="Show preferences" control={
@@ -149,8 +153,8 @@ export const SoundPlayer: FC<Props> = ({ url }: Props): JSX.Element => {
               }/>
             </FormGroup>
           </FormControl>
-        </div>
-        <div className={[style.controlItem, style.preferences].join(' ')}>
+        </ControlItemDiv>
+        <PreferencesDiv>
           {prefsShown &&
             <Preferences
               url={url}
@@ -160,14 +164,14 @@ export const SoundPlayer: FC<Props> = ({ url }: Props): JSX.Element => {
               volumeChanged={onVolumeChanged}
             />
           }
-        </div>
-      </div>
-      <div className={style.list}>
+        </PreferencesDiv>
+      </ControlsDiv>
+      <ListDiv>
         <Grid container spacing={0}>
           {
             sounds && Object.values(sounds).map((sound) => (
               <Grid key={sound.id} item xs={xs}>
-                <div className={style.item}>
+                <ItemDiv>
                   <IconButton
                     data-testid={`play-${sound.id}`}
                     onClick={e => onIconClick(e, sound.id)}
@@ -178,14 +182,14 @@ export const SoundPlayer: FC<Props> = ({ url }: Props): JSX.Element => {
                   </IconButton>
                   <div>
                     <div>{sound.displayName}</div>
-                    <div className={style.command}>{sound.command.join(', ')}</div>
+                    <CommandDiv>{sound.command.join(', ')}</CommandDiv>
                   </div>
-                </div>
+                </ItemDiv>
               </Grid>
             ))
           }
         </Grid>
-      </div>
+      </ListDiv>
     </div>
   )
 }

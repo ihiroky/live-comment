@@ -1,18 +1,24 @@
-import { FC, ChangeEvent, FormEvent, useState, useCallback, useEffect } from 'react'
-import { TextField, Button, Grid } from '@mui/material'
-import makeStyles from '@mui/styles/makeStyles'
+import { FC, ChangeEvent, FormEvent, useState, useCallback, useEffect, useSyncExternalStore } from 'react'
+import { TextField, Button, Grid, Divider } from '@mui/material'
+import { styled } from '@mui/system'
 import {
-  AcnMessage,
   isAcnOkMessage,
   isErrorMessage,
   Message,
 } from '@/common/Message'
 import {
   createHash,
-  fetchWithTimeout,
+  isExtensionOrElectron,
 } from '@/common/utils'
+import { serverConfigStore } from './utils/serverConfigStore'
 import { getLogger } from '@/common/Logger'
-import { gotoCommentPage } from './utils/pages'
+import {
+  gotoCommentPage,
+  login,
+  getToken,
+  setToken,
+  goto,
+} from './utils/pages'
 import { LabeledCheckbox } from './LabeledCheckbox'
 import { NavigateFunction } from 'react-router-dom'
 import jwtDecode, { JwtPayload } from 'jwt-decode'
@@ -22,61 +28,66 @@ interface TextFieldState {
   helperText: string
 }
 
-const useStyles = makeStyles({
-  root: {
-    minWidth: '300px',
-    maxWidth: '600px',
-    minHeight: '300px',
-    height: '600px',
-    margin: 'auto',
-    padding: '8px',
-  },
-  logo: {
-    display: 'flex',
-    margin: 'auto',
-  },
-  logoCredit: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    fontSize: 'x-small',
-  },
-  notification: {
-    color: 'red'
-  },
-  texts: {
-    padding: '8px'
-  },
-  options: {
-    padding: '8px'
-  },
-  buttons: {
-    padding: '8px'
-  },
+const RootForm = styled('form')({
+  minWidth: '300px',
+  width: '400px',
+  minHeight: '300px',
+  height: '400px',
+  margin: 'auto',
+  padding: '8px',
+})
+
+const LogoImg = styled('img')({
+  display: 'flex',
+  margin: 'auto',
+})
+
+const LogCreditDiv = styled('div')({
+  display: 'flex',
+  justifyContent: 'flex-end',
+  fontSize: 'x-small',
+})
+
+const NotificationDiv = styled('div')({
+  color: 'red'
+})
+
+const TextsDiv = styled('div')({
+  padding: '8px'
+})
+
+const OptionsDiv = styled('div')({
+  padding: '8px'
+})
+
+const ButtonsDiv = styled('div')({
+  padding: '8px'
 })
 
 const log = getLogger('LoginForm')
 
 type LoginFormProps = {
+  origin: string
   apiUrl: string
   navigate?: NavigateFunction
 }
 
-export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormProps): JSX.Element => {
+export const LoginForm: FC<LoginFormProps> = ({ origin, apiUrl, navigate }: LoginFormProps): JSX.Element => {
   const [notification, setNotification] = useState<{ message: string }>({
     message: ''
   })
   const [room, setRoom] = useState<TextFieldState>({
     value: '',
-    helperText: 'Input room name',
+    helperText: '',
   })
   const [password, setPassword] = useState<TextFieldState>({
     value: '',
-    helperText: 'Input password of the room',
+    helperText: '',
   })
   const [keepLogin, setKeepLogin] = useState<boolean>(false)
 
   useEffect((): void => {
-    const token = window.localStorage.getItem('token')
+    const token = getToken()
     if (token) {
       const payload = jwtDecode<JwtPayload & { room: string }>(token)
       if ((payload.exp !== undefined) && (payload.exp > Date.now() / 1000)) {
@@ -94,40 +105,39 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
     setNotification(notification)
   }, [navigate])
 
-  const onSubmit = useCallback((e: FormEvent<HTMLFormElement>): void => {
-    e.preventDefault()
-    const message: AcnMessage = {
-      type: 'acn',
-      room: room.value,
-      longLife: keepLogin,
-      hash: createHash(password.value)
+  const loginCallback = useCallback((m: Message): undefined => {
+    if (!isAcnOkMessage(m)) {
+      setNotification({ message: `Login failed (${ isErrorMessage(m) ? m.message : JSON.stringify(m)})` })
+      return
     }
-    fetchWithTimeout(
-      `${apiUrl.replace(/\/+$/, '')}/login`,
-      {
-        method: 'POST',
-        cache: 'no-store',
-        mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(message)
-      },
-      3000
-    ).then((res: Response): Promise<Message> =>
-      res.ok
-        ? res.json()
-        : Promise.resolve({ type: 'error', error: 'ERROR', message: 'Fetch failed' })
-    ).then((m: Message): void => {
-      // TODO stay login if token is invalid
-      if (isAcnOkMessage(m)) {
-        window.localStorage.setItem('token', m.attrs.token)
-        gotoCommentPage(navigate)
+    setToken(m.attrs.token)
+    gotoCommentPage(navigate)
+  }, [navigate])
+
+  useEffect((): () => void => {
+    serverConfigStore.update(apiUrl)
+
+    const onMessage = (ev: MessageEvent): void => {
+      log.debug('[onMessage]', ev)
+      if (ev.origin !== origin) {
         return
       }
-      setNotification({ message: `Login failed (${ isErrorMessage(m) ? m.message : JSON.stringify(m)})` })
-    })
-  }, [apiUrl, navigate, room.value, password.value, keepLogin])
+      if (ev.data.type !== 'room' || typeof ev.data.room !== 'string' || typeof ev.data.hash !== 'string') {
+        setNotification({ message: 'Invalid message from SAML login window' })
+        return
+      }
+      login(apiUrl, ev.data.room, ev.data.hash, false).then(loginCallback)
+    }
+    window.addEventListener('message', onMessage)
+    return () => {
+      window.removeEventListener('message', onMessage)
+    }
+  }, [origin, apiUrl, loginCallback])
+
+  const onSubmit = useCallback((e: FormEvent<HTMLFormElement>): void => {
+    e.preventDefault()
+    login(apiUrl, room.value, createHash(password.value), keepLogin).then(loginCallback)
+  }, [apiUrl, room.value, password.value, keepLogin, loginCallback])
 
   const onTextFieldChange = useCallback((e: ChangeEvent<HTMLInputElement>): void => {
     log.debug('[onTextFieldChanged]', e.target.name, e.target.value)
@@ -139,7 +149,7 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
       case 'room': {
         setRoom({
           value: e.target.value,
-          helperText: error ? 'Input room name.' : ''
+          helperText: error ? 'Input room name' : ''
         })
         break
       }
@@ -157,15 +167,13 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
     return room.helperText.length > 0 || password.helperText.length > 0
   }, [room.helperText, password.helperText])
 
-  const classes = useStyles()
+  const serverConfig = useSyncExternalStore(serverConfigStore.subscribe, serverConfigStore.getSnapshot)
+
   return (
-    <form className={classes.root} onSubmit={onSubmit}>
+    <RootForm onSubmit={onSubmit}>
       <div>
-        <img
-          className={classes.logo}
-          src="./logo.png"
-        />
-        <div className={classes.logoCredit}>
+        <LogoImg src="./logo.png"/>
+        <LogCreditDiv>
           Image by
           <a href="https://www.sasagawa-brand.co.jp/tada/detail.php?id=1145&cid=4&cid2=14"
             target="_blank"
@@ -174,14 +182,38 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
           <a href="https://github.com/ihiroky/live-comment"
             target="_blank"
             rel="noreferrer">Live Comment</a>.
-        </div>
+        </LogCreditDiv>
       </div>
-      <div className={classes.texts}>
-        <div role="status" className={classes.notification}>{notification.message}</div>
+      { serverConfig.samlEnabled
+        ? (
+          <>
+            <ButtonsDiv>
+              <Grid container alignItems="center" justifyContent="center">
+                <Grid item>
+                  <Button sx={{ mt: 4, mb: 4}} variant="outlined" type="button"
+                    //onClick={() => { goto(`${apiUrl}/saml/login`) }}
+                    onClick={() => { !isExtensionOrElectron()
+                      ? goto(`${apiUrl}/saml/login`)
+                      : window.open(`${apiUrl}/saml/login`, 'saml-login', 'width=475,height=600')
+                    }}
+                  >
+                    SSO Login
+                  </Button>
+                </Grid>
+              </Grid>
+            </ButtonsDiv>
+            <Divider>OR</Divider>
+          </>
+        )
+        : undefined
+      }
+      <TextsDiv>
+        <NotificationDiv role="status">{notification.message}</NotificationDiv>
         <TextField
           fullWidth
           label="Room"
           name="room"
+          variant="standard"
           value={room.value}
           error={room.value.length === 0}
           helperText={room.helperText}
@@ -193,26 +225,27 @@ export const LoginForm: FC<LoginFormProps> = ({ apiUrl, navigate }: LoginFormPro
           label="Password"
           type="password"
           name="password"
+          variant="standard"
           value={password.value}
           error={password.value.length === 0}
           helperText={password.helperText}
           margin="normal"
           onChange={onTextFieldChange}
         />
-      </div>
-      <div className={classes.options}>
+      </TextsDiv>
+      <OptionsDiv>
         <LabeledCheckbox
           label="Login enabled for 30 days" name="login_30_days" checked={keepLogin}
           onChange={setKeepLogin}
         />
-      </div>
-      <div className={classes.buttons}>
+      </OptionsDiv>
+      <ButtonsDiv>
         <Grid container alignItems="center" justifyContent="center">
           <Grid item>
             <Button variant="outlined" type="submit" disabled={hasError()}>Enter</Button>
           </Grid>
         </Grid>
-      </div>
-    </form>
+      </ButtonsDiv>
+    </RootForm>
   )
 }

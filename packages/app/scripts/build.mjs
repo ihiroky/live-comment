@@ -1,35 +1,30 @@
 /* eslint-disable no-console */
 import concurrently from 'concurrently'
-import path from 'node:path'
 
 function pad(name) {
   return name.padEnd(16)
-}
-
-function cmd(cmd) {
-  return path.join('node_modules', '.bin', cmd)
 }
 
 export const cmddef = {
   c: {
     name: pad('comment:build'),
     prefixColor: 'cyan',
-    command: `${cmd('rollup')} -c rollup/comment.js`,
+    command: `npx rollup -c rollup/comment.mjs`,
   },
   d: {
     name: pad('desktop:build'),
     prefixColor: 'yellow',
-    command: `${cmd('rollup')} -c rollup/desktop.js`,
+    command: `npx rollup -c rollup/desktop.mjs`,
   },
   e: {
     name: pad('extension:build'),
     prefixColor: 'green',
-    command: `${cmd('rollup')} -c rollup/extension.js`,
+    command: `npx rollup -c rollup/extension.mjs`,
   },
   s: {
     name: pad('servers:build'),
     prefixColor: 'blue',
-    command: `${cmd('rollup')} -c rollup/server.js`,
+    command: `npx rollup -c rollup/server.mjs`,
   },
 }
 

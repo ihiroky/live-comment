@@ -18,7 +18,31 @@ function isRoom(obj: unknown): obj is ServerConfig['rooms'][number] {
   return typeof obj.room === 'string' && typeof obj.hash === 'string'
 }
 
-type ServerConfig = Readonly<{
+export type SamlConfig = {
+  appUrl: string
+  cookieSecret: string
+  callbackUrl: string
+  entryPoint: string
+  issuer: string      // Entity ID
+  certPaths: string[] // Path to IDP certificate
+  certs: string[]
+  wantAssertionsSigned: boolean | undefined
+  wantAuthnResponseSigned: boolean | undefined
+  decryption?: {
+    keyPath: string
+    key: string
+    certPath: string
+    cert: string
+  }
+  signing?: {
+    keyPath: string
+    key: string
+    certPaths: string[]
+    certs: string[]
+  }
+}
+
+export type ServerConfig = Readonly<{
   rooms: Room[]
   soundDirPath: string
   jwtPrivateKeyPath: string
@@ -26,11 +50,61 @@ type ServerConfig = Readonly<{
   jwtPublicKeyPath: string
   jwtPublicKey: Buffer
   corsOrigins: string[]
+  saml?: SamlConfig
 }>
 
 const log = getLogger('Configuration')
 
+function assertDefinedAndNotEmpty(object: Record<string, string>, prop: string, prefix?: string): void {
+  if (!object[prop] || object[prop].length === 0) {
+    throw new Error(`${prefix ? `${prefix}.${prop}` : prop} is empty or undefined.`)
+  }
+}
+
+async function readKeyOrCertAsync(
+  json: Record<string, string>,
+  pathPropName: string,
+  prefix?: string
+): Promise<string> {
+  assertDefinedAndNotEmpty(json, pathPropName, prefix)
+  const path = json[pathPropName]
+  try {
+    const stat = await fsp.stat(path)
+    if (!stat.isFile()) {
+      throw new Error(`${prefix ? `${prefix}.${pathPropName}` : pathPropName}: ${path} is not a file.`)
+    }
+    const buffer = await fsp.readFile(path)
+    return buffer.toString()
+  } catch (e: unknown) {
+    throw new Error(`${prefix ? `${prefix}.${pathPropName}` : pathPropName}: ${e}`)
+  }
+
+}
+
+async function readCertsAsync(json: Record<string, string>, pathsPropName: string, prefix?: string): Promise<string[]> {
+  assertDefinedAndNotEmpty(json, pathsPropName, prefix)
+  const paths = json[pathsPropName]
+  if (!Array.isArray(paths)) {
+    throw new Error(`${prefix ? `${prefix}.${pathsPropName}` : pathsPropName} is not an array.`)
+  }
+  for (const path of paths) {
+    try {
+      const stat = await fsp.stat(path)
+      if (!stat.isFile()) {
+        throw new Error(`${prefix ? `${prefix}.${pathsPropName}` : pathsPropName} is not a file.`)
+      }
+    } catch (e: unknown) {
+      throw new Error(`${prefix ? `${prefix}.${pathsPropName}` : pathsPropName}: ${e}`)
+    }
+  }
+  const buffers = await Promise.all(paths.map(path => fsp.readFile(path)))
+  return buffers.map(buffer => buffer.toString())
+}
+
 async function buildConfig(json: string): Promise<ServerConfig> {
+
+  // Ensure completeness of ServerConfig in this function.
+
   const c = JSON.parse(json)
 
   if (!Array.isArray(c.rooms) || c.rooms.length === 0) {
@@ -42,35 +116,36 @@ async function buildConfig(json: string): Promise<ServerConfig> {
     }
   }
 
-  if (!c.jwtPrivateKeyPath) {
-    throw new Error('jwtPrivateKeyPath is not defined.')
-  }
-  const jwtPrivateKeyStat = await fsp.stat(c.jwtPrivateKeyPath)
-  if (!jwtPrivateKeyStat.isFile()) {
-    throw new Error(`${c.jwtPrivateKeyPath} is not a file.`)
-  }
-
-  if (!c.jwtPublicKeyPath) {
-    throw new Error('jwtPublicKeyPath is not defined.')
-  }
-  const jwtPublicKeyStat = await fsp.stat(c.jwtPublicKeyPath)
-  if (!jwtPublicKeyStat.isFile()) {
-    throw new Error(`${c.jwtPublicKeyPath} is not a file.`)
-  }
-
-  const jwtPrivateKey = await fsp.readFile(c.jwtPrivateKeyPath)
-  const jwtPublicKey = await fsp.readFile(c.jwtPublicKeyPath)
+  c.jwtPrivateKey = await readKeyOrCertAsync(c, 'jwtPrivateKeyPath')
+  c.jwtPublicKey = await readKeyOrCertAsync(c, 'jwtPublicKeyPath')
 
   if (!Array.isArray(c.corsOrigins) || c.corsOrigins.length === 0) {
     throw new Error('corsOrigins is not defined.')
   }
 
-  return {
-    ...c,
-    jwtPrivateKey,
-    jwtPublicKey,
+  if (c.saml) {
+    const s = c.saml
+    assertDefinedAndNotEmpty(s, 'appUrl', 'saml')
+    s.appUrl = s.appUrl.replace(/\/+$/, '') // Remove trailing slashes
+    assertDefinedAndNotEmpty(s, 'cookieSecret', 'saml')
+    assertDefinedAndNotEmpty(s, 'callbackUrl', 'saml')
+    assertDefinedAndNotEmpty(s, 'entryPoint', 'saml')
+    assertDefinedAndNotEmpty(s, 'issuer', 'saml')
+    s.certs = await readCertsAsync(s, 'certPaths', 'saml')
+    s.wantAssertionsSigned = typeof s.wantAssertionsSigned === 'undefined' || !!s.wantAssertionsSigned
+    s.wantAuthnResponseSigned = typeof s.wantAuthnResponseSigned === 'undefined' || !!s.wantAuthnResponseSigned
+    if (s.decryption) {
+      s.decryption.key = await readKeyOrCertAsync(s.decryption, 'keyPath', 'saml.decryption')
+      s.decryption.cert = await readKeyOrCertAsync(s.decryption, 'certPath', 'saml.decryption')
+    }
+    if (s.signing) {
+      s.signing.key = await readKeyOrCertAsync(s.signing, 'keyPath', 'saml.signing')
+      s.signing.certs = await readCertsAsync(s.signing, 'certPaths', 'saml.signing')
+    }
   }
+  return c
 }
+
 export async function loadConfigAsync(
   path: string,
   lastUpdated: number
@@ -92,6 +167,23 @@ export class Configuration {
 
   readonly port: number
   readonly logLevel: LogLevel
+  readonly saml: {
+    appUrl: string
+    cookieSecret: string
+    //path: string
+    callbackUrl: string
+    entryPoint: string
+    issuer: string
+    cert: string[]
+    wantAssertionsSigned?: boolean
+    wantAuthnResponseSigned?: boolean
+    privateKey?: string
+    decryptionPvk?: string
+
+    // for generating SP metadata
+    decryptionCert?: string
+    signingCert?: string[]
+  } | undefined
 
   constructor(argv: Argv, cache: ServerConfig, lastupdated: number) {
     log.setLevel(argv.loglevel)
@@ -100,6 +192,22 @@ export class Configuration {
     this.cache = cache
     this.port = argv.port
     this.logLevel = argv.loglevel
+    if (cache.saml) {
+      this.saml = {
+        appUrl: cache.saml.appUrl,
+        cookieSecret: cache.saml.cookieSecret,
+        callbackUrl: cache.saml.callbackUrl,
+        entryPoint: cache.saml.entryPoint,
+        issuer: cache.saml.issuer,
+        cert: cache.saml.certs,
+        wantAssertionsSigned: cache.saml.wantAssertionsSigned,
+        wantAuthnResponseSigned: cache.saml.wantAuthnResponseSigned,
+        privateKey: cache.saml.signing?.key,
+        signingCert: cache.saml.signing?.certs,
+        decryptionPvk: cache.saml.decryption?.key,
+        decryptionCert: cache.saml.decryption?.cert,
+      }
+    }
   }
 
   async reloadIfUpdatedAsync(): Promise<void> {

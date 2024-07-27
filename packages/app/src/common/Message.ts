@@ -47,6 +47,15 @@ export interface AcnOkMessage extends Message {
   }
 }
 
+export interface AcnRoomsMessage extends Message {
+  type: 'acn'
+  nid: string
+  rooms: {
+    room: string
+    hash: string
+  }[]
+}
+
 export interface ErrorMessage extends Message {
   type: 'error'
   error: Error
@@ -69,6 +78,10 @@ export function isAcnMessage(m: unknown): m is AcnMessage {
 
 export function isAcnTokenMessage(m: unknown): m is AcnTokenMessage {
   return isObject(m) && m.type === 'acn' && typeof m.token === 'string'
+}
+
+export function isAcnRoomsMessage(m: unknown): m is AcnRoomsMessage {
+  return isObject(m) && m.type === 'acn' && typeof m.nid === 'string' && Array.isArray(m.rooms)
 }
 
 export function isAcnOkMessage(m: unknown): m is AcnOkMessage {

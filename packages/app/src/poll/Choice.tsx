@@ -1,14 +1,14 @@
 import { useRef, useEffect, useMemo } from 'react'
 import { Button, Grid } from '@mui/material'
-import makeStyles from '@mui/styles/makeStyles'
 import { Mode, PollEntry } from './types'
+import { createRandomString } from '@/common/utils'
 
-const blinkDurationMillis = 1000
+/*
 const useStyles = makeStyles({
   blink: {
     animationName: '$flash',
     animationTimingFunction: 'linear',
-    animationDuration: `${blinkDurationMillis}ms`
+    animationDuration: `${}ms`
   },
   '@keyframes flash': {
     '0%': {
@@ -22,6 +22,25 @@ const useStyles = makeStyles({
     },
   }
 })
+*/
+
+function AnimationStyle({ blinkClassName }: {
+  blinkClassName: string
+}): JSX.Element {
+  const css =
+`${blinkClassName} {
+  animation-name: flash;
+  animation-timing-function: linear;
+  animation-duration: 1000ms;
+}
+@keyframes flash {
+  0% { background: transparent;}
+  50% { background: #99ffcc; }
+  100% { background: transparent; }
+}`
+  return <style>${css}</style>
+}
+
 
 function elementIdOf(e: PollEntry): string {
   return 'choice-element-' + e.key
@@ -80,8 +99,8 @@ export function Choice({ entries, mode, descClass, topClass, onRemoveEntry }: {
   topClass: string
   onRemoveEntry: (index: number) => void
 }): JSX.Element | null {
-  const classes = useStyles()
-  useBlinkCountedUpEntries(entries, classes.blink)
+  const blinkClassName = 'blink-' + createRandomString(6)
+  useBlinkCountedUpEntries(entries, blinkClassName)
   const highestCount = useMemo((): number => {
     if (entries.length === 0 || (mode !== 'result-list' && mode !== 'result-graph')) {
       return -1
@@ -98,6 +117,7 @@ export function Choice({ entries, mode, descClass, topClass, onRemoveEntry }: {
   const isResultList = mode === 'result-list'
   return (
     <>
+      <AnimationStyle blinkClassName={blinkClassName} />
       {entries.map((entry: PollEntry, index: number): JSX.Element => (
         <Grid item xs={12} key={entry.key} id={elementIdOf(entry)}>
           <Grid container className={isResultList && (entry.count === highestCount) ? topClass : ''}>

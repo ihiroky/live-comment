@@ -1,5 +1,6 @@
 import { Component, ChangeEvent, KeyboardEvent, ReactNode } from 'react'
 import { CommentMessage } from '@/common/Message'
+import { styled } from '@mui/system'
 
 type PropsType = {
   onSubmit: (message: CommentMessage) => void
@@ -10,6 +11,25 @@ type PropsType = {
 type StateType = {
   comment: string
 }
+
+const FormInputText = styled('input')({
+  border: 'none',
+  padding: 6,
+  margin: '10px 0px',
+  borderRadius: 6,
+  width: 'calc(99% - min(15%, 75px))',
+})
+
+const FormInputSubmit = styled('input')({
+  width: '15%',
+  maxWidth: 75,
+  border: 'none',
+  padding: '6px 3px',
+  marginTop: 'auto',
+  marginBottom: 10,
+  marginLeft: 3,
+  borderRadius: 6,
+})
 
 export class SendCommentForm extends Component<PropsType, StateType> {
 
@@ -66,13 +86,13 @@ export class SendCommentForm extends Component<PropsType, StateType> {
   render(): ReactNode {
     return (
       <form action='javascript:void()' onSubmit={(e) => { e.preventDefault() }}>
-        <input
+        <FormInputText
           type="text"
           value={this.state.comment}
           onChange={this.onChange}
           onKeyDown={this.onKeyDown}
         />
-        <input
+        <FormInputSubmit
           type="submit"
           autoComplete="off"
           value="💬"

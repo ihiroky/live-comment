@@ -1,4 +1,4 @@
-import { AcnTokenMessage, isAcnOkMessage, isAcnTokenMessage } from './Message'
+import { AcnRoomsMessage, AcnTokenMessage, isAcnOkMessage, isAcnRoomsMessage, isAcnTokenMessage } from './Message'
 import {
   AcnMessage,
   AcnOkMessage,
@@ -74,6 +74,52 @@ test('isAcnTokenMessage false', () => {
   }
 
   expect(isAcnTokenMessage(msg)).toBe(false)
+})
+
+test('isAcnRoomsMessage', () => {
+  const msg: AcnRoomsMessage = {
+    type: 'acn',
+    nid: 'nid',
+    rooms: [
+      {
+        room: 'r0',
+        hash: 'h0',
+      },
+      {
+        room: 'r1',
+        hash: 'h1',
+      },
+    ]
+  }
+
+  expect(isAcnRoomsMessage(msg)).toBeTruthy()
+})
+
+test('isAcnRoomsMessage false', () => {
+  const msgEmpty = {
+  }
+  expect(isAcnRoomsMessage(msgEmpty)).toBeFalsy()
+
+  const msgTypeOnly = {
+    type: 'acn',
+  }
+  expect(isAcnRoomsMessage(msgTypeOnly)).toBeFalsy()
+
+  const msgTypeNid = {
+    type: 'acn',
+    nid: 'nid',
+  }
+  expect(isAcnRoomsMessage(msgTypeNid)).toBeFalsy()
+
+  const msgTypeNidNoArrayRoom = {
+    type: 'acn',
+    nid: 'nid',
+    rooms: {
+      room: 'r',
+      hash: 'h',
+    },
+  }
+  expect(isAcnRoomsMessage(msgTypeNidNoArrayRoom)).toBeFalsy()
 })
 
 test('isApplicationMessage', () => {

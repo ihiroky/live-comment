@@ -12,18 +12,20 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: 'yarn'
-      - run: yarn install --frozen-lockfile --network-timeout 180000
+          node-version: 20
+          cache: 'npm'
+      - run: |
+          npm c set fetch-retry-maxtimeout 180000
+          npm ci
 
       - name: Run checks
         run: |
-          yarn eslint --ext ts,tsx --max-warnings 0 packages/app/src
-          yarn --cwd packages/app/ tsc -b
-          yarn jest --reporters=default --reporters=jest-junit --coverage --coverageDirectory reports/coverage
+          npm run lint
+          npm run test
+          npm run typecheck
         shell: bash
 
       - name: Test report
@@ -34,12 +36,11 @@ jobs:
           path: reports/jest-*.xml
           reporter: jest-junit
 
-      - name: Coverage report
-        uses: ihiroky/lcov-reporter-action@master
+      - name: Check coverage
+        uses: VeryGoodOpenSource/very_good_coverage@v2
         with:
-          name: Coverage report on ${{ matrix.os }}
-          github-token: ${{ secrets.github_token }}
-          lcov-file: reports/coverage/lcov.info
+          path: 'reports/coverage/lcov.info'
+          min_coverage: 85
 #
 # Build desktop app
 #
@@ -50,22 +51,24 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: 'yarn'
-      - run: yarn install --frozen-lockfile --network-timeout 180000
+          node-version: 20
+          cache: 'npm'
+      - run: |
+          npm c set fetch-retry-maxtimeout 180000
+          npm ci
 
       - name: Build apps
         run: |
-          yarn --cwd packages/app/ clean
-          yarn --cwd packages/app/ build-desktop
+          npm -w packages/app run clean
+          npm -w packages/app run build-desktop
         env:
           NODE_ENV: production
 
       - name: Build/release Electron app
-        uses: samuelmeuli/action-electron-builder@v1
+        uses: ihiroky/action-electron-builder@master
         with:
           github_token: ${{ secrets.github_token }}
           release: ${{ startsWith(github.ref, 'refs/tags/v') }}
@@ -74,7 +77,7 @@ jobs:
           args: -c electron-builder-config.json
 
       - name: Archive artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: live-comment-for-${{ matrix.os }}-${{ github.run_number }}
           path: packages/app/dist/live-comment*
@@ -85,21 +88,24 @@ jobs:
     needs: check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: 'yarn'
-      - run: yarn install --frozen-lockfile --network-timeout 180000
+          node-version: 20
+          cache: 'npm'
+      - run: |
+          npm c set fetch-retry-maxtimeout 180000
+          npm ci
 
       - name: Build apps
         run: |
-          yarn --cwd packages/app/ clean
-          yarn --cwd packages/app/ build-comment
-          yarn --cwd packages/app/ build-servers
+          npm -w packages/app run clean
+          npm -w packages/app run build-comment
+          npm -w packages/app run build-servers
 
       - name: Create release directory tree
         run: |
+          rm -rf build/apps # For local execution
           mkdir -p build/apps/server
           cp -a packages/app/dist/bundle/comment  build/apps/comment
           cp -a packages/app/resources/icon@4.png build/apps/comment/favicon.ico

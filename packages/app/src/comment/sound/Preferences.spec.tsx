@@ -103,11 +103,11 @@ test('Download sound file.', async () => {
   const volume = 10
   const volumeChanged = jest.fn()
 
-  const firstRead: ReadableStreamDefaultReadResult<Uint8Array> = {
+  const firstRead: ReadableStreamReadResult<Uint8Array> = {
     done: false,
     value: new Uint8Array(['a'.charCodeAt(0)]),
   }
-  const secondReadDeffered = new Deffered<ReadableStreamDefaultReadResult<Uint8Array>>()
+  const secondReadDeffered = new Deffered<ReadableStreamReadResult<Uint8Array>>()
   const fetchResult = Promise.resolve({
     ok: true,
     status: 200,

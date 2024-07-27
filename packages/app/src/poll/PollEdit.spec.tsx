@@ -36,7 +36,9 @@ test('Enter description and click add button, then onEntryAdded is called and de
   })
   userEvent.click(addButton)
   expect(onEntryAdded).toBeCalledWith('A description.')
-  expect((desctiption as HTMLTextAreaElement).value).toBe('')
+  await waitFor(() => {
+    expect((desctiption as HTMLTextAreaElement).value).toBe('')
+  })
 })
 
 test('OK button is disabled if entryCount is zero', () => {

@@ -1,6 +1,6 @@
 import { useState, ReactNode, ChangeEvent } from 'react'
 import { AppBar, Tabs, Tab, Box, Grid, Button } from '@mui/material'
-import makeStyles from '@mui/styles/makeStyles'
+import { styled } from '@mui/system'
 import { General } from './General'
 import { Watermark } from './Watermark'
 import {
@@ -53,14 +53,13 @@ function accessibilityProps(index: number): { id: string, 'aria-controls': strin
   }
 }
 
-const useStyles = makeStyles({
-  root: {
-    flexGrow: 1,
-    overflow: 'hidden',
-  },
-  tabs: {
-    background: 'white',
-  },
+const Form = styled('form')({
+  flexGrow: 1,
+  overflow: 'hidden',
+})
+
+const StyledTabs = styled(Tabs)({
+  background: 'white',
 })
 
 function toGeneralSettings(state: GeneralSettingsState): GeneralSettings {
@@ -110,16 +109,14 @@ export const SettingsForm = (props: SettingsFormProps): JSX.Element => {
   const onSubmit = useOnSubmit(settingsState, props.repository)
   const hasError = useHasError(settingsState)
 
-  const classes = useStyles()
-
   // TODO fix TabPanel height
   return (
-    <form className={classes.root} onSubmit={onSubmit}>
+    <Form onSubmit={onSubmit}>
       <AppBar position="static">
-        <Tabs className={classes.tabs} value={value} onChange={onChange} aria-label="setting tabs">
+        <StyledTabs value={value} onChange={onChange} aria-label="setting tabs">
           <Tab label="General" { ...accessibilityProps(0) } />
           <Tab label="Watermark" { ...accessibilityProps(1) } />
-        </Tabs>
+        </StyledTabs>
       </AppBar>
       <TabPanel value={value} index={0}>
         <General
@@ -145,6 +142,6 @@ export const SettingsForm = (props: SettingsFormProps): JSX.Element => {
           </Grid>
         </Grid>
       </div>
-    </form>
+    </Form>
   )
 }

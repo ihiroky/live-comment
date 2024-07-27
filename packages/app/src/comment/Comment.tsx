@@ -1,19 +1,21 @@
 import { FC, useState, useCallback, useEffect, useRef } from 'react'
 import { Message } from '@/common/Message'
 import { getLogger } from '@/common/Logger'
+import { isMobiles } from '@/common/utils'
 import { useReconnectableWebSocket } from '@/wscomp/rws'
 import { SendCommentForm } from './SendCommentForm'
 import { AppState as CommentState } from './types'
 import { isPlaySoundMessage, PlaySoundMessage } from '@/sound/types'
 import { PollControl } from './PollControl'
 import { LabeledCheckbox } from './LabeledCheckbox'
-import { FormGroup, Link } from '@mui/material'
-import makeStyles from '@mui/styles/makeStyles'
+import { FormGroup, Link, Slide } from '@mui/material'
+import { styled } from '@mui/system'
 import { useWebSocketOnOpen, useWebSocketOnClose, useWebSocketOnMessage } from './webSocketHooks'
 import { useOnPoll, useOnClosePoll } from './pollHooks'
 import { useToken } from './utils/token'
-import { getSoundPageUrl, gotoLoginPage } from './utils/pages'
+import { getSoundPageUrl, getToken, gotoLoginPage, removeToken } from './utils/pages'
 import { NavigateFunction } from 'react-router-dom'
+import { TransitionGroup } from 'react-transition-group'
 
 type CommentProps = {
   url: string
@@ -27,121 +29,114 @@ type CommentProps = {
 
 // TODO User should be able to restart poll if the poll entry is closed by mistake.
 
-const useStyles = makeStyles({
-  App: {
-    width: '100vw',
-    height: '100vh',
-    backgroundColor: '#ccffcc',
-    padding: '0px 4px',
-    margin: 0,
-  },
-  nav: {
-    minWidth: 300,
-    width: '90%',
-    minHeight: 16,
-    height: '3vh',
-    margin: 'auto',
-    display: 'flex',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    padding: 6,
-  },
-  box: {
-    display: 'flex',
-    height: 'calc(100% - (3vh + 12px))',  /* 3vh + 12px : acutal nav height */
-    margin: 0,
-    padding: 0,
-  },
-  main: {
-    textAlign: 'center',
-    background: 'rgba(32, 32, 32, 0.1)',
-    borderRadius: 6,
-    padding: 10,
-    margin: 10,
-    width: '100%',
-    height: 'calc(100% - 40px)', /* 40px: margin + padding */
-    display: 'flex',
-    flexDirection: 'column',
-    '& form': {
-      display: 'flex',
-      margin: 0,
-      padding: '0px 10px',
-      '& input[type="text"]': {
-        flexGrow: 1,
-        border: 'none',
-        padding: 6,
-        margin: '10px 0px',
-        borderRadius: 6,
-        width: '100%',
-      },
-      '& input[type="submit"]': {
-        width: '15%',
-        maxWidth: 75,
-        border: 'none',
-        padding: '6px 3px',
-        marginTop: 'auto',
-        marginBottom: 10,
-        marginLeft: 3,
-        borderRadius: 6,
-      },
-      '& $options': {
-        width: '90%',
-        fontSize: 8,
-      }
-    },
-  },
-  openSound: {
-    overflow: 'hidden',
-    resize: 'horizontal',
-    width: 200,
-    height: '100%',
-    '& iframe': {
-      overflow: 'auto',
-      border: 0,
-      margin: 0,
-      padding: 0,
-      width: '100%',
-      height: '100%',
-      resize: 'horizontal',
-    },
-  },
-  closeSound: {
-    top: 0,
-    left: 0,
-    width: 0,
-    height: 0,
-    '& iframe': {
-      border: 0,
-      margin: 0,
-      padding: 0,
-      width: 0,
-      height: 0,
-    },
-  },
-  'message-list': {
-    flexGrow: 1,
-    overflowY: 'auto',
-  },
-  message: {
-    textAlign: 'left',
-    backgroundColor: '#99ffcc',
-    borderRadius: 6,
-    padding: 10,
-    margin: '10px 0px',
-  },
-  messageContent: {
-    marginLeft: 0,
-    marginRight: 0,
-    overflowWrap: 'anywhere',
-    hyphens: 'auto',
-  },
-  messageTime: {
-    textAlign: 'right',
-    fontWeight: 'lighter',
-    fontSize: 'small',
+const AppDiv = styled('div')({
+  width: '100vw',
+  height: '100vh',
+  backgroundColor: '#ccffcc',
+  padding: '0px 4px',
+  margin: 0,
+})
 
-  },
-  'options': {}
+const NavDiv = styled('div')({
+  minWidth: 300,
+  width: '90%',
+  minHeight: 16,
+  height: '3vh',
+  margin: 'auto',
+  display: 'flex',
+  justifyContent: 'flex-end',
+  alignItems: 'center',
+  padding: 6,
+})
+
+const BoxDiv = styled('div')({
+  display: 'flex',
+  height: 'calc(100% - (3vh + 12px))',  /* 3vh + 12px : acutal nav height */
+  margin: 0,
+  padding: 0,
+})
+
+const MainDiv = styled('div')({
+  textAlign: 'center',
+  background: 'rgba(32, 32, 32, 0.1)',
+  borderRadius: 6,
+  padding: 10,
+  margin: 10,
+  width: '100%',
+  height: 'calc(100% - 40px)', /* 40px: margin + padding */
+  display: 'flex',
+  flexDirection: 'column',
+})
+
+const OptionForm = styled('form')({
+  display: 'flex',
+  margin: 0,
+  padding: '0px 10px',
+})
+
+const FormOptions = styled('div')({
+  width: '90%',
+  fontSize: 8,
+})
+
+const OpenSoundDiv = styled('div')({
+  overflow: 'hidden',
+  resize: 'horizontal',
+  width: 200,
+  height: '100%',
+})
+
+const SoundIFrame = styled('iframe')({
+  overflow: 'auto',
+  border: 0,
+  margin: 0,
+  padding: 0,
+  width: '100%',
+  height: '100%',
+  resize: 'horizontal',
+})
+
+const CloseSoundDiv = styled('div')({
+  top: 0,
+  left: 0,
+  width: 0,
+  height: 0,
+})
+
+const NoSoundIFrame = styled('iframe')({
+  border: 0,
+  margin: 0,
+  padding: 0,
+  width: 0,
+  height: 0,
+})
+
+const MessageListDiv = styled('div')({
+  flexGrow: 1,
+  overflowY: 'auto',
+  // コメントのスライドアニメーション時に横スクロールバーが表示されるのを防ぐ
+  overflowX: 'hidden',
+})
+
+const MessageDiv = styled('div')({
+  textAlign: 'left',
+  backgroundColor: '#99ffcc',
+  borderRadius: 6,
+  padding: 10,
+  margin: '10px 0px',
+})
+
+const MessageContentDiv = styled('div')({
+  marginLeft: 0,
+  marginRight: 0,
+  overflowWrap: 'anywhere',
+  hyphens: 'auto',
+})
+
+const MessageTimeDiv = styled('div')({
+  textAlign: 'right',
+  fontWeight: 'lighter',
+  fontSize: 'small',
 })
 
 const log = getLogger('App')
@@ -160,10 +155,6 @@ function getBooleanOptionValue(key: OptionKey, defalutValue: boolean): boolean {
 
 function setBooleanOptionValue(key: OptionKey, value: boolean): void {
   window.localStorage.setItem(key, value ? 't' : '')
-}
-
-function isMobiles(): boolean {
-  return /iPhone|iPad|Android/.test(navigator.userAgent)
 }
 
 const autoScroll = getBooleanOptionValue('autoScroll', true)
@@ -213,12 +204,13 @@ export const Comment: FC<CommentProps> = (props: CommentProps): JSX.Element => {
     })
   }, [state])
   const backToLogin = useCallback((): void => {
-    window.localStorage.removeItem('token')
+    // TODO call logout
+    removeToken()
     gotoLoginPage(props.navigate)
   }, [props.navigate])
 
   useEffect((): (() => void) => {
-    const token = window.localStorage.getItem('token')
+    const token = getToken()
     if (!token) {
       gotoLoginPage(props.navigate)
     }
@@ -256,34 +248,42 @@ export const Comment: FC<CommentProps> = (props: CommentProps): JSX.Element => {
     }
   }, [rws])
 
-  const style = useStyles()
-
   return (
-    <div className={style.App}>
-      <div className={style.nav}>
+    <AppDiv>
+      <NavDiv>
         <div style={{ padding: '0px 12px' }}>Room: {token.payload.room}</div>
         <Link href="#" onClick={backToLogin}>Back to login</Link>
-      </div>
-      <div className={style.box}>
+      </NavDiv>
+      <BoxDiv>
         <div>
           { token.value ? (
             <>
-              <div className={ state.openSoundPanel ? style.openSound : style.closeSound }>
-                <iframe ref={soundPanelRef} src={getSoundPageUrl(props.navigate)} allow="autoplay 'src'" />
-              </div>
+              { state.openSoundPanel ? (
+                <OpenSoundDiv>
+                  <SoundIFrame ref={soundPanelRef} src={getSoundPageUrl(props.navigate)} allow="autoplay 'src'"></SoundIFrame>
+                </OpenSoundDiv>
+              ) : (
+                <CloseSoundDiv>
+                  <NoSoundIFrame ref={soundPanelRef} src={getSoundPageUrl(props.navigate)} allow="autoplay 'src'"></NoSoundIFrame>
+                </CloseSoundDiv>
+              )}
             </>) : null
           }
         </div>
-        <div className={style.main}>
-          <div className={style['message-list']} ref={messageListDivRef}>
-            {
-              state.comments.map((m: CommentState['comments'][number]) => (
-                <div key={m.key} className={style.message}>
-                  <div className={style.messageContent}>{m.comment}</div>
-                  <div className={style.messageTime}>{new Date(m.ts).toLocaleString()}</div>
-                </div>
-              ))
-            }
+        <MainDiv>
+          <MessageListDiv ref={messageListDivRef}>
+            <TransitionGroup>
+              {
+                state.comments.map((m: CommentState['comments'][number]) => (
+                  <Slide key={m.key} direction="left" mountOnEnter unmountOnExit>
+                    <MessageDiv>
+                      <MessageContentDiv>{m.comment}</MessageContentDiv>
+                      <MessageTimeDiv>{new Date(m.ts).toLocaleString()}</MessageTimeDiv>
+                    </MessageDiv>
+                  </Slide>
+                ))
+              }
+            </TransitionGroup>
             {
               state.polls.map(poll =>
                 <PollControl
@@ -295,10 +295,10 @@ export const Comment: FC<CommentProps> = (props: CommentProps): JSX.Element => {
               )
             }
             <div ref={autoScrollRef}></div>
-          </div>
+          </MessageListDiv>
           <SendCommentForm onSubmit={onSubmit} sendWithCtrlEnter={state.sendWithCtrlEnter} />
-          <form>
-            <div className={style.options}>
+          <OptionForm>
+            <FormOptions>
               <FormGroup row>
                 { checkBoxMeta.map(m => (
                   <LabeledCheckbox
@@ -310,10 +310,10 @@ export const Comment: FC<CommentProps> = (props: CommentProps): JSX.Element => {
                   />
                 )) }
               </FormGroup>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+            </FormOptions>
+          </OptionForm>
+        </MainDiv>
+      </BoxDiv>
+    </AppDiv>
   )
 }

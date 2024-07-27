@@ -12,21 +12,24 @@ jobs:
     name: Build extension for ${{ inputs.host }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: 'yarn'
-      - run: yarn install --frozen-lockfile --network-timeout 180000
+          node-version: 20
+          cache: 'npm'
+      - run: |
+          npm c set fetch-retry-maxtimeout 180000
+          npm ci
 
       - name: Build apps
         run: |
-          yarn --cwd packages/app/ clean
-          yarn --cwd packages/app/ build-extension
+          npm -w packages/app run clean
+          npm -w packages/app run build-extension
           test "${GITHUB_REF#refs/heads/}" != "main" && (cd packages/app/ && node scripts/beta_manifest.mjs) || echo 'No manifest modification.'
         env:
           LC_WS_URL: wss://${{ inputs.host }}/app
           LC_API_URL: https://${{ inputs.host }}/api
+          LC_APP_URL: https://${{ inputs.host }}
           NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Create release directory tree

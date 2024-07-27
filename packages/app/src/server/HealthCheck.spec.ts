@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import { HealthCheck, countUpPending, countDownPending } from './HealthCheck'
 import WebSocket from 'ws'
 import { ClientSession } from './websocket'
