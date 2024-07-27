@@ -18,6 +18,7 @@
     "serve-saml": "node scripts/serve.mjs config/server.config.saml-local.json",
     "build-comment": "NODE_ENV=production rollup -c rollup/comment.mjs",
     "build-desktop": "rollup -c rollup/desktop.mjs",
+    "build-electron-installer": "NODE_ENV=production npx electron-builder -c ./electron-builder-config.json",
     "build-servers": "NODE_ENV=production rollup -c rollup/server.mjs",
     "build-extension": "NODE_ENV=production rollup -c rollup/extension.mjs",
     "start-desktop": "electron . --open-dev-tools --verbose --no-sandbox",

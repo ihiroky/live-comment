@@ -64,12 +64,7 @@ jobs:
         run: |
           npm -w packages/app run clean
           npm -w packages/app run build-desktop
-        env:
-          NODE_ENV: production
-
-      - name: Build Electron
-        run: |
-          npx electron-builder -c ./electron-builder-config.json
+          npm -w packages/app run build-electron-installer
         env:
           NODE_ENV: production
 
