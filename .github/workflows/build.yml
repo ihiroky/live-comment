@@ -67,14 +67,33 @@ jobs:
         env:
           NODE_ENV: production
 
-      - name: Build/release Electron app
-        uses: ihiroky/action-electron-builder@master
+      - name: Build Electron
+        run: |
+          npx electron-builder -c ./electron-builder-config.json
+        env:
+          NODE_ENV: production
+
+      - name: Gets latest release info
+        id: latest_release
+        uses: octokit/request-action@v2.x
         with:
-          github_token: ${{ secrets.github_token }}
-          release: ${{ startsWith(github.ref, 'refs/tags/v') }}
-          skip_build: true
-          package_root: packages/app/
-          args: -c electron-builder-config.json
+          route: GET /repos/ihiroky/live-comment/releases?per_page=1&page=1
+          owner: octokit
+          repo: request-action
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload asset to github release if draft release exists.
+        id: upload-release-asset
+        if: ${{ fromJson(steps.latest_release.outputs.data)[0].draft == true }}
+        uses: ihiroky/upload-release-asset@main
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ fromJson(steps.latest_release.outputs.data)[0].upload_url }}
+          asset_path: build/server-apps-${{ github.run_number }}.zip
+          asset_name: server-apps-${{ github.run_number }}.zip
+          asset_content_type: application/zip
 
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
