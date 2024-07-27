@@ -67,6 +67,7 @@ jobs:
           npm -w packages/app run build-electron-installer
         env:
           NODE_ENV: production
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Gets latest release info
         id: latest_release
