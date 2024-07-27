@@ -65,6 +65,7 @@ jobs:
           npm -w packages/app run clean
           npm -w packages/app run build-desktop
           npm -w packages/app run build-electron-installer
+        shell: bash
         env:
           NODE_ENV: production
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
