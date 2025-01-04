@@ -249,7 +249,6 @@ function onReady(): void {
     mainWindow_?.webContents.send(CHANNEL_LOG_RECV, message)
   })
   electron.ipcMain.handle(CHANNEL_LOGIN, (_: electron.IpcMainInvokeEvent, m: AcnMessage): void => {
-    console.info('[login]', m)
     commentWindow_?.webContents.send(CHANNEL_LOGIN, m)
   })
 
