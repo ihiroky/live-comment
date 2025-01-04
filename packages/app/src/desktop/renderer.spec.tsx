@@ -26,6 +26,8 @@ beforeEach(() => {
   window.comment = {
     request: jest.fn<typeof window.comment.request>(),
     send: jest.fn<typeof window.comment.send>(),
+    postCredential: jest.fn<typeof window.comment.postCredential>(),
+    onLoggedIn: jest.fn<typeof window.comment.onLoggedIn>(),
   }
 
   const div = document.createElement('div')

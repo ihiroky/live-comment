@@ -29,6 +29,8 @@ declare global {
     comment: {
       request: () => Promise<SettingsV1>
       send: (m: Message | null) => Promise<void>
+      postCredential: (m: AcnMessage) => Promise<void>
+      onLoggedIn: (onLoggedIn: (_: AcnMessage) => void) => () => void
     }
   }
 }

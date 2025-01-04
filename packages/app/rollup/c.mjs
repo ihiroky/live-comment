@@ -31,6 +31,7 @@ export function plugins(targets) {
       'process.env.LC_API_URL': `"${process.env.LC_API_URL ?? ''}"`,
       'process.env.LC_APP_URL': `"${process.env.LC_APP_URL ?? ''}"`,
       'process.env.LC_ORIGIN_URL': `"${process.env.LC_APP_URL ?? ''}"`,
+      'process.env.LC_ALLOW_POST_CREDENTIAL_ORIGIN': `"${process.env.LC_ALLOW_POST_CREDENTIAL_ORIGIN ?? ''}"`,
       'preventAssignment': true
     }),
     nodeResolve({

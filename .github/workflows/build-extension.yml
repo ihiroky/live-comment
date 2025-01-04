@@ -30,6 +30,7 @@ jobs:
           LC_WS_URL: wss://${{ inputs.host }}/app
           LC_API_URL: https://${{ inputs.host }}/api
           LC_APP_URL: https://${{ inputs.host }}
+          LC_ALLOW_POST_CREDENTIAL_ORIGIN: chrome-extension://nelcmkfemkkbopgcgbmdoecfiodjocca
           NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Create release directory tree

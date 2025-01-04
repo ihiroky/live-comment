@@ -17,7 +17,9 @@ import {
   ScreenProps,
   CHANNEL_LOG_SEND,
   CHANNEL_LOG_RECV,
+  CHANNEL_LOGIN,
 } from './channels'
+import { AcnMessage } from '@/common/Message'
 
 
 let mainWindow_: electron.BrowserWindow | null = null
@@ -204,6 +206,26 @@ function showCommentWindow(): void {
     mainWindow_?.close()
     electron.app.quit()
   })
+  window.webContents.setWindowOpenHandler((details: electron.HandlerDetails) => {
+    const url = details.url
+    if (!url.endsWith('/saml/login')) {
+      return { action: 'deny' }
+    }
+    return {
+      action: 'allow',
+      overrideBrowserWindowOptions: {
+        frame: true,
+        transparent: false,
+        resizable: true,
+        hasShadow: true,
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true,
+          preload: path.resolve(PRELOAD_PATH),
+        }
+      }
+    }
+  })
   commentWindow_ = window
 }
 
@@ -225,6 +247,10 @@ function onReady(): void {
   electron.ipcMain.handle(CHANNEL_DESKTOP_THUMBNAIL, asyncGetDesktopThumnail)
   electron.ipcMain.handle(CHANNEL_LOG_SEND, (_: electron.IpcMainInvokeEvent, message: unknown): void => {
     mainWindow_?.webContents.send(CHANNEL_LOG_RECV, message)
+  })
+  electron.ipcMain.handle(CHANNEL_LOGIN, (_: electron.IpcMainInvokeEvent, m: AcnMessage): void => {
+    console.info('[login]', m)
+    commentWindow_?.webContents.send(CHANNEL_LOGIN, m)
   })
 
   registerAppRootProtocol()

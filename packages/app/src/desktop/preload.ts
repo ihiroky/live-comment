@@ -7,8 +7,9 @@ import {
   CHANNEL_DESKTOP_THUMBNAIL,
   CHANNEL_LOG_SEND,
   CHANNEL_LOG_RECV,
+  CHANNEL_LOGIN,
 } from './channels'
-import { Message } from '@/common/Message'
+import { AcnMessage, Message } from '@/common/Message'
 
 contextBridge.exposeInMainWorld('main', {
   request: (): Promise<SettingsV1> => {
@@ -51,5 +52,15 @@ contextBridge.exposeInMainWorld('comment', {
   },
   send: (message: Message | null): Promise<void> => {
     return message ? ipcRenderer.invoke(CHANNEL_LOG_SEND, message) : Promise.resolve()
+  },
+  postCredential: (m: AcnMessage): Promise<void> => {
+    return ipcRenderer.invoke(CHANNEL_LOGIN, m)
+  },
+  onLoggedIn: (onLoggedIn: (_: AcnMessage) => void): () => void => {
+    const listener = (_: IpcRendererEvent, c: AcnMessage): void => onLoggedIn(c)
+    ipcRenderer.on(CHANNEL_LOGIN, listener)
+    return (): void => {
+      ipcRenderer.off(CHANNEL_LOGIN, listener)
+    }
   },
 })

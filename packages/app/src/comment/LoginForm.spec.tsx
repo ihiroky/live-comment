@@ -217,6 +217,8 @@ describe('SAML login', () => {
 
   beforeEach(() => {
     locationSpy = jest.spyOn(window, 'location', 'get')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    window.comment = undefined as any
   })
 
   afterEach(() => {
@@ -269,6 +271,121 @@ describe('SAML login', () => {
     userEvent.click(ssoLoginButton)
     await waitFor(() => {
       expect(window.open).toBeCalledWith('apiUrl/saml/login', 'saml-login', 'width=475,height=600')
+    })
+  })
+
+  test('Room credential is passed from Electron main process', async () => {
+    window.comment = {
+      ...window.comment,
+      onLoggedIn: jest.fn<typeof window.comment.onLoggedIn>()
+    }
+    const values = {
+      apiUrl: 'apiUrl',
+      token: 'token',
+      room: 'room',
+      hash: 'hash',
+      navigate: jest.fn(),
+    }
+    jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: true })
+    const acnOkMsg: AcnOkMessage = { type: 'acn', attrs: { token: values.token } }
+    jest.mocked(login).mockResolvedValue(acnOkMsg)
+
+    render(<LoginForm apiUrl={values.apiUrl} origin="origin" navigate={values.navigate} />)
+    await waitFor(() => {
+      expect(window.comment.onLoggedIn).toHaveBeenCalledWith(expect.any(Function))
+    })
+
+    const onLoggedIn = jest.mocked(window.comment.onLoggedIn).mock.calls[0][0]
+    onLoggedIn({ type: 'acn', room: values.room, hash: values.hash })
+    expect(login).toHaveBeenCalledWith(values.apiUrl, values.room, values.hash, false) // longLife gets false forcibly
+    await waitFor(() => {
+      expect(setToken).toHaveBeenCalledWith(values.token)
+      expect(gotoCommentPage).toHaveBeenCalledWith(values.navigate)
+    })
+  })
+
+  test('Room credential is passed from window.postMessage', async () => {
+    // No window.comment
+    window.addEventListener = jest.fn<typeof window.addEventListener>()
+    const values = {
+      apiUrl: 'apiUrl',
+      token: 'token',
+      room: 'room',
+      hash: 'hash',
+      navigate: jest.fn(),
+    }
+    jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: true })
+    const acnOkMsg: AcnOkMessage = { type: 'acn', attrs: { token: values.token } }
+    jest.mocked(login).mockResolvedValue(acnOkMsg)
+
+    render(<LoginForm apiUrl={values.apiUrl} origin="origin" navigate={values.navigate} />)
+    await waitFor(() => {
+      expect(window.addEventListener).toHaveBeenCalledWith('message', expect.any(Function))
+    })
+
+    const onMessage = jest.mocked(window.addEventListener).mock.calls[0][1] as (_: unknown) => void
+    onMessage({ origin: 'origin', data: { type: 'acn', room: values.room, hash: values.hash }})
+    expect(login).toHaveBeenCalledWith(values.apiUrl, values.room, values.hash, false) // longLife gets false forcibly
+    await waitFor(() => {
+      expect(setToken).toHaveBeenCalledWith(values.token)
+      expect(gotoCommentPage).toHaveBeenCalledWith(values.navigate)
+    })
+  })
+
+  test('Invalid origin from window.postMessage', async () => {
+    // No window.comment
+
+    window.addEventListener = jest.fn<typeof window.addEventListener>()
+    const values = {
+      apiUrl: 'apiUrl',
+      token: 'token',
+      room: 'room',
+      hash: 'hash',
+      navigate: jest.fn(),
+    }
+    jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: true })
+    const acnOkMsg: AcnOkMessage = { type: 'acn', attrs: { token: values.token } }
+    jest.mocked(login).mockResolvedValue(acnOkMsg)
+
+    const { rerender} = render(<LoginForm apiUrl={values.apiUrl} origin="origin" navigate={values.navigate} />)
+    await waitFor(() => {
+      expect(window.addEventListener).toHaveBeenCalledWith('message', expect.any(Function))
+    })
+    rerender(<LoginForm apiUrl={values.apiUrl} origin="origin" navigate={values.navigate} />)
+
+    const onMessage = jest.mocked(window.addEventListener).mock.calls[0][1] as (_: unknown) => void
+    onMessage({ origin: 'anotherOrigin', data: { type: 'acn', room: values.room, hash: values.hash }})
+    await waitFor(() => {
+      const notification = screen.getByRole('status')
+      expect(notification).toHaveTextContent('Invalid origin from SAML login window: anotherOrigin')
+    })
+  })
+
+  test('Invalid message from window.postMessage', async () => {
+    // No window.comment
+    window.addEventListener = jest.fn<typeof window.addEventListener>()
+    const values = {
+      apiUrl: 'apiUrl',
+      token: 'token',
+      room: 'room',
+      hash: 'hash',
+      navigate: jest.fn(),
+    }
+    jest.mocked(serverConfigStore.getSnapshot).mockReturnValue({ samlEnabled: true })
+    const acnOkMsg: AcnOkMessage = { type: 'acn', attrs: { token: values.token } }
+    jest.mocked(login).mockResolvedValue(acnOkMsg)
+
+    const { rerender} = render(<LoginForm apiUrl={values.apiUrl} origin="origin" navigate={values.navigate} />)
+    await waitFor(() => {
+      expect(window.addEventListener).toHaveBeenCalledWith('message', expect.any(Function))
+    })
+    rerender(<LoginForm apiUrl={values.apiUrl} origin="origin" navigate={values.navigate} />)
+
+    const onMessage = jest.mocked(window.addEventListener).mock.calls[0][1] as (_: unknown) => void
+    onMessage({ origin: 'origin', data: { type: 'acn' }})
+    await waitFor(() => {
+      const notification = screen.getByRole('status')
+      expect(notification).toHaveTextContent('Invalid message from SAML login window: {"type":"acn"}')
     })
   })
 })
