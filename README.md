@@ -2,7 +2,7 @@
 
 Show audiences' comments on your screen.
 
-## Archtitecture
+## Architecture
 
 ```
        |           [api] [streaming]
