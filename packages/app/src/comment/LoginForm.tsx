@@ -2,6 +2,8 @@ import { FC, ChangeEvent, FormEvent, useState, useCallback, useEffect, useSyncEx
 import { TextField, Button, Grid, Divider } from '@mui/material'
 import { styled } from '@mui/system'
 import {
+  AcnMessage,
+  isAcnMessage,
   isAcnOkMessage,
   isErrorMessage,
   Message,
@@ -117,13 +119,25 @@ export const LoginForm: FC<LoginFormProps> = ({ origin, apiUrl, navigate }: Logi
   useEffect((): () => void => {
     serverConfigStore.update(apiUrl)
 
+    // For electron
+    if (window.comment) {
+      const unsubscribeLoggedIn = window.comment.onLoggedIn(
+        (m: AcnMessage): void => {
+          login(apiUrl, m.room, m.hash, false).then(loginCallback)
+        }
+      )
+      return unsubscribeLoggedIn
+    }
+
+    // For extension
     const onMessage = (ev: MessageEvent): void => {
       log.debug('[onMessage]', ev)
       if (ev.origin !== origin) {
+        setNotification({ message: 'Invalid origin from SAML login window: ' + ev.origin })
         return
       }
-      if (ev.data.type !== 'room' || typeof ev.data.room !== 'string' || typeof ev.data.hash !== 'string') {
-        setNotification({ message: 'Invalid message from SAML login window' })
+      if (!isAcnMessage(ev.data)) {
+        setNotification({ message: 'Invalid message from SAML login window: ' + JSON.stringify(ev.data) })
         return
       }
       login(apiUrl, ev.data.room, ev.data.hash, false).then(loginCallback)
@@ -191,7 +205,6 @@ export const LoginForm: FC<LoginFormProps> = ({ origin, apiUrl, navigate }: Logi
               <Grid container alignItems="center" justifyContent="center">
                 <Grid item>
                   <Button sx={{ mt: 4, mb: 4}} variant="outlined" type="button"
-                    //onClick={() => { goto(`${apiUrl}/saml/login`) }}
                     onClick={() => { !isExtensionOrElectron()
                       ? goto(`${apiUrl}/saml/login`)
                       : window.open(`${apiUrl}/saml/login`, 'saml-login', 'width=475,height=600')

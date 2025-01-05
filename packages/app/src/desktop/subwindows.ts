@@ -80,6 +80,7 @@ export function registerAppRootProtocol(): void {
   if (!electron.app.isReady) {
     throw new Error('app is not ready.')
   }
+  // Deprecated at Electron v25
   electron.protocol.registerFileProtocol(
     APP_ROOT_PROTOCOL,
     (request: electron.ProtocolRequest, callback: (response: electron.ProtocolResponse) => void) => {

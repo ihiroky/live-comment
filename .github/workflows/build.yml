@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
       - run: |
           npm c set fetch-retry-maxtimeout 180000
@@ -54,7 +54,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
       - run: |
           npm c set fetch-retry-maxtimeout 180000
@@ -69,7 +69,9 @@ jobs:
 
       - name: Prepare for using npm in action-electron-builder
         run: |
-          cp -a package-lock.json packages/app/
+          mv package-lock.json packages/app
+          rm -rf packages/app/node_modules
+          mv node_modules packages/app
         shell: bash
 
       - name: Build/release Electron app
