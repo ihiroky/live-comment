@@ -156,6 +156,7 @@ jobs:
           path: build/apps/
 #
 # Buid browser extension
+# TODO: host is hard coded. It should be a parameter, and configurable at extension settings.
 #
   browser-extension-for-g1:
     needs: check
