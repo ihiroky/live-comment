@@ -80,16 +80,13 @@ export function registerAppRootProtocol(): void {
   if (!electron.app.isReady) {
     throw new Error('app is not ready.')
   }
-  // Deprecated at Electron v25
-  electron.protocol.registerFileProtocol(
-    APP_ROOT_PROTOCOL,
-    (request: electron.ProtocolRequest, callback: (response: electron.ProtocolResponse) => void) => {
-      const url = request.url.substring(APP_ROOT_PROTOCOL.length + 3) // 3: '://'.length
-      const filePath = path.resolve(url)
-      log.debug(filePath)
-      callback({ path: filePath })
-    }
-  )
+
+  electron.protocol.handle(APP_ROOT_PROTOCOL, (request: GlobalRequest): Promise<GlobalResponse> => {
+    const url = request.url.substring(APP_ROOT_PROTOCOL.length + 3) // 3: '://'.length
+    const filePath = path.resolve(url)
+    log.debug(filePath)
+    return electron.net.fetch(`file://${filePath}`)
+  })
 }
 
 export function createSettingsWindow(preload: string): void {
