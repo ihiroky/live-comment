@@ -16,9 +16,9 @@ const defaultApiUrl = process.env.NODE_ENV === 'production'
   ? (process.env.LC_API_URL || `https://${window.location.hostname}/api`)
   : `http://localhost:9080`
 
-const allowPostCredentialOrigin =
-  process.env.LC_ALLOW_POST_CREDENTIAL_ORIGIN ||
-  'chrome-extension://nelcmkfemkkbopgcgbmdoecfiodjocca'
+const allowPostCredentialOrigin = process.env.NODE_ENV === 'production'
+  ? (process.env.LC_ALLOW_POST_CREDENTIAL_ORIGIN || 'chrome-extension://nelcmkfemkkbopgcgbmdoecfiodjocca')
+  : 'chrome-extension://nelcmkfemkkbopgcgbmdoecfiodjocca'
 
 type Props = {
   origin?: string

@@ -19,13 +19,12 @@ const App = (): JSX.Element => {
   const props = useMemo(() => ({
     useStandaloneSettings: false,
     repository: {
-      requestSettings: () => Promise.resolve(storeCache.settingsTab.settings),
+      requestSettings: () => Promise.resolve(store.cache.settingsTab.settings),
       postSettings: (settings: SettingsV1): Promise<void> => {
-        store.update('settingsTab', {
+        return store.update('settingsTab', {
           ...storeCache.settingsTab,
           settings,
         })
-        return Promise.resolve()
       },
       getScreenPropsList: () => Promise.resolve([]),
     },
