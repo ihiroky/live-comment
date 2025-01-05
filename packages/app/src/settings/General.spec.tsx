@@ -208,8 +208,8 @@ test('Screen selector', async () => {
   */
 
   const { rerender } = render(<General {...props} screen={{ data: 0, error: false }} />)
+  await new Promise(e => { setTimeout(e, 500) })
   rerender(<General {...props} screen={{ data: 0, error: false }} />)
-  await new Promise(e => { setTimeout(e, 1000) })
 
   const combobox = screen.getByRole('combobox', { name: /Screen/ })
   userEvent.click(combobox)
