@@ -35,6 +35,7 @@ export function createCommentAppProps(): Required<ComponentProps<typeof App>> {
     origin: '',
     wsUrl: '',
     apiUrl: '',
+    logoRatio: 0.9,
     onMount: (): void => {
       log.debug('[onMount]')
       chrome.runtime.onConnect.addListener(onConnected)

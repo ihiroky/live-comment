@@ -71,10 +71,11 @@ const log = getLogger('LoginForm')
 type LoginFormProps = {
   origin: string
   apiUrl: string
+  logoRatio?: number
   navigate?: NavigateFunction
 }
 
-export const LoginForm: FC<LoginFormProps> = ({ origin, apiUrl, navigate }: LoginFormProps): JSX.Element => {
+export const LoginForm: FC<LoginFormProps> = ({ origin, apiUrl, navigate, logoRatio }: LoginFormProps): JSX.Element => {
   const [notification, setNotification] = useState<{ message: string }>({
     message: ''
   })
@@ -182,11 +183,12 @@ export const LoginForm: FC<LoginFormProps> = ({ origin, apiUrl, navigate }: Logi
   }, [room.helperText, password.helperText])
 
   const serverConfig = useSyncExternalStore(serverConfigStore.subscribe, serverConfigStore.getSnapshot)
+  const logoPercent = (logoRatio || 1) * 100
 
   return (
     <RootForm onSubmit={onSubmit}>
       <div>
-        <LogoImg src="./logo.png"/>
+        <LogoImg src="./logo.png" width={`${logoPercent}%`} height={`${logoPercent}%`} />
         <LogCreditDiv>
           Image by
           <a href="https://www.sasagawa-brand.co.jp/tada/detail.php?id=1145&cid=4&cid2=14"

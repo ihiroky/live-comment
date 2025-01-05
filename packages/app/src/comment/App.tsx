@@ -24,6 +24,7 @@ type Props = {
   origin?: string
   wsUrl?: string
   apiUrl?: string
+  logoRatio?: number
   onMount?: () => void
   onUnmount?: () => void
   onOpen?: () => void
@@ -44,7 +45,7 @@ const AppRoutes = (props: Props): JSX.Element => {
   return (
     <Routes>
       <Route path='/' element={<Navigate replace to='/login' />} />
-      <Route path='/login' element={<LoginForm origin={origin} apiUrl={apiUrl} navigate={navigate} />} />
+      <Route path='/login' element={<LoginForm origin={origin} apiUrl={apiUrl} logoRatio={props.logoRatio} navigate={navigate} />} />
       <Route path='/rooms' element={<SelectRoom apiUrl={apiUrl} navigate={navigate} allowPostCredentialOrigin={allowPostCredentialOrigin} />} />
       { !isSoundPage ? (
         <Route path='/comment' element={

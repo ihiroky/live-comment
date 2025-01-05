@@ -189,7 +189,7 @@ function showCommentWindow(): void {
   // (using data schema) can't use local storage. So create BrowserWindow directly.
   const window = new electron.BrowserWindow({
     width: 800,
-    height: 600,
+    height: 700,
     show: false,
     webPreferences: {
       nodeIntegration: false,
