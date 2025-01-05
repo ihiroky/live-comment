@@ -69,7 +69,9 @@ jobs:
 
       - name: Prepare for using npm in action-electron-builder
         run: |
-          cp -a package-lock.json packages/app/
+          mv package-lock.json packages/app
+          rm -rf packages/app/node_modules
+          mv node_modules packages/app
         shell: bash
 
       - name: Build/release Electron app
