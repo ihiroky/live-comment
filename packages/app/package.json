@@ -29,7 +29,7 @@
     "@mui/icons-material": "^5.15.10",
     "@mui/material": "^5.15.9",
     "@node-saml/passport-saml": "^4.0.4",
-    "body-parser": "^1.20.2",
+    "body-parser": "^1.20.3",
     "chart.js": "^3.8.0",
     "cors": "^2.8.5",
     "dompurify": "^2.2.7",
