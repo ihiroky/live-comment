@@ -62,7 +62,8 @@ async function fetchAndRender(
 describe('SelectRoom', () => {
 
   beforeEach(() => {
-    delete window.opener
+    window.opener = undefined
+    ;(window.comment as unknown) = undefined
   })
 
   test('Send message to opener if this page is saml-login window', async () => {
@@ -254,10 +255,10 @@ describe('SelectRoom', () => {
 
     // Select a room and post its credential
     userEvent.click(rooms[0])
-    waitFor(() => {
+    await waitFor(() => {
       expect(window.comment.postCredential).toHaveBeenCalledWith({ type: 'acn', room: values.room, hash: values.hash })
     })
-    waitFor(() => {
+    await waitFor(() => {
       expect(window.close).toHaveBeenCalled()
     })
   })
@@ -284,7 +285,7 @@ describe('SelectRoom', () => {
 
     // Select a room and post its credential
     userEvent.click(rooms[0])
-    waitFor(() => {
+    await waitFor(() => {
       expect(window.opener.postMessage).toHaveBeenCalledWith({ type: 'acn', room: values.room, hash: values.hash }, 'targetOrigin')
       expect(window.close).toHaveBeenCalled()
     })
