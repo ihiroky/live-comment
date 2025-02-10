@@ -80,7 +80,7 @@
     "cookie-parser": "^1.4.6",
     "electron": "^33.3.0",
     "electron-builder": "^24.1.0",
-    "esbuild": "^0.14.54",
+    "esbuild": "^0.25.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "react-test-renderer": "^18.1.0",
