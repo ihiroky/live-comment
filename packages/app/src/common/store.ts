@@ -86,21 +86,19 @@ export function createWindowStore<T extends Record<string, unknown>>(
     })
   }
 
-  const keys = Object.keys(empty) as (keyof T)[]
-  const syncPromise = new Promise<void>(resolve => {
+  const keys = Object.keys(empty).sort() as (keyof T)[]
+  store.sync = (): Promise<void> => new Promise(resolve => {
     let updated = false
     for (const key of keys) {
       const s = storage.getItem(key.toString())
       store._cache[key] = parseJSONOrDefault(key, s, empty[key])
-      updated = (s !== null)
+      updated = updated || (s !== null)
     }
-    // TODO test
     if (updated) {
       store._callbacks.forEach(f => f())
     }
     resolve()
   })
-  store.sync = (): Promise<void> => syncPromise
 
   const isKey = createIsKey(keys)
   const listener = (ev: WindowEventMap['storage']): void => {
@@ -139,8 +137,8 @@ export function createChromeStore<T extends Record<string, unknown>>(
     return storage.remove(key.toString())
   }
 
-  const keys = Object.keys(empty)
-  const syncPromise = storage.get(keys).then(values => {
+  const keys = Object.keys(empty).sort()
+  store.sync = (): Promise<void> => storage.get(keys).then(values => {
     let updated = false
     for (const k of keys) {
       const value = values[k.toString()]
@@ -148,13 +146,12 @@ export function createChromeStore<T extends Record<string, unknown>>(
         ...store._cache,
         [k]: (value !== undefined) ? value : empty[k]
       }
-      updated = (value !== undefined)
+      updated = updated || (value !== undefined)
     }
     if (updated) {
       store._callbacks.forEach(f => f())
     }
   })
-  store.sync = (): Promise<void> => syncPromise
 
   const isKey = createIsKey(keys)
   const listener = (changes: Record<string, chrome.storage.StorageChange>, areaName: AreaName): void => {
