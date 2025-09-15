@@ -546,6 +546,230 @@ describe('loadConfigAsync', () => {
     expect(actual.content?.saml?.wantAuthnResponseSigned).toBeTruthy()
   })
 
+  test('Get SAML configuration from idpMetadataPath (prefer Redirect)', async () => {
+    const configPath = path.join(testDataRoot, 'test.metadata.json')
+    const jwtPrivateKeyPath = path.join(testDataRoot, 'jwt.key')
+    const jwtPublicKeyPath = path.join(testDataRoot, 'jwt.key.pub')
+    const metadataPath = path.join(testDataRoot, 'GoogleIDPMetadata.xml')
+
+    // Minimal valid config using metadata only for IdP settings
+    const cfg = {
+      rooms: [
+        { room: 'test', hash: 'ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff' }
+      ],
+      jwtPrivateKeyPath,
+      jwtPublicKeyPath,
+      corsOrigins: ['/https://w+\\.live-comment\\.ga$/', 'http://localhost:8888'],
+      saml: {
+        appUrl: 'http://localhost:8888',
+        cookieSecret: 'cookieSecret',
+        callbackUrl: 'http://localhost:9080/saml/acs',
+        issuer: 'issuer',
+        idpMetadataPath: metadataPath,
+      }
+    }
+    fs.writeFileSync(configPath, JSON.stringify(cfg))
+    createFile(jwtPrivateKeyPath, 'jwtPrivateKey')
+    createFile(jwtPublicKeyPath, 'jwtPublicKey')
+
+    // Metadata with Redirect and POST, and signing + encryption certs
+    const certB64 = 'QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo='
+    const metadata = `<?xml version="1.0"?>
+<md:EntityDescriptor
+    xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+    entityID="https://accounts.google.com/o/saml2?idpid=C02zx1llr">
+  <md:IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+    <md:KeyDescriptor use="signing">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:X509Data>
+          <ds:X509Certificate>${certB64}</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+    <md:KeyDescriptor use="encryption">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:X509Data>
+          <ds:X509Certificate>RUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRQ==</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+    <md:SingleSignOnService
+      Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+      Location="https://example.com/idp/post"/>
+    <md:SingleSignOnService
+      Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+      Location="https://example.com/idp/redirect"/>
+  </md:IDPSSODescriptor>
+</md:EntityDescriptor>`
+    fs.writeFileSync(metadataPath, metadata)
+
+    const cache = await loadConfigAsync(configPath, 0)
+    assertNotNullable(cache.content, 'cache.content must be defined.')
+    const sut = new Configuration(argv, cache.content, cache.stat.mtimeMs)
+
+    expect(sut.saml?.entryPoint).toBe('https://example.com/idp/redirect')
+    expect(Array.isArray(sut.saml?.cert)).toBe(true)
+    expect(sut.saml?.cert?.length).toBe(1) // only signing certs
+    const pem = sut.saml?.cert?.[0] as string
+    expect(pem.startsWith('-----BEGIN CERTIFICATE-----')).toBe(true)
+    expect(pem.includes(certB64)).toBe(true)
+    expect(pem.trim().endsWith('-----END CERTIFICATE-----')).toBe(true)
+  })
+
+  test('Get SAML configuration from idpMetadataPath (fallback POST)', async () => {
+    const configPath = path.join(testDataRoot, 'test.metadata.post.json')
+    const jwtPrivateKeyPath = path.join(testDataRoot, 'jwt.key')
+    const jwtPublicKeyPath = path.join(testDataRoot, 'jwt.key.pub')
+    const metadataPath = path.join(testDataRoot, 'GoogleIDPMetadata.post.xml')
+
+    const cfg = {
+      rooms: [
+        { room: 'test', hash: 'ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff' }
+      ],
+      jwtPrivateKeyPath,
+      jwtPublicKeyPath,
+      corsOrigins: ['/https://w+\\.live-comment\\.ga$/', 'http://localhost:8888'],
+      saml: {
+        appUrl: 'http://localhost:8888',
+        cookieSecret: 'cookieSecret',
+        callbackUrl: 'http://localhost:9080/saml/acs',
+        issuer: 'issuer',
+        idpMetadataPath: metadataPath,
+      }
+    }
+    fs.writeFileSync(configPath, JSON.stringify(cfg))
+    createFile(jwtPrivateKeyPath, 'jwtPrivateKey')
+    createFile(jwtPublicKeyPath, 'jwtPublicKey')
+
+    const metadata = `<?xml version="1.0"?>
+<md:EntityDescriptor
+    xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+    entityID="https://accounts.google.com/o/saml2?idpid=C02zx1llr">
+  <md:IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+    <md:KeyDescriptor use="signing">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:X509Data>
+          <ds:X509Certificate>QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+    <md:KeyDescriptor use="encryption">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:X509Data>
+          <ds:X509Certificate>RUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRQ==</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+    <md:SingleSignOnService
+      Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+      Location="https://example.com/idp/post"/>
+  </md:IDPSSODescriptor>
+</md:EntityDescriptor>`
+    fs.writeFileSync(metadataPath, metadata)
+
+    const cache = await loadConfigAsync(configPath, 0)
+    assertNotNullable(cache.content, 'cache.content must be defined.')
+    const sut = new Configuration(argv, cache.content, cache.stat.mtimeMs)
+
+    expect(sut.saml?.entryPoint).toBe('https://example.com/idp/post')
+  })
+
+  test('idpMetadataPath throws when no Redirect or POST SSO Location', async () => {
+    const configPath = path.join(testDataRoot, 'test.metadata.error.json')
+    const jwtPrivateKeyPath = path.join(testDataRoot, 'jwt.key')
+    const jwtPublicKeyPath = path.join(testDataRoot, 'jwt.key.pub')
+    const metadataPath = path.join(testDataRoot, 'GoogleIDPMetadata.nohttp.xml')
+
+    const cfg = {
+      rooms: [
+        { room: 'test', hash: 'ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff' }
+      ],
+      jwtPrivateKeyPath,
+      jwtPublicKeyPath,
+      corsOrigins: ['/https://w+\\.live-comment\\.ga$/', 'http://localhost:8888'],
+      saml: {
+        appUrl: 'http://localhost:8888',
+        cookieSecret: 'cookieSecret',
+        callbackUrl: 'http://localhost:9080/saml/acs',
+        issuer: 'issuer',
+        idpMetadataPath: metadataPath,
+      }
+    }
+    fs.writeFileSync(configPath, JSON.stringify(cfg))
+    createFile(jwtPrivateKeyPath, 'jwtPrivateKey')
+    createFile(jwtPublicKeyPath, 'jwtPublicKey')
+
+    const metadata = `<?xml version="1.0"?>
+<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata">
+  <IDPSSODescriptor>
+    <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://example.com/idp/soap"/>
+  </IDPSSODescriptor>
+</EntityDescriptor>`
+    fs.writeFileSync(metadataPath, metadata)
+
+    await expect(loadConfigAsync(configPath, 0))
+      .rejects
+      .toThrow('saml.idpMetadataPath: Error: Could not find SingleSignOnService Location in metadata.')
+  })
+
+  test('idpMetadataPath overrides entryPoint and certPaths when both provided', async () => {
+    const configPath = path.join(testDataRoot, 'test.metadata.override.json')
+    const jwtPrivateKeyPath = path.join(testDataRoot, 'jwt.key')
+    const jwtPublicKeyPath = path.join(testDataRoot, 'jwt.key.pub')
+    const metadataPath = path.join(testDataRoot, 'GoogleIDPMetadata.override.xml')
+
+    const certPath0 = path.join(testDataRoot, 'idp.0.crt')
+    const certPath1 = path.join(testDataRoot, 'idp.1.crt')
+    const cfg = {
+      rooms: [
+        { room: 'test', hash: 'ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff' }
+      ],
+      jwtPrivateKeyPath,
+      jwtPublicKeyPath,
+      corsOrigins: ['/https://w+\\.live-comment\\.ga$/', 'http://localhost:8888'],
+      saml: {
+        appUrl: 'http://localhost:8888',
+        cookieSecret: 'cookieSecret',
+        callbackUrl: 'http://localhost:9080/saml/acs',
+        issuer: 'issuer',
+        entryPoint: 'https://example.com/legacy',
+        certPaths: [certPath0, certPath1],
+        idpMetadataPath: metadataPath,
+      }
+    }
+    fs.writeFileSync(configPath, JSON.stringify(cfg))
+    createFile(jwtPrivateKeyPath, 'jwtPrivateKey')
+    createFile(jwtPublicKeyPath, 'jwtPublicKey')
+    createFile(certPath0, 'legacyCert0')
+    createFile(certPath1, 'legacyCert1')
+
+    const certB64 = 'QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo='
+    const metadata = `<?xml version="1.0"?>
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata">
+  <md:IDPSSODescriptor>
+    <md:KeyDescriptor use="signing">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:X509Data>
+          <ds:X509Certificate>${certB64}</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+    <md:SingleSignOnService
+      Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+      Location="https://example.com/idp/redirect2"/>
+  </md:IDPSSODescriptor>
+</md:EntityDescriptor>`
+    fs.writeFileSync(metadataPath, metadata)
+
+    const cache = await loadConfigAsync(configPath, 0)
+    assertNotNullable(cache.content, 'cache.content must be defined.')
+    const sut = new Configuration(argv, cache.content, cache.stat.mtimeMs)
+
+    expect(sut.saml?.entryPoint).toBe('https://example.com/idp/redirect2')
+    expect(sut.saml?.cert?.length).toBe(1)
+    expect((sut.saml?.cert?.[0] as string).includes(certB64)).toBe(true)
+  })
+
   test('Get SAML configuration with non boolean wantAssertionsSigned and wantAuthnResponseSigned', async () => {
     const configPath = path.join(testDataRoot, 'test.json')
     writeConfigSaml(configPath, {
