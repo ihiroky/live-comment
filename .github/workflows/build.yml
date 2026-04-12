@@ -46,10 +46,22 @@ jobs:
 #
   desktop:
     needs: check
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.runs_on }}
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        include:
+          - os: macos
+            runs_on: macos-latest
+            artifact_suffix: macos-universal
+            electron_builder_args: -c electron-builder-config.json --universal
+          - os: linux
+            runs_on: ubuntu-latest
+            artifact_suffix: linux-x64
+            electron_builder_args: -c electron-builder-config.json --x64
+          - os: windows
+            runs_on: windows-latest
+            artifact_suffix: windows-x64
+            electron_builder_args: -c electron-builder-config.json --x64
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -81,12 +93,12 @@ jobs:
           release: ${{ startsWith(github.ref, 'refs/tags/v') }}
           skip_build: true
           package_root: packages/app/
-          args: -c electron-builder-config.json
+          args: ${{ matrix.electron_builder_args }}
 
       - name: Archive artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: live-comment-for-${{ matrix.os }}-${{ github.run_number }}
+          name: live-comment-for-${{ matrix.artifact_suffix }}-${{ github.run_number }}
           path: packages/app/dist/live-comment*
 #
 # Build server side apps
@@ -150,7 +162,7 @@ jobs:
           asset_content_type: application/zip
 
       - name: Archive artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: server-apps-${{ github.run_number }}
           path: build/apps/
