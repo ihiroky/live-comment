@@ -29,6 +29,8 @@ declare global {
     comment: {
       request: () => Promise<SettingsV1>
       send: (m: Message | null) => Promise<void>
+      postCredential: (m: AcnMessage) => Promise<void>
+      onLoggedIn: (onLoggedIn: (_: AcnMessage) => void) => () => void
     }
   }
 }
@@ -240,7 +242,7 @@ export function commentMain(): Promise<void> {
       root.render(
         <StrictMode>
           <CommentApp
-            wsUrl={urls.ws} apiUrl={urls.api}
+            wsUrl={urls.ws} apiUrl={urls.api} logoRatio={0.6}
             onOpen={onOpen} onClose={onClose} onMessage={window.comment.send} onError={log.error}
           />
         </StrictMode>

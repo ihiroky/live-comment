@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
       - run: |
           npm c set fetch-retry-maxtimeout 180000
@@ -30,6 +30,7 @@ jobs:
           LC_WS_URL: wss://${{ inputs.host }}/app
           LC_API_URL: https://${{ inputs.host }}/api
           LC_APP_URL: https://${{ inputs.host }}
+          LC_ALLOW_POST_CREDENTIAL_ORIGIN: chrome-extension://nelcmkfemkkbopgcgbmdoecfiodjocca
           NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Create release directory tree

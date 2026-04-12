@@ -36,17 +36,20 @@ async function fetchAndRender(
   apiUrl: string,
   navigate: jest.Mock,
   nid: string,
-  rooms: { room: string, hash: string}[]
+  rooms: { room: string, hash: string}[],
+  targetOrigin = 'origin',
 ): Promise<{ rerender: typeof rerender, rooms: HTMLElement[]}> {
   // Fetch rooms
-  const { rerender } = render(<SelectRoom apiUrl={apiUrl} navigate={navigate} />)
+  const { rerender } = render(
+    <SelectRoom apiUrl={apiUrl} navigate={navigate} allowPostCredentialOrigin={targetOrigin} />
+  )
   expect(fetchWithTimeout).toHaveBeenCalledWith(`${apiUrl}/rooms`, {
     mode: 'cors',
     credentials: 'include',
   }, 3000)
 
   // Render rooms
-  rerender(<SelectRoom apiUrl={apiUrl} navigate={navigate} />)
+  rerender(<SelectRoom apiUrl={apiUrl} navigate={navigate} allowPostCredentialOrigin={targetOrigin} />)
   const { roomElements } = await waitFor(() => {
     const nidElement = screen.getByText(new RegExp(nid))
     const roomElements = rooms.map(r => screen.getByText(new RegExp(r.room)))
@@ -57,6 +60,12 @@ async function fetchAndRender(
 }
 
 describe('SelectRoom', () => {
+
+  beforeEach(() => {
+    window.opener = undefined
+    ;(window.comment as unknown) = undefined
+  })
+
   test('Send message to opener if this page is saml-login window', async () => {
     const { apiUrl, navigate, response } = prepare()
     jest.mocked(fetchWithTimeout).mockResolvedValue({
@@ -66,26 +75,23 @@ describe('SelectRoom', () => {
     jest.mocked(isAcnRoomsMessage).mockReturnValue(true)
     window.opener = {
       postMessage: jest.fn<typeof window.postMessage>(),
-    } as any // eslint-disable-line @typescript-eslint/no-explicit-any
-    const defaultWindowName = window.name
+    }
     const defaultWindowClose = window.close
     try {
-      window.name = 'saml-login'
       window.close = jest.fn<typeof window.close>()
 
-      const { rooms } = await fetchAndRender(apiUrl, navigate, response.nid, response.rooms)
+      const { rooms } = await fetchAndRender(apiUrl, navigate, response.nid, response.rooms, 'targetOrigin')
       userEvent.click(rooms[0])
 
       await waitFor(() => {
         expect(window.opener.postMessage).toBeCalledWith({
-          type: 'room',
+          type: 'acn',
           room: 'room1',
           hash: 'hash1',
-        }, '*')
+        }, 'targetOrigin')
         expect(window.close).toBeCalled()
       })
     } finally {
-      window.name = defaultWindowName
       window.close = defaultWindowClose
     }
   })
@@ -111,6 +117,7 @@ describe('SelectRoom', () => {
     jest.mocked(isAcnOkMessage).mockReturnValue(true)
     userEvent.click(rooms[0])
     await waitFor(() => {
+      expect(response.rooms[0]).toBeDefined()
       const { room, hash } = response.rooms[0]
       expect(login).toBeCalledWith(apiUrl, room, hash, false)
     })
@@ -140,7 +147,7 @@ describe('SelectRoom', () => {
     jest.mocked(isAcnOkMessage).mockReturnValue(false)
     jest.mocked(isErrorMessage).mockReturnValue(true)
     userEvent.click(rooms[0])
-    rerender(<SelectRoom apiUrl={apiUrl} navigate={navigate} />)
+    rerender(<SelectRoom apiUrl={apiUrl} navigate={navigate} allowPostCredentialOrigin='origin' />)
     await waitFor(() => {
       screen.getByText(new RegExp(acnNgMsg.message))
     })
@@ -166,7 +173,7 @@ describe('SelectRoom', () => {
     jest.mocked(isAcnOkMessage).mockReturnValue(false)
     jest.mocked(isErrorMessage).mockReturnValue(false) // not a error message
     userEvent.click(rooms[0])
-    rerender(<SelectRoom apiUrl={apiUrl} navigate={navigate} />)
+    rerender(<SelectRoom apiUrl={apiUrl} navigate={navigate} allowPostCredentialOrigin='origin' />)
     await waitFor(() => {
       screen.getByText('Login failed: {"type":"error","error":"ACN_FAILED","message":"error message"}')
     })
@@ -178,7 +185,7 @@ describe('SelectRoom', () => {
       ok: false,
     } as any) // eslint-disable-line @typescript-eslint/no-explicit-any
 
-    render(<SelectRoom apiUrl={apiUrl} navigate={navigate} />)
+    render(<SelectRoom apiUrl={apiUrl} navigate={navigate} allowPostCredentialOrigin='origin' />)
     await waitFor(() => {
       screen.getByText('Fetch failed.')
     })
@@ -199,7 +206,7 @@ describe('SelectRoom', () => {
     jest.mocked(isErrorMessage).mockReturnValue(true)
     jest.mocked(isAcnRoomsMessage).mockReturnValue(false)
 
-    render(<SelectRoom apiUrl={apiUrl} navigate={navigate} />)
+    render(<SelectRoom apiUrl={apiUrl} navigate={navigate} allowPostCredentialOrigin='origin' />)
     await waitFor(() => {
       screen.getByText('error message')
     })
@@ -220,9 +227,67 @@ describe('SelectRoom', () => {
     jest.mocked(isErrorMessage).mockReturnValue(false)
     jest.mocked(isAcnRoomsMessage).mockReturnValue(false)
 
-    render(<SelectRoom apiUrl={apiUrl} navigate={navigate} />)
+    render(<SelectRoom apiUrl={apiUrl} navigate={navigate} allowPostCredentialOrigin='origin' />)
     await waitFor(() => {
       screen.getByText('Unexpected message: {"type":"error","error":"ERROR","message":"error message"}')
+    })
+  })
+
+  test('Show room list, select a room and post credential with Electron main process', async () => {
+    const { apiUrl, navigate, response } = prepare()
+    window.opener = jest.fn()
+    window.comment = {
+      ...window.comment,
+      postCredential: jest.fn<typeof window.comment.postCredential>().mockResolvedValue(undefined),
+    }
+    window.close = jest.fn<typeof window.close>()
+    const values = {
+      room: 'room1',
+      hash: 'hash1',
+    }
+    jest.mocked(fetchWithTimeout).mockResolvedValue({
+      ok: true,
+      json: jest.fn(async () => response),
+    } as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+    jest.mocked(isAcnRoomsMessage).mockReturnValue(true)
+
+    const { rooms } = await fetchAndRender(apiUrl, navigate, response.nid, response.rooms)
+
+    // Select a room and post its credential
+    userEvent.click(rooms[0])
+    await waitFor(() => {
+      expect(window.comment.postCredential).toHaveBeenCalledWith({ type: 'acn', room: values.room, hash: values.hash })
+    })
+    await waitFor(() => {
+      expect(window.close).toHaveBeenCalled()
+    })
+  })
+
+  test('Show room list, select a room and post credential with opener.postMassage', async () => {
+    const { apiUrl, navigate, response } = prepare()
+    // No window.comment
+    window.opener = {
+      postMessage: jest.fn<typeof window.opener.postMessage>(),
+    }
+
+    window.close = jest.fn<typeof window.close>()
+    const values = {
+      room: 'room1',
+      hash: 'hash1',
+    }
+    jest.mocked(fetchWithTimeout).mockResolvedValue({
+      ok: true,
+      json: jest.fn(async () => response),
+    } as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+    jest.mocked(isAcnRoomsMessage).mockReturnValue(true)
+
+    const { rooms } = await fetchAndRender(apiUrl, navigate, response.nid, response.rooms, 'targetOrigin')
+
+    // Select a room and post its credential
+    userEvent.click(rooms[0])
+    await waitFor(() => {
+      expect(window.opener.postMessage).toHaveBeenCalledWith({ type: 'acn', room: values.room, hash: values.hash }, 'targetOrigin')
+      expect(window.close).toHaveBeenCalled()
     })
   })
 })

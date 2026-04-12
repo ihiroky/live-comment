@@ -3,6 +3,7 @@ import {
   promises as fsp
 } from 'fs'
 import { LogLevel, getLogger } from '@/common/Logger'
+import { XMLParser } from 'fast-xml-parser'
 import { isObject } from '@/common/utils'
 import { Argv } from './argv'
 
@@ -28,6 +29,8 @@ export type SamlConfig = {
   certs: string[]
   wantAssertionsSigned: boolean | undefined
   wantAuthnResponseSigned: boolean | undefined
+  // Optional: If provided, use IdP metadata XML to populate entryPoint and certs
+  idpMetadataPath?: string
   decryption?: {
     keyPath: string
     key: string
@@ -101,6 +104,60 @@ async function readCertsAsync(json: Record<string, string>, pathsPropName: strin
   return buffers.map(buffer => buffer.toString())
 }
 
+// Parse IdP metadata XML to extract
+// - SingleSignOnService Location (prefer HTTP-Redirect, fallback HTTP-POST, otherwise first)
+// - X509Certificate values under KeyDescriptor (prefer use="signing", fallback to all)
+function toPemFromBase64(base64: string): string {
+  const header = '-----BEGIN CERTIFICATE-----\n'
+  const fooder = '\n-----END CERTIFICATE-----'
+  const trimmed = base64.trim()
+  return (trimmed.startsWith(header) ? '' : header) + trimmed + (trimmed.endsWith(fooder) ? '' : fooder) + '\n'
+}
+
+function parseIdpMetadata(xml: string): { entryPoint: string | undefined, certs: string[] } {
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    attributeNamePrefix: '',
+    removeNSPrefix: true,
+    trimValues: true,
+  })
+  const doc = parser.parse(xml)
+  const ed = doc?.EntityDescriptor
+  const idp = ed?.IDPSSODescriptor
+  if (!idp) {
+    return { entryPoint: undefined, certs: [] }
+  }
+
+  // Normalize SSO services to array
+  const ssoRaw = idp.SingleSignOnService
+  const ssoArr: Array<{ Binding?: string, Location?: string }> =
+    Array.isArray(ssoRaw) ? ssoRaw : (ssoRaw ? [ssoRaw] : [])
+  let entryPoint: string | undefined = ssoArr.find(x => x.Binding?.includes('HTTP-Redirect'))?.Location
+  if (!entryPoint) {
+    entryPoint = ssoArr.find(x => x.Binding?.includes('HTTP-POST'))?.Location
+  }
+
+  // Normalize KeyDescriptor to array
+  const kdRaw = idp.KeyDescriptor
+  const kdArr: Array<{ use?: string, KeyInfo?: { X509Data?: { X509Certificate?: string | string[] } } }> =
+    Array.isArray(kdRaw) ? kdRaw : (kdRaw ? [kdRaw] : [])
+  const signingArr = kdArr.filter(k => !k.use || k.use.toLowerCase() === 'signing')
+  const selected = signingArr.length > 0 ? signingArr : kdArr
+  const certs: string[] = []
+  for (const k of selected) {
+    const x = k.KeyInfo?.X509Data?.X509Certificate
+    const list = Array.isArray(x) ? x : (typeof x === 'string' && x.length > 0 ? [x] : [])
+    for (const c of list) {
+      const base64 = c.replace(/\s+/g, '')
+      if (base64.length > 0) {
+        certs.push(toPemFromBase64(base64))
+      }
+    }
+  }
+
+  return { entryPoint, certs }
+}
+
 async function buildConfig(json: string): Promise<ServerConfig> {
 
   // Ensure completeness of ServerConfig in this function.
@@ -129,9 +186,35 @@ async function buildConfig(json: string): Promise<ServerConfig> {
     s.appUrl = s.appUrl.replace(/\/+$/, '') // Remove trailing slashes
     assertDefinedAndNotEmpty(s, 'cookieSecret', 'saml')
     assertDefinedAndNotEmpty(s, 'callbackUrl', 'saml')
-    assertDefinedAndNotEmpty(s, 'entryPoint', 'saml')
     assertDefinedAndNotEmpty(s, 'issuer', 'saml')
-    s.certs = await readCertsAsync(s, 'certPaths', 'saml')
+
+    // If metadata is provided, prefer values from it
+    if (s.idpMetadataPath) {
+      try {
+        const xml = await fsp.readFile(s.idpMetadataPath, { encoding: 'utf8' })
+        const parsed = parseIdpMetadata(xml)
+        if (!parsed.entryPoint) {
+          throw new Error('Could not find SingleSignOnService Location in metadata.')
+        }
+        if (s.entryPoint && s.entryPoint !== parsed.entryPoint) {
+          log.warn(`[SAML] entryPoint overridden by metadata: ${s.entryPoint} -> ${parsed.entryPoint}`)
+        }
+        s.entryPoint = parsed.entryPoint
+        if (parsed.certs.length === 0) {
+          throw new Error('No X509Certificate found in metadata.')
+        }
+        if (Array.isArray(s.certPaths) && s.certPaths.length > 0) {
+          log.warn('[SAML] certs loaded from metadata. certPaths is ignored when idpMetadataPath is set.')
+        }
+        s.certs = parsed.certs
+      } catch (e: unknown) {
+        throw new Error(`saml.idpMetadataPath: ${e}`)
+      }
+    } else {
+      // Backward-compatible path: require entryPoint and certPaths
+      assertDefinedAndNotEmpty(s, 'entryPoint', 'saml')
+      s.certs = await readCertsAsync(s, 'certPaths', 'saml')
+    }
     s.wantAssertionsSigned = typeof s.wantAssertionsSigned === 'undefined' || !!s.wantAssertionsSigned
     s.wantAuthnResponseSigned = typeof s.wantAuthnResponseSigned === 'undefined' || !!s.wantAuthnResponseSigned
     if (s.decryption) {

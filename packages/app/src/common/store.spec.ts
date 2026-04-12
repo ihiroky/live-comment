@@ -116,6 +116,25 @@ describe('WindowStore', () => {
 
     expect(store.cache.k0).toEqual({ s: '', n: 0 })
   })
+
+  test('callback fires when only the first stored value exists', async () => {
+    window.localStorage.setItem('k0', JSON.stringify({ s: 's0', n: 1 }))
+
+    const store = createWindowStore<{
+      k0: { s: string, n: number }
+      k1: string
+    }>(window.localStorage, {
+      k0: { s: '', n: 0 },
+      k1: ''
+    })
+
+    const callback = jest.fn<() => void>()
+    store.subscribe(callback)
+    await store.sync()
+
+    expect(store.cache).toEqual({ k0: { s: 's0', n: 1 }, k1: '' })
+    expect(callback).toBeCalledTimes(1)
+  })
 })
 
 
@@ -241,5 +260,26 @@ describe('ChromeStore', () => {
     await chrome.storage.local.remove(['k0'])
 
     expect(store.cache.k0).toEqual({ s: '', n: 0 })
+  })
+
+  test('callback fires when only the first stored value exists', async () => {
+    // First key has a value, second key does not
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    jest.mocked(chrome.storage.local.get as any).mockResolvedValue({ k0: { s: 's0', n: 1 } })
+
+    const store = createChromeStore<{
+      k0: { s: string, n: number }
+      k1: string
+    }>(chrome.storage.local, {
+      k0: { s: '', n: 0 },
+      k1: ''
+    })
+
+    const callback = jest.fn<() => void>()
+    store.subscribe(callback)
+    await store.sync()
+
+    expect(store.cache).toEqual({ k0: { s: 's0', n: 1 }, k1: '' })
+    expect(callback).toBeCalledTimes(1)
   })
 })

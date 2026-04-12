@@ -26,6 +26,8 @@ beforeEach(() => {
   window.comment = {
     request: jest.fn<typeof window.comment.request>(),
     send: jest.fn<typeof window.comment.send>(),
+    postCredential: jest.fn<typeof window.comment.postCredential>(),
+    onLoggedIn: jest.fn<typeof window.comment.onLoggedIn>(),
   }
 
   const div = document.createElement('div')
@@ -70,6 +72,7 @@ describe('commentMain', () => {
     expect(appProps).toEqual({
       wsUrl: 'ws://localhost:8080',
       apiUrl: 'http://localhost:9080',
+      logoRatio: 0.6,
       onOpen: expect.any(Function),
       onClose: expect.any(Function),
       onMessage: expect.any(Function),
@@ -105,6 +108,7 @@ describe('commentMain', () => {
     expect(appProps).toEqual({
       wsUrl: 'ws://localhost:8080',
       apiUrl: 'http://localhost:9080',
+      logoRatio: 0.6,
       onOpen: expect.any(Function),
       onClose: expect.any(Function),
       onMessage: expect.any(Function),
@@ -140,6 +144,7 @@ describe('commentMain', () => {
     expect(appProps).toEqual({
       wsUrl: 'ws://localhost:8080',
       apiUrl: 'http://localhost:9080',
+      logoRatio: 0.6,
       onOpen: expect.any(Function),
       onClose: expect.any(Function),
       onMessage: expect.any(Function),
@@ -180,6 +185,7 @@ describe('commentMain', () => {
     expect(appProps).toEqual({
       wsUrl: 'wss://hogefuga/app',
       apiUrl: 'https://hogefuga/api',
+      logoRatio: 0.6,
       onOpen: expect.any(Function),
       onClose: expect.any(Function),
       onMessage: expect.any(Function),
@@ -214,6 +220,7 @@ describe('commentMain', () => {
     expect(appProps).toEqual({
       wsUrl: 'wss://hostname/app',
       apiUrl: 'https://hostname/api',
+      logoRatio: 0.6,
       onOpen: expect.any(Function),
       onClose: expect.any(Function),
       onMessage: expect.any(Function),
@@ -240,6 +247,7 @@ describe('commentMain', () => {
     expect(appProps).toEqual({
       wsUrl: 'wss://hostname/app',
       apiUrl: 'https://hostname/api',
+      logoRatio: 0.6,
       onOpen: expect.any(Function),
       onClose: expect.any(Function),
       onMessage: expect.any(Function),

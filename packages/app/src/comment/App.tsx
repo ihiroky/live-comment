@@ -16,10 +16,15 @@ const defaultApiUrl = process.env.NODE_ENV === 'production'
   ? (process.env.LC_API_URL || `https://${window.location.hostname}/api`)
   : `http://localhost:9080`
 
+const allowPostCredentialOrigin = process.env.NODE_ENV === 'production'
+  ? (process.env.LC_ALLOW_POST_CREDENTIAL_ORIGIN || 'chrome-extension://nelcmkfemkkbopgcgbmdoecfiodjocca')
+  : 'chrome-extension://nelcmkfemkkbopgcgbmdoecfiodjocca'
+
 type Props = {
   origin?: string
   wsUrl?: string
   apiUrl?: string
+  logoRatio?: number
   onMount?: () => void
   onUnmount?: () => void
   onOpen?: () => void
@@ -40,8 +45,8 @@ const AppRoutes = (props: Props): JSX.Element => {
   return (
     <Routes>
       <Route path='/' element={<Navigate replace to='/login' />} />
-      <Route path='/login' element={<LoginForm origin={origin} apiUrl={apiUrl} navigate={navigate} />} />
-      <Route path='/rooms' element={<SelectRoom apiUrl={apiUrl} navigate={navigate} />} />
+      <Route path='/login' element={<LoginForm origin={origin} apiUrl={apiUrl} logoRatio={props.logoRatio} navigate={navigate} />} />
+      <Route path='/rooms' element={<SelectRoom apiUrl={apiUrl} navigate={navigate} allowPostCredentialOrigin={allowPostCredentialOrigin} />} />
       { !isSoundPage ? (
         <Route path='/comment' element={
           <Comment url={wsUrl} maxMessageCount={1024} navigate={navigate} {...props} />

@@ -1,6 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Live Comment",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhGPAOYga/+H7CpLoQUQXiDKwXTaNCMTWdldhbeTlv9FvJwPomOtFN6ZhpA1Q8H3cN9m43K2VcmJg4oOUWf7gr4cPOaMzbb8VxuClPuEMOk54PM710rQin6VNTFc/TqcQv+9cTwtvu1FwtIrNCqaNNzLCj2XOlj14aS928o0tJ1MCmfdmOwvXrqF1e2adLnYy4MBw5C2Tv5ektOyEYzTWQHS+QnTxZh+zCmFO36V+K2syvzxZbdvni4Cw/K4ZFGZhIBzPmG1ouAFThP/tccq3Y9rrsfteroAkwGzzA3a7yCgJoRIrYrAg1E5pS8uT+ojoC7WQHMS62i8mVktH6T890wIDAQAB",
   "description": "Show comments on your browser.",
   "version": "0.6.4",
   "options_ui": {

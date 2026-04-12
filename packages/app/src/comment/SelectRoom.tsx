@@ -1,7 +1,7 @@
 import { FC, useCallback, useEffect, useSyncExternalStore } from 'react'
 import { Box, Divider, Grid, Link, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography, styled }from '@mui/material'
 import SpeakerNotesRounded from '@mui/icons-material/SpeakerNotesOutlined'
-import { Message, isAcnOkMessage, isAcnRoomsMessage, isErrorMessage } from '@/common/Message'
+import { AcnMessage, Message, isAcnOkMessage, isAcnRoomsMessage, isErrorMessage } from '@/common/Message'
 import { gotoCommentPage, gotoLoginPage, login, removeToken, setToken } from './utils/pages'
 import { NavigateFunction } from 'react-router-dom'
 import { fetchWithTimeout } from '@/common/utils'
@@ -66,6 +66,7 @@ const roomsStore = {
 type SelectRoomProps = {
   apiUrl: string
   navigate: NavigateFunction | undefined
+  allowPostCredentialOrigin: string
 }
 
 const Root = styled('div')({
@@ -94,10 +95,25 @@ const NotificationDiv = styled('div')({
   color: 'red'
 })
 
-function selectRoom(apiUrl: string, room: string, hash: string, navigate: NavigateFunction | undefined): void {
-  if (window.opener && window.name === 'saml-login') {
-    window.opener.postMessage({ type: 'room', room, hash }, '*')
-    window.close()
+function selectRoom(
+  apiUrl: string,
+  room: string,
+  hash: string,
+  navigate: NavigateFunction | undefined,
+  targetOrigin: string
+): void {
+  // Use subwinndow if eletron or extension. See LoginForm.tsx
+  if (window.opener) {
+    const message: AcnMessage = { type: 'acn', room, hash }
+    // Avoid window.postMessage on electron because it requires '*' or 'file://' as targetOrigin
+    if (window.comment) {
+      // electron
+      window.comment.postCredential(message).then((): void => window.close())
+    } else {
+      // extension
+      window.opener.postMessage(message, targetOrigin)
+      window.close()
+    }
     return
   }
 
@@ -113,10 +129,11 @@ function selectRoom(apiUrl: string, room: string, hash: string, navigate: Naviga
     })
 }
 
-const RoomSelectForm = ({ apiUrl, navigate, store }: {
+const RoomSelectForm = ({ apiUrl, navigate, store, allowPostCredentialOrigin }: {
   apiUrl: string
   navigate: NavigateFunction | undefined
   store: typeof roomsStore.snapshot
+  allowPostCredentialOrigin: string
 }): JSX.Element => {
   const backToLogin = useCallback((): void => {
     removeToken()
@@ -132,7 +149,9 @@ const RoomSelectForm = ({ apiUrl, navigate, store }: {
         <List>
           {store.rooms.map((room) => (
             <ListItem disablePadding key={room.room}>
-              <ListItemButton onClick={(): void => { selectRoom(apiUrl, room.room, room.hash, navigate) }}>
+              <ListItemButton onClick={(): void => {
+                selectRoom(apiUrl, room.room, room.hash, navigate, allowPostCredentialOrigin)
+              }}>
                 <ListItemIcon>
                   <SpeakerNotesRounded />
                 </ListItemIcon>
@@ -156,6 +175,7 @@ const RoomSelectForm = ({ apiUrl, navigate, store }: {
 export const SelectRoom: FC<SelectRoomProps> = ({
   apiUrl,
   navigate,
+  allowPostCredentialOrigin
 }: SelectRoomProps): JSX.Element => {
   const store = useSyncExternalStore(roomsStore.subscribe, roomsStore.getSnapshot)
 
@@ -163,13 +183,16 @@ export const SelectRoom: FC<SelectRoomProps> = ({
     roomsStore.fetch(apiUrl)
   }, [apiUrl])
 
+  const roomSelectFormProps = {
+    apiUrl, navigate, store, allowPostCredentialOrigin
+  }
   return (
     <Root>
       <Form>
         {
           store.error
             ? <NotificationDiv>{store.error}</NotificationDiv>
-            : <RoomSelectForm apiUrl={apiUrl} navigate={navigate} store={store} />
+            : <RoomSelectForm { ...roomSelectFormProps } />
         }
       </Form>
     </Root>
