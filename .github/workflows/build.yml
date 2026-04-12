@@ -58,10 +58,6 @@ jobs:
             runs_on: ubuntu-latest
             artifact_suffix: linux-x64
             electron_builder_args: -c electron-builder-config.json --x64
-          - os: linux
-            runs_on: ubuntu-24.04-arm
-            artifact_suffix: linux-arm64
-            electron_builder_args: -c electron-builder-config.json --arm64
           - os: windows
             runs_on: windows-latest
             artifact_suffix: windows-x64
@@ -102,7 +98,7 @@ jobs:
           args: ${{ matrix.electron_builder_args }}
 
       - name: Archive artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: live-comment-for-${{ matrix.artifact_suffix }}-${{ github.run_number }}
           path: packages/app/dist/live-comment*
@@ -168,7 +164,7 @@ jobs:
           asset_content_type: application/zip
 
       - name: Archive artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         with:
           name: server-apps-${{ github.run_number }}
           path: build/apps/

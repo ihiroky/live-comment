@@ -67,7 +67,7 @@ jobs:
           asset_content_type: application/zip
 
       - name: Archive artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         with:
           name: browser-extension-${{ inputs.host }}-${{ github.run_number }}
           path: build/apps/browser-extension/
