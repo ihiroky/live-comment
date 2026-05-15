@@ -131,8 +131,8 @@ const MessageDiv = styled('div')({
   border: '1px solid rgba(48, 155, 106, 0.22)',
   borderLeft: '3px solid #20a86d',
   borderRadius: 6,
-  padding: '12px 14px',
-  margin: '10px 0px',
+  padding: '8px 12px',
+  margin: '4px 0px',
 })
 
 const MessageContentDiv = styled('div')({
@@ -152,8 +152,8 @@ const MessageTimeDiv = styled('div')({
   color: '#4f806d',
   fontFamily: '"Century Gothic", "Avenir Next", "Helvetica Neue", sans-serif',
   fontWeight: 400,
-  fontSize: 'small',
-  marginTop: 6,
+  fontSize: 12,
+  marginTop: 4,
 })
 
 const log = getLogger('App')
