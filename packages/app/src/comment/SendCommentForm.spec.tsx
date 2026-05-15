@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SendCommentForm } from './SendCommentForm'
 import '@testing-library/jest-dom'
@@ -38,6 +38,19 @@ test('Input text and press Enter key.', async () => {
     type: 'comment',
     comment: inputText,
   })
+})
+
+test('Input text and press Enter key while composing.', async () => {
+  const onSubmit = jest.fn()
+  render(<SendCommentForm onSubmit={onSubmit} sendWithCtrlEnter={false}/>)
+
+  const inputText = '入力中'
+  const textBox = screen.getByRole('textbox', { name: '' }) as HTMLInputElement
+  userEvent.type(textBox, inputText)
+  fireEvent.keyDown(textBox, { key: 'Enter', code: 'Enter', isComposing: true })
+
+  expect(textBox.value).toBe(inputText)
+  expect(onSubmit).not.toBeCalled()
 })
 
 test('Input text and click button with "send with ctrl+enter" option.', async () => {
