@@ -120,9 +120,11 @@ const MessageListDiv = styled('div')({
 
 const MessageDiv = styled('div')({
   textAlign: 'left',
-  backgroundColor: '#99ffcc',
+  background: 'rgba(226, 255, 238, 0.86)',
+  border: '1px solid rgba(48, 155, 106, 0.22)',
+  borderLeft: '3px solid #20a86d',
   borderRadius: 6,
-  padding: 10,
+  padding: '12px 14px',
   margin: '10px 0px',
 })
 
@@ -131,12 +133,20 @@ const MessageContentDiv = styled('div')({
   marginRight: 0,
   overflowWrap: 'anywhere',
   hyphens: 'auto',
+  color: '#15382c',
+  fontSize: 15,
+  fontWeight: 500,
+  lineHeight: 1.55,
+  letterSpacing: 0,
 })
 
 const MessageTimeDiv = styled('div')({
   textAlign: 'right',
-  fontWeight: 'lighter',
+  color: '#4f806d',
+  fontFamily: '"Century Gothic", "Avenir Next", "Helvetica Neue", sans-serif',
+  fontWeight: 400,
   fontSize: 'small',
+  marginTop: 6,
 })
 
 const log = getLogger('App')
