@@ -33,7 +33,6 @@ const AppDiv = styled('div')({
   width: '100vw',
   height: '100vh',
   backgroundColor: '#ccffcc',
-  padding: '0px 4px',
   margin: 0,
 })
 
@@ -72,18 +71,11 @@ const OptionForm = styled('form')({
   display: 'flex',
   justifyContent: 'flex-end',
   margin: 0,
-  padding: '0 2px',
+  paddingRight: 4,
 })
 
 const FormOptions = styled('div')({
-  width: '100%',
-  fontSize: 12,
-  '& .MuiFormGroup-root': {
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    columnGap: 2,
-    rowGap: 4,
-  },
+  fontSize: 8,
 })
 
 const OpenSoundDiv = styled('div')({
@@ -128,7 +120,7 @@ const MessageListDiv = styled('div')({
 const MessageDiv = styled('div')({
   textAlign: 'left',
   background: 'rgba(226, 255, 238, 0.86)',
-  border: '1px solid rgba(48, 155, 106, 0.22)',
+  border: '1px solid rgba(48, 155, 106, 0.32)',
   borderLeft: '3px solid #20a86d',
   borderRadius: 6,
   padding: '8px 12px',
@@ -141,10 +133,7 @@ const MessageContentDiv = styled('div')({
   overflowWrap: 'anywhere',
   hyphens: 'auto',
   color: '#15382c',
-  fontSize: 15,
   fontWeight: 500,
-  lineHeight: 1.55,
-  letterSpacing: 0,
 })
 
 const MessageTimeDiv = styled('div')({
@@ -153,7 +142,7 @@ const MessageTimeDiv = styled('div')({
   fontFamily: '"Century Gothic", "Avenir Next", "Helvetica Neue", sans-serif',
   fontWeight: 400,
   fontSize: 12,
-  marginTop: 4,
+  marginTop: 8,
 })
 
 const log = getLogger('App')
@@ -180,7 +169,7 @@ const openSoundPanel = getBooleanOptionValue('openSoundPanel', window.innerWidth
 
 const checkBoxMeta: Array<{ label: string, hint: string, name: string, key: OptionKey}> = [
   { label: 'Auto scroll', hint: '新しいコメントまで自動で追従します', name: 'auto_scroll', key: 'autoScroll' },
-  { label: 'Send with Ctrl+Enter', hint: 'Ctrl+Enterで送信します', name: 'send_with_ctrl_enter', key: 'sendWithCtrlEnter' },
+  { label: 'Send with Ctrl+Enter', hint: 'Ctrl+Enterでコメントを送信します', name: 'send_with_ctrl_enter', key: 'sendWithCtrlEnter' },
   { label: 'DDD', hint: '効果音パネルを表示します', name: 'open_ddd', key: 'openSoundPanel' },
 ]
 isMobiles() && checkBoxMeta.splice(1, 1)

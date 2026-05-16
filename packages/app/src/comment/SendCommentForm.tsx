@@ -16,15 +16,12 @@ type StateType = {
 const FormInputText = styled('input')({
   width: '100%',
   height: 42,
-  boxSizing: 'border-box',
   background: 'rgba(255, 255, 255, 0.62)',
-  border: '1px solid rgba(32, 168, 109, 0.22)',
+  border: '1px solid rgba(32, 168, 109, 0.32)',
   color: '#15382c',
   fontSize: 15,
-  fontWeight: 500,
-  lineHeight: 1,
   outline: 'none',
-  padding: '0 58px 0 14px',
+  padding: '0 52px 0 14px',
   borderRadius: 999,
   transition: 'background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease',
   '&:focus': {
@@ -35,16 +32,12 @@ const FormInputText = styled('input')({
 })
 
 const FormInputSubmit = styled('button')({
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
   position: 'absolute',
   top: 4,
   right: 4,
   width: 42,
   height: 34,
   border: 'none',
-  padding: 0,
   borderRadius: 999,
   background: 'rgba(32, 168, 109, 0.12)',
   color: '#127c51',
@@ -61,22 +54,14 @@ const FormInputSubmit = styled('button')({
     color: 'rgba(21, 56, 44, 0.28)',
     cursor: 'default',
   },
-  '& svg': {
-    width: 20,
-    height: 20,
-  },
 })
 
 const FloatingForm = styled('form')({
-  boxSizing: 'border-box',
-  width: '100%',
   margin: '12px 0 8px',
-  padding: '4px 0 0',
 })
 
 const InputField = styled('div')({
   position: 'relative',
-  width: '100%',
 })
 
 export class SendCommentForm extends Component<PropsType, StateType> {

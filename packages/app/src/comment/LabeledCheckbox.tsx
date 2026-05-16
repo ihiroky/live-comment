@@ -15,14 +15,10 @@ type Props = {
 }
 
 const CompactLabel = styled(FormControlLabel)({
-  margin: '0 14px 0 0',
-  minHeight: 24,
+  margin: 0,
   color: '#315746',
   '& .MuiFormControlLabel-label': {
-    fontSize: 12,
-    fontWeight: 500,
-    lineHeight: 1.2,
-    letterSpacing: 0,
+    fontSize: 14,
   },
 })
 
@@ -41,7 +37,6 @@ export const LabeledCheckbox: React.FC<Props> = ({ label, hint, name, checked, o
           name={name}
           size="small"
           sx={{
-            color: 'rgba(49, 87, 70, 0.52)',
             padding: '2px 2px 2px 0',
             '&.Mui-checked': {
               color: '#20a86d',
