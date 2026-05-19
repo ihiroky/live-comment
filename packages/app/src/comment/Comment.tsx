@@ -33,7 +33,6 @@ const AppDiv = styled('div')({
   width: '100vw',
   height: '100vh',
   backgroundColor: '#ccffcc',
-  padding: '0px 4px',
   margin: 0,
 })
 
@@ -70,12 +69,12 @@ const MainDiv = styled('div')({
 
 const OptionForm = styled('form')({
   display: 'flex',
+  justifyContent: 'flex-end',
   margin: 0,
-  padding: '0px 10px',
+  paddingRight: 4,
 })
 
 const FormOptions = styled('div')({
-  width: '90%',
   fontSize: 8,
 })
 
@@ -120,10 +119,12 @@ const MessageListDiv = styled('div')({
 
 const MessageDiv = styled('div')({
   textAlign: 'left',
-  backgroundColor: '#99ffcc',
+  background: 'rgba(226, 255, 238, 0.86)',
+  border: '1px solid rgba(48, 155, 106, 0.32)',
+  borderLeft: '3px solid #20a86d',
   borderRadius: 6,
-  padding: 10,
-  margin: '10px 0px',
+  padding: '8px 12px',
+  margin: '4px 0px',
 })
 
 const MessageContentDiv = styled('div')({
@@ -131,12 +132,17 @@ const MessageContentDiv = styled('div')({
   marginRight: 0,
   overflowWrap: 'anywhere',
   hyphens: 'auto',
+  color: '#15382c',
+  fontWeight: 500,
 })
 
 const MessageTimeDiv = styled('div')({
   textAlign: 'right',
-  fontWeight: 'lighter',
-  fontSize: 'small',
+  color: '#4f806d',
+  fontFamily: '"Century Gothic", "Avenir Next", "Helvetica Neue", sans-serif',
+  fontWeight: 400,
+  fontSize: 12,
+  marginTop: 8,
 })
 
 const log = getLogger('App')
@@ -161,10 +167,10 @@ const autoScroll = getBooleanOptionValue('autoScroll', true)
 const sendWithCtrlEnter = getBooleanOptionValue('sendWithCtrlEnter', !isMobiles())
 const openSoundPanel = getBooleanOptionValue('openSoundPanel', window.innerWidth >= 500)
 
-const checkBoxMeta: Array<{ label: string, name: string, key: OptionKey}> = [
-  { label: 'Auto scroll', name: 'auto_scroll', key: 'autoScroll' },
-  { label: 'Send with Ctrl+Enter', name: 'send_with_ctrl_enter', key: 'sendWithCtrlEnter' },
-  { label: 'DDD', name: 'open_ddd', key: 'openSoundPanel' },
+const checkBoxMeta: Array<{ label: string, hint: string, name: string, key: OptionKey}> = [
+  { label: 'Auto scroll', hint: '新しいコメントまで自動で追従します', name: 'auto_scroll', key: 'autoScroll' },
+  { label: 'Send with Ctrl+Enter', hint: 'Ctrl+Enterでコメントを送信します', name: 'send_with_ctrl_enter', key: 'sendWithCtrlEnter' },
+  { label: 'DDD', hint: '効果音パネルを表示します', name: 'open_ddd', key: 'openSoundPanel' },
 ]
 isMobiles() && checkBoxMeta.splice(1, 1)
 export const Comment: FC<CommentProps> = (props: CommentProps): JSX.Element => {

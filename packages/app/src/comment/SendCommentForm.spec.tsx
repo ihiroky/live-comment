@@ -11,7 +11,7 @@ test('Input text and click button.', async () => {
   const inputText = 'some text.'
   const textBox = screen.getByRole('textbox', { name: '' }) as HTMLInputElement
   userEvent.type(textBox, inputText)
-  const button = screen.getByRole('button', { name: '💬' })
+  const button = screen.getByRole('button', { name: 'Send comment' })
   await waitFor(() => expect(button).toBeEnabled())
   userEvent.click(button)
   await waitFor(() => expect(textBox.value).toBe(''))
@@ -29,7 +29,7 @@ test('Input text and press Enter key.', async () => {
   const inputText = 'any text.'
   const textBox = screen.getByRole('textbox', { name: '' }) as HTMLInputElement
   userEvent.type(textBox, inputText)
-  const button = screen.getByRole('button', { name: '💬' })
+  const button = screen.getByRole('button', { name: 'Send comment' })
   await waitFor(() => expect(button).toBeEnabled())
   userEvent.keyboard('{enter}')
   await waitFor(() => expect(textBox.value).toBe(''))
@@ -47,7 +47,7 @@ test('Input text and click button with "send with ctrl+enter" option.', async ()
   const inputText = 'some text.'
   const textBox = screen.getByRole('textbox', { name: '' }) as HTMLInputElement
   userEvent.type(textBox, inputText)
-  const button = screen.getByRole('button', { name: '💬' })
+  const button = screen.getByRole('button', { name: 'Send comment' })
   await waitFor(() => expect(button).toBeEnabled())
   userEvent.click(button)
   await waitFor(() => expect(textBox.value).toBe(''))
@@ -65,7 +65,7 @@ test('Input text and press Enter key only with "send with ctrl+enter" option.', 
   const inputText = 'any text.'
   const textBox = screen.getByRole('textbox', { name: '' }) as HTMLInputElement
   userEvent.type(textBox, inputText)
-  const button = screen.getByRole('button', { name: '💬' })
+  const button = screen.getByRole('button', { name: 'Send comment' })
   await waitFor(() => expect(button).toBeEnabled())
   userEvent.keyboard('{enter}')
 
@@ -82,7 +82,7 @@ test('Input text and press Ctrl+Enter key with "send with ctrl+enter" option.', 
   const inputText = 'any text.'
   const textBox = screen.getByRole('textbox', { name: '' }) as HTMLInputElement
   userEvent.type(textBox, inputText)
-  const button = screen.getByRole('button', { name: '💬' })
+  const button = screen.getByRole('button', { name: 'Send comment' })
   await waitFor(() => expect(button).toBeEnabled())
   userEvent.keyboard('{ctrl}{enter}{/ctrl}')
   await waitFor(() => expect(textBox.value).toBe(''))

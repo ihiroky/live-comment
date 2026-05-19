@@ -5,7 +5,7 @@ import { LabeledCheckbox } from './LabeledCheckbox'
 import { jest, test } from '@jest/globals'
 
 test('Label, name, and checked', () => {
-  render(<LabeledCheckbox label="LABEL" name="NAME" checked onChange={() => undefined} />)
+  render(<LabeledCheckbox label="LABEL" hint="HINT" name="NAME" checked onChange={() => undefined} />)
 
   screen.getByText('LABEL')
   const checkBox = screen.getByRole('checkbox', { name: 'LABEL' }) as HTMLInputElement
