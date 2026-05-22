@@ -95,6 +95,11 @@ export class SendCommentForm extends Component<PropsType, StateType> {
   }
 
   private onKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
+    // Do not send while IME composition is active; Enter may only confirm conversion.
+    if (e.nativeEvent.isComposing) {
+      return
+    }
+
     const ctrlModifierState = !this.getControlModifierState
       ? e.getModifierState('Control')
       : this.getControlModifierState()
