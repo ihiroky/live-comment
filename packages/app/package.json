@@ -47,7 +47,7 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.11.0",
     "react-transition-group": "^4.4.5",
-    "unzip": "workspace:*",
+    "unzip": "file:../unzip",
     "ws": "^8.16.0",
     "yargs": "^17.5.1"
   },

@@ -81,21 +81,14 @@ jobs:
         env:
           NODE_ENV: production
 
-      - name: Prepare for using npm in action-electron-builder
-        run: |
-          mv pnpm-lock.yaml packages/app
-          rm -rf packages/app/node_modules
-          mv node_modules packages/app
-        shell: bash
-
       - name: Build/release Electron app
-        uses: ihiroky/action-electron-builder@master
-        with:
-          github_token: ${{ secrets.github_token }}
-          release: ${{ startsWith(github.ref, 'refs/tags/v') }}
-          skip_build: true
-          package_root: packages/app/
-          args: ${{ matrix.electron_builder_args }}
+        # ihiroky/action-electron-builder always runs `npm install`/`yarn` in
+        # package_root regardless of skip_build, which doesn't understand pnpm's
+        # workspace layout. Invoke electron-builder directly via pnpm instead.
+        run: |
+          pnpm --filter ./packages/app exec electron-builder ${{ matrix.electron_builder_args }} ${{ startsWith(github.ref, 'refs/tags/v') && '--publish always' || '' }}
+        env:
+          GH_TOKEN: ${{ secrets.github_token }}
 
       - name: Archive artifacts
         uses: actions/upload-artifact@v6
