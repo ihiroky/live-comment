@@ -1,7 +1,6 @@
 {
   "productName": "live-comment",
   "appId": "ga.live-comment.desktop",
-  "electronVersion": "12.1.2",
   "files": [
     "package.json",
     "dist/common/**/*.js",
@@ -28,7 +27,7 @@
     "artifactName": "${productName}-${version}-${arch}.${ext}",
     "target": [{
       "target": "dmg",
-      "arch": ["x64"]
+      "arch": ["universal"]
     }],
     "publish": ["github"],
     "icon": "resources/kujira.png"
