@@ -13,18 +13,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.3.4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
-      - run: |
-          npm c set fetch-retry-maxtimeout 180000
-          npm ci
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
 
       - name: Build apps
         run: |
-          npm -w packages/app run clean
-          npm -w packages/app run build-extension
+          pnpm --filter ./packages/app run clean
+          pnpm --filter ./packages/app run build-extension
           test "${GITHUB_REF#refs/heads/}" != "main" && (cd packages/app/ && node scripts/beta_manifest.mjs) || echo 'No manifest modification.'
         env:
           LC_WS_URL: wss://${{ inputs.host }}/app

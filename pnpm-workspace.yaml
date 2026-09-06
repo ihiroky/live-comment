@@ -1,0 +1,12 @@
+packages:
+  - "packages/*"
+
+allowBuilds:
+  bufferutil: true
+  electron: true
+  esbuild: true
+  pre-commit: true
+  spawn-sync: true
+  utf-8-validate: true
+
+blockExoticSubdeps: false

@@ -13,19 +13,20 @@ jobs:
         os: [macos-latest, ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.3.4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
-      - run: |
-          npm c set fetch-retry-maxtimeout 180000
-          npm ci
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
 
       - name: Run checks
         run: |
-          npm run lint
-          npm run test
-          npm run typecheck
+          pnpm run lint
+          pnpm run test
+          pnpm run typecheck
         shell: bash
 
       - name: Test report
@@ -64,24 +65,25 @@ jobs:
             electron_builder_args: -c electron-builder-config.json --x64
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.3.4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
-      - run: |
-          npm c set fetch-retry-maxtimeout 180000
-          npm ci
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
 
       - name: Build apps
         run: |
-          npm -w packages/app run clean
-          npm -w packages/app run build-desktop
+          pnpm --filter ./packages/app run clean
+          pnpm --filter ./packages/app run build-desktop
         env:
           NODE_ENV: production
 
       - name: Prepare for using npm in action-electron-builder
         run: |
-          mv package-lock.json packages/app
+          mv pnpm-lock.yaml packages/app
           rm -rf packages/app/node_modules
           mv node_modules packages/app
         shell: bash
@@ -108,19 +110,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.3.4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-      - run: |
-          npm c set fetch-retry-maxtimeout 180000
-          npm ci
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
 
       - name: Build apps
         run: |
-          npm -w packages/app run clean
-          npm -w packages/app run build-comment
-          npm -w packages/app run build-servers
+          pnpm --filter ./packages/app run clean
+          pnpm --filter ./packages/app run build-comment
+          pnpm --filter ./packages/app run build-servers
 
       - name: Create release directory tree
         run: |

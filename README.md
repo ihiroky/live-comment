@@ -26,18 +26,18 @@ The release in this repository will not include the browser extension because it
 
 ### Fetch dependencies
 ```bash
-npm install
+pnpm install
 ```
 
 ### Build and watch all applications
 ```bash
-npm -w packages/esbuild-plugin-copy-files/ run build
-npm -w packages/app/ run watch
+pnpm --filter esbuild-plugin-copy-files run build
+pnpm --filter ./packages/app run watch
 ```
 
 ### Start servers
 ```bash
-npm -w packages/app/ run serve
+pnpm --filter ./packages/app run serve
 # Start streaming server on port 8080
 # Start api server on port 9080
 # Start comment page server on port 8888 (http://localhost:8888/login)
@@ -45,7 +45,7 @@ npm -w packages/app/ run serve
 
 ### Start desktop application
 ```bash
-npm -w packages/app/ run start-desktop
+pnpm --filter ./packages/app run start-desktop
 # And change Server URL to the streaming server (ws://localhost:8080/app) in its settings.
 ```
 

@@ -5,15 +5,11 @@
   "author": "Hiroki Itoh <ihiroky@gmail.com>",
   "license": "MIT",
   "private": true,
+  "packageManager": "pnpm@12.3.4",
   "scripts": {
     "lint": "eslint --ext ts,tsx --max-warnings 0 packages",
     "typecheck": "tsc -p packages/app/tsconfig.json --noEmit",
     "test": "jest --reporters=default --reporters=jest-junit --coverage --coverageDirectory reports/coverage"
-  },
-  "workspaces": {
-    "packages": [
-      "packages/*"
-    ]
   },
   "repository": {
     "type": "git",
