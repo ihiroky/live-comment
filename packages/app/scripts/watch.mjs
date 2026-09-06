@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { build } from 'esbuild'
+import { build, context } from 'esbuild'
 import { copyFiles } from 'esbuild-plugin-copy-files'
 import { apps } from './apps.mjs'
 
@@ -10,24 +10,24 @@ const log = (name, message) => {
 }
 
 const printRebuildResult = (name) => ({
-  onRebuild: (err, result) => {
-    const messages = []
-    if (result.errors.length === 0 && result.warnings.length === 0) {
-      messages.push('Rebuild completed. No errors/warnings.')
-    }
-    if (result.errors.length > 0) {
-      messages.push(`Found ${result.errors.length} error(s).\n`)
-      messages.push(...result.errors)
-    }
-    if (result.warnings.length > 0) {
-      messages.push(`Found ${result.warnings.length} warning(s).\n`)
-      messages.push(...result.warnings)
-    }
-    if (err) {
-      console.error(err)
-    }
-    const delimiter = messages.length === 1 ? ' ' : '\n'
-    console.info(`${new Date().toLocaleString()} [${name}]:${delimiter}${messages.join('\n')}`)
+  name: `print-rebuild-result-${name}`,
+  setup: (build) => {
+    build.onEnd((result) => {
+      const messages = []
+      if (result.errors.length === 0 && result.warnings.length === 0) {
+        messages.push('Rebuild completed. No errors/warnings.')
+      }
+      if (result.errors.length > 0) {
+        messages.push(`Found ${result.errors.length} error(s).\n`)
+        messages.push(...result.errors)
+      }
+      if (result.warnings.length > 0) {
+        messages.push(`Found ${result.warnings.length} warning(s).\n`)
+        messages.push(...result.warnings)
+      }
+      const delimiter = messages.length === 1 ? ' ' : '\n'
+      console.info(`${new Date().toLocaleString()} [${name}]:${delimiter}${messages.join('\n')}`)
+    })
   }
 })
 
@@ -39,8 +39,8 @@ const optionsList = {
     bundle: true,
     platform: 'node',
     target: ['es2020'],
-    watch: dev && printRebuildResult('api'),
     minify: !dev,
+    plugins: dev ? [printRebuildResult('api')] : [],
   },
   streaming: {
     entryPoints: apps.streaming.entryPoints,
@@ -49,8 +49,8 @@ const optionsList = {
     bundle: true,
     platform: 'node',
     target: ['es2020'],
-    watch: dev && printRebuildResult('streaming'),
     minify: !dev,
+    plugins: dev ? [printRebuildResult('streaming')] : [],
   },
   comment: {
     entryPoints: apps.comment.entryPoints,
@@ -60,10 +60,10 @@ const optionsList = {
     bundle: true,
     platform: 'browser',
     target: ['es2020'],
-    watch: dev && printRebuildResult('comment'),
     minify: !dev,
     plugins: [
-      copyFiles({ entries: apps.comment.assets })
+      copyFiles({ entries: apps.comment.assets, watch: dev }),
+      ...(dev ? [printRebuildResult('comment')] : []),
     ],
   },
   desktop: {
@@ -73,8 +73,8 @@ const optionsList = {
     bundle: true,
     platform: 'node',
     external: ['electron'],
-    watch: dev && printRebuildResult('desktop:main'),
-    minify: !dev
+    minify: !dev,
+    plugins: dev ? [printRebuildResult('desktop:main')] : [],
   },
   renderer: {
     entryPoints: apps.renderer.entryPoints,
@@ -85,8 +85,8 @@ const optionsList = {
     bundle: true,
     platform: 'browser',
     target: ['es2020'],
-    watch: dev && printRebuildResult('desktop:renderer'),
     minify: !dev,
+    plugins: dev ? [printRebuildResult('desktop:renderer')] : [],
   },
   extension: {
     entryPoints: apps.extension.entryPoints,
@@ -96,11 +96,11 @@ const optionsList = {
     bundle: true,
     platform: 'browser',
     target: ['es2020', 'es2020'],
-    watch: dev && printRebuildResult('extension'),
     minify: !dev,
     plugins: [
-      copyFiles({ entries: apps.extension.assets })
-    ]
+      copyFiles({ entries: apps.extension.assets, watch: dev }),
+      ...(dev ? [printRebuildResult('extension')] : []),
+    ],
   }
 }
 
@@ -108,5 +108,15 @@ console.info('Targets:', Object.keys(optionsList).join(', '))
 await Promise.all(
   Object
     .entries(optionsList)
-    .map(entry => build(entry[1]).then(() => log(entry[0], 'Watching...')))
+    .map(async (entry) => {
+      const [name, options] = entry
+      if (dev) {
+        const ctx = await context(options)
+        await ctx.watch()
+        log(name, 'Watching...')
+      } else {
+        await build(options)
+        log(name, 'Built.')
+      }
+    })
 )
