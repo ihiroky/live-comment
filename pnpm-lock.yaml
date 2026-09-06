@@ -332,6 +332,9 @@ importers:
       esbuild:
         specifier: ^0.25.0
         version: 0.25.12
+      esbuild-plugin-copy-files:
+        specifier: file:../esbuild-plugin-copy-files
+        version: link:../esbuild-plugin-copy-files
       jest:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@22.10.5)(babel-plugin-macros@3.1.0)(supports-color@8.1.1)
