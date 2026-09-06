@@ -38,6 +38,9 @@ describe('copyOnce', () => {
     await func({
       errors: [],
       warnings: [],
+      outputFiles: undefined,
+      metafile: undefined,
+      mangleCache: undefined,
     })
   }
 
@@ -197,13 +200,12 @@ describe('Watch', () => {
       entries: [
         { src: normalize(path.join(tempDirPath, 'srcFile*')), destDir },
       ],
+      watch: true,
       initialDelayMs: 0,
       debounceTimeoutMs,
     })
     const build = {
-      initialOptions: {
-        watch: true,
-      },
+      initialOptions: {},
     }
 
     try {

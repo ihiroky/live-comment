@@ -8,7 +8,6 @@ import { copyFiles } from 'esbuild-plugin-copy-files'
 
 build({
   ...,
-  watch: ..., // if not falsely, watch target files independently of esbuild itself.
   plugins: [
     copyFiles({
       entries: [
@@ -17,6 +16,7 @@ build({
         { src: 'resources/icon.png', destDir: 'dist/extension/images/'} ,
         { src: 'resources/icon@[236].png', destDir: 'dist/extension/images/'} ,
       ],
+      watch: ..., // if not falsely, watch target files independently of esbuild itself.
       initialDelayMs: 3000,
       debounceTimeoutMs: 200,
       logLevel: 'error',
@@ -39,13 +39,21 @@ Array of entries to copy.
 - destFile: Desitination file path to copy.
 - destDir: Desitination directory to copy into. Create if not exists.
 
+### watch
+
+Type: `boolean` or `undefined`
+
+Default: `undefined`
+
+If truthy, watch the entries' src files independently of esbuild itself (esbuild does not expose its own watch state to plugins, so this must be set explicitly by the caller, e.g. based on whether `esbuild.context().watch()` is used).
+
 ### initialDelayMs
 
 Type: `number` or `undefined`
 
 Default: `3000`
 
-Delay milliseconds to start watch. Available if enables esbuild watch mode.
+Delay milliseconds to start watch. Available if `watch` is truthy.
 
 ### debounceTimeoutMs
 

@@ -10,6 +10,7 @@ type Options = {
     destFile?: string
     destDir?: string
   }[]
+  watch?: boolean
   initialDelayMs?: number
   debounceTimeoutMs?: number
   logLevel?: 'debug' | 'info' | 'error'
@@ -202,7 +203,7 @@ export const copyFiles = (options: Options): Plugin & FSWatcherCloseable => {
     name: 'copy-files',
     setup: (build: PluginBuild): void | Promise<void> => {
       log.setup(options.logLevel)
-      if (build.initialOptions.watch) {
+      if (options.watch) {
         return new Promise<void>((resolve: () => void, reject: (reason: unknown) => void): void => {
           setTimeout((): void => {
             copyOnce(options)
